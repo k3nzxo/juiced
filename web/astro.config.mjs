@@ -3,6 +3,8 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   site: "https://juiced.team",
   output: "static",
+  // Seiten beim Drüberfahren schon laden, damit der Wechsel sofort passiert
+  prefetch: { prefetchAll: true, defaultStrategy: "hover" },
   trailingSlash: "ignore",
   build: { format: "directory", inlineStylesheets: "auto" },
   i18n: {

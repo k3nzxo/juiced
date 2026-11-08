@@ -75,20 +75,40 @@ export function initChrome() {
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then((r) => (r.ok ? r.json() : null))
     .then((me) => {
-      if (!me || !me.user) return;
       const label = document.querySelector<HTMLElement>("[data-account-label]");
       const link = document.querySelector<HTMLElement>("[data-account-link]");
-      if (!label || !link) return;
-      if (me.user.avatar_url) {
-        const img = document.createElement("img");
-        img.src = me.user.avatar_url; img.alt = ""; img.width = 20; img.height = 20;
-        img.style.cssText = "border-radius:50%;width:20px;height:20px";
-        link.prepend(img);
+      if (!me || !me.user) {
+        // abgemeldet: Zwischenspeicher und evtl. schon gezeigten Namen zurücksetzen
+        try { sessionStorage.removeItem("juiced-me"); } catch { /* egal */ }
+        if (label) label.textContent = label.dataset.default || label.textContent;
+        link?.querySelector(".acc-av")?.remove();
+        const bell = document.querySelector<HTMLElement>("[data-bell]");
+        if (bell) bell.hidden = true;
+        return;
       }
-      label.textContent = me.user.display_name;
-      if (me.user.is_member) initBell();
+      if (!label || !link) return;
+      const u = me.user;
+      let img = link.querySelector<HTMLImageElement>(".acc-av");
+      if (u.avatar_url) {
+        if (!img) {
+          img = document.createElement("img");
+          img.alt = ""; img.width = 20; img.height = 20; img.className = "acc-av";
+          link.prepend(img);
+        }
+        if (img.src !== u.avatar_url) img.src = u.avatar_url;
+      } else img?.remove();
+      label.textContent = u.display_name;
+      saveMe({ n: u.display_name, a: u.avatar_url || "", m: !!u.is_member });
+      if (u.is_member) initBell();
     })
     .catch(() => {});
+}
+
+function saveMe(patch: Record<string, unknown>) {
+  try {
+    const cur = JSON.parse(sessionStorage.getItem("juiced-me") || "{}");
+    sessionStorage.setItem("juiced-me", JSON.stringify({ ...cur, ...patch }));
+  } catch { /* privater Modus */ }
 }
 
 // Glocke: offene Bewerbungen, Match-Anfragen, VODs ohne Review
@@ -100,9 +120,10 @@ function initBell() {
   const btn = bell.querySelector<HTMLButtonElement>("[data-bell-btn]")!;
   const menu = bell.querySelector<HTMLElement>("[data-bell-menu]")!;
   const count = bell.querySelector<HTMLElement>("[data-bell-count]")!;
-  let last = -1;
+  let last = Number(count.hidden ? 0 : count.textContent) || -1;
   const paint = (n: Record<string, number>) => {
     const total = n.total || 0;
+    saveMe({ c: total });
     count.hidden = !total;
     count.textContent = total > 99 ? "99+" : String(total);
     if (last >= 0 && total > last) { bell.classList.remove("ring"); void bell.offsetWidth; bell.classList.add("ring"); }

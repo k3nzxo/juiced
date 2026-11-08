@@ -155,7 +155,7 @@ p { margin: 0; }
 .chip[aria-pressed="true"], .chip.active { background: var(--text); border-color: var(--text); color: var(--bg); }
 
 /* ------------------------------------------------------------------ reveal on scroll */
-.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); transition-delay: var(--d, 0ms); }
+.reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); transition-delay: calc(var(--d, 0ms) * 0.6); }
 .reveal.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
@@ -204,11 +204,9 @@ p { margin: 0; }
 /* ---------- Seitenwechsel: weich überblenden, Header bleibt stehen */
 @view-transition { navigation: auto; }
 #site-header { view-transition-name: site-header; }
-::view-transition-old(root) { animation: vt-out 0.16s ease both; }
-::view-transition-new(root) { animation: vt-in 0.32s var(--ease) both; }
-::view-transition-old(site-header), ::view-transition-new(site-header) { animation: none; mix-blend-mode: normal; }
-@keyframes vt-out { to { opacity: 0; } }
-@keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.22s; animation-timing-function: ease-out; }
+::view-transition-group(site-header), ::view-transition-old(site-header), ::view-transition-new(site-header) { animation: none; }
+::view-transition-old(site-header) { display: none; }
 
 /* ---------- Lichtkegel unter dem Mauszeiger auf Karten */
 .spot { position: relative; isolation: isolate; }

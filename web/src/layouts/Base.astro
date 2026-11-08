@@ -79,7 +79,7 @@ const nav = [
           </div>
           <a class="icon-btn hide-sm" href={DISCORD_INVITE} target="_blank" rel="noopener" aria-label="Discord"><Icon name="discord" /></a>
           <a class="btn btn-outline btn-sm hide-sm" href={`/${lang}/app/`} data-account-link>
-            <span data-account-label>{t("nav_members")}</span>
+            <span data-account-label data-default={t("nav_members")}>{t("nav_members")}</span>
           </a>
           <button class="icon-btn show-sm" data-menu-btn aria-expanded="false" aria-label={t("nav_menu")}><Icon name="menu" /></button>
         </div>
@@ -91,6 +91,24 @@ const nav = [
         </div>
       </div>
     </header>
+    <script is:inline>
+      // Angemeldeten Nutzer sofort zeigen (aus dem letzten Seitenaufruf), Abgleich passiert danach in chrome.ts
+      (function () {
+        try {
+          var u = JSON.parse(sessionStorage.getItem("juiced-me") || "null");
+          if (!u) return;
+          var l = document.querySelector("[data-account-label]"), a = document.querySelector("[data-account-link]");
+          if (l) l.textContent = u.n;
+          if (a && u.a) { var i = document.createElement("img"); i.src = u.a; i.alt = ""; i.width = 20; i.height = 20; i.className = "acc-av"; a.prepend(i); }
+          var b = document.querySelector("[data-bell]");
+          if (b && u.m) {
+            b.hidden = false;
+            var c = b.querySelector("[data-bell-count]");
+            if (u.c) { c.hidden = false; c.textContent = u.c > 99 ? "99+" : String(u.c); }
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <main id="main"><slot /></main>
 
@@ -136,6 +154,7 @@ const nav = [
   .lang-code { font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; }
   :global([data-theme="dark"]) .i-sun, :global([data-theme="light"]) .i-moon { display: none; }
   .lang-menu, .bell { position: relative; }
+  :global(.acc-av) { width: 20px; height: 20px; border-radius: 50%; }
   .bell[hidden] { display: none; }
   .bell-count { position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 10px; font-weight: 700; line-height: 16px; color: #fff; background: var(--accent); box-shadow: 0 0 0 2px var(--bg); animation: pop 0.25s var(--ease); }
   .bell.ring svg { animation: ring 0.9s var(--ease); transform-origin: 50% 10%; }
