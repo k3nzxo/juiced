@@ -484,3 +484,10 @@ main.vod-main, .vod-main { max-width: none; }
 .unsigned-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 140px; overflow-y: auto; margin-bottom: 12px; }
 /* Mitgliederkarte: ruhige Zusatzzeile statt Mini-Icons */
 .mc-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--muted); }
+/* Mitgliederkarten: immer gleicher Aufbau, gleiche Höhe, kein Leerraum */
+.mem-grid { align-items: start; }
+.mcard { gap: 10px; }
+.mc-meta { min-height: calc(2 * 1.5em); line-height: 1.5; }
+.mc-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-empty { font-style: italic; color: var(--faint); }
+.mc-build { min-height: 28px; } .mc-build .path-tag { font-size: 12.5px; }

@@ -660,9 +660,9 @@ async function viewRoster(view: HTMLElement) {
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
         <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
-        <div class="mc-build">${u.main_path ? pathTag(u.main_path, true) : u.main_role ? roleTag(u.main_role) : `<span class="muted">${esc(T("mem_no_build"))}</span>`}
+        <div class="mc-build">${u.main_path ? pathTag(u.main_path, true) : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`}
           ${(u.alt_paths || []).length ? `<span class="mc-more">+${u.alt_paths.length}</span>` : ""}</div>
-        ${pathById(u.main_path) || (u.inner_ways || []).length ? `<div class="mc-meta">${pathById(u.main_path) ? `<span>${esc(pathById(u.main_path)!.weapons.join(" + "))}</span>` : ""}${(u.inner_ways || []).length ? `<span>${u.inner_ways.length} ${esc(T("prof_inner_ways"))}</span>` : ""}</div>` : ""}
+        <div class="mc-meta">${pathById(u.main_path) ? `<span>${esc(pathById(u.main_path)!.weapons.join(" + "))}</span>` : `<span class="mc-empty">${esc(T("mem_no_build"))}</span>`}<span>${(u.inner_ways || []).length ? `${u.inner_ways.length} ${esc(T("prof_inner_ways"))}` : ""}</span></div>
       </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   };
   view.querySelector("[data-q]")!.addEventListener("input", (e) => { memFilter.q = (e.target as HTMLInputElement).value; draw(); });
