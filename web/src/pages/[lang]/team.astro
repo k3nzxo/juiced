@@ -19,7 +19,7 @@ const labels = {
     <p class="count reveal" style="--d:180ms" data-count></p>
   </section>
   <section class="container" data-roster data-labels={JSON.stringify(labels)}>
-    <div class="grid">{[0, 1, 2, 3, 4, 5, 6, 7].map(() => <div class="person skeleton"></div>)}</div>
+    <div class="grid">{[0, 1, 2, 3].map(() => <div class="person skeleton"></div>)}</div>
   </section>
 </Base>
 
@@ -46,7 +46,7 @@ const labels = {
   .page-head { padding-top: 72px; padding-bottom: 40px; display: flex; flex-direction: column; gap: 12px; }
   .page-head h1 { font-size: clamp(40px, 5vw, 60px); }
   .page-head p { color: var(--muted); font-size: 17px; max-width: 620px; }
-  .count { font-size: 14px !important; font-weight: 600; color: var(--text-2) !important; }
+  .count { font-size: 14px !important; font-weight: 600; color: var(--text-2) !important; min-height: 1.5em; }
   :global(.grid) { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
   :global(.group-title) { font-size: 22px; margin: 40px 0 16px; display: flex; align-items: center; gap: 10px; }
   :global(.group-title span) { font-size: 13px; font-family: var(--font-sans); font-weight: 600; color: var(--muted); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); }
