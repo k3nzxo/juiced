@@ -204,7 +204,7 @@ async function viewDashboard(view: HTMLElement) {
     const el = view.querySelector<HTMLElement>("#dash-mem");
     if (!el) return;
     el.innerHTML = list.length ? `<div class="mem-strip">${list.slice(0, 18).map((u) => `<a class="ms card" href="#/roster/${u.id}" title="${esc(u.display_name)}">
-      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${u.main_path ? pathTag(u.main_path) : u.main_role ? roleTag(u.main_role) : `<span class="muted">—</span>`}</a>`).join("")}</div>`
+      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${u.main_path ? pathTag(u.main_path) : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`}</a>`).join("")}</div>`
       : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   }).catch(() => { view.querySelector("#dash-mem")?.remove(); });
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
