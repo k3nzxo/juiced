@@ -356,6 +356,8 @@ const en = {
   att_title: "{a} of {t} events",
   rh_open_web: "Discord app not found – click again to open it in the browser.",
   att_count: "{a} events",
+  vod_retry_in: "Connection interrupted – retrying in {n} s",
+  vod_retry_offline: "You're offline – continues as soon as you're back online",
 };
 
 export type ExtraDict = typeof en;
@@ -708,6 +710,8 @@ const de: Partial<ExtraDict> = {
   att_title: "{a} von {t} Events",
   rh_open_web: "Discord-App nicht gefunden – nochmal klicken für die Browser-Version.",
   att_count: "{a} Events",
+  vod_retry_in: "Verbindung unterbrochen – neuer Versuch in {n} s",
+  vod_retry_offline: "Du bist offline – geht weiter, sobald die Verbindung wieder da ist",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1052,6 +1056,8 @@ const fr: Partial<ExtraDict> = {
   m_friday: "Soirées du vendredi",
   rh_open_web: "App Discord introuvable – reclique pour l'ouvrir dans le navigateur.",
   att_count: "{a} événements",
+  vod_retry_in: "Connexion interrompue – nouvel essai dans {n} s",
+  vod_retry_offline: "Tu es hors ligne – reprend dès le retour de la connexion",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1396,6 +1402,8 @@ const es: Partial<ExtraDict> = {
   m_friday: "Noches de viernes",
   rh_open_web: "No se encontró la app de Discord: vuelve a hacer clic para abrirlo en el navegador.",
   att_count: "{a} eventos",
+  vod_retry_in: "Conexión interrumpida – reintento en {n} s",
+  vod_retry_offline: "Sin conexión – sigue en cuanto vuelva la conexión",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1740,6 +1748,8 @@ const pt: Partial<ExtraDict> = {
   m_friday: "Sextas à noite",
   rh_open_web: "App do Discord não encontrado – clique de novo para abrir no navegador.",
   att_count: "{a} eventos",
+  vod_retry_in: "Conexão interrompida – nova tentativa em {n} s",
+  vod_retry_offline: "Você está offline – continua assim que a conexão voltar",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2084,6 +2094,8 @@ const ru: Partial<ExtraDict> = {
   m_friday: "Пятничные вечера",
   rh_open_web: "Приложение Discord не найдено — нажми ещё раз, чтобы открыть в браузере.",
   att_count: "событий: {a}",
+  vod_retry_in: "Соединение прервано — повтор через {n} с",
+  vod_retry_offline: "Нет сети — продолжится, когда соединение вернётся",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2428,6 +2440,8 @@ const tr: Partial<ExtraDict> = {
   m_friday: "Cuma Geceleri",
   rh_open_web: "Discord uygulaması bulunamadı – tarayıcıda açmak için tekrar tıkla.",
   att_count: "{a} etkinlik",
+  vod_retry_in: "Bağlantı kesildi – {n} sn sonra tekrar denenecek",
+  vod_retry_offline: "Çevrimdışısın – bağlantı gelince devam eder",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2772,6 +2786,8 @@ const pl: Partial<ExtraDict> = {
   m_friday: "Piątkowe wieczory",
   rh_open_web: "Nie znaleziono aplikacji Discord – kliknij ponownie, by otworzyć w przeglądarce.",
   att_count: "{a} wydarzeń",
+  vod_retry_in: "Połączenie przerwane – ponowna próba za {n} s",
+  vod_retry_offline: "Jesteś offline – wznowi się po powrocie połączenia",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

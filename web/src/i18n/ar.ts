@@ -659,6 +659,8 @@ const ar: Partial<Dict & ExtraDict> = {
   att_title: "{a} من {t} فعالية",
   rh_open_web: "لم يتم العثور على تطبيق Discord – انقر مرة أخرى لفتحه في المتصفح.",
   att_count: "{a} فعالية",
+  vod_retry_in: "انقطع الاتصال – إعادة المحاولة خلال {n} ث",
+  vod_retry_offline: "أنت غير متصل – سيستمر عند عودة الاتصال",
 };
 
 export default ar;

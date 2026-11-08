@@ -383,6 +383,27 @@ function vodPutChunk(up, index, blob) {
   });
 }
 
+// Kurze Ausfälle (Deploy, WLAN weg, Storage Box kurz weg) überbrücken: warten und erneut versuchen.
+// Endgültig sind nur Fehler, bei denen ein neuer Versuch nichts bringt (kein Recht, abgebrochen, schon fertig ...).
+const VOD_FATAL = [400, 401, 403, 404, 409, 410, 413];
+const VOD_MAX_TRIES = 20;  // mit wachsender Pause bis 30 s -> zusammen rund 8 Minuten
+const vodWaitOnline = () => (navigator.onLine === false
+  ? new Promise(r => window.addEventListener("online", r, { once: true })) : Promise.resolve());
+async function vodRetryPause(up, tries) {
+  up.retrying = true;
+  up.retryAt = Date.now() + Math.min(30000, 1000 * 2 ** Math.min(tries, 5));
+  renderUploadProgressPanel();
+  // Countdown nur für die Anzeige; gewartet wird mit EINEM Timer (Hintergrund-Tabs bremsen viele kurze Timer stark aus)
+  const tick = setInterval(renderUploadProgressPanel, 1000);
+  try {
+    await vodWaitOnline();
+    const wait = up.retryAt - Date.now();
+    if (wait > 0 && !up.stopped) await new Promise(r => setTimeout(r, wait));
+  } finally {
+    clearInterval(tick);
+  }
+}
+
 async function startVodUpload(vod, file, doneList) {
   const chunk = vod.chunk_size || 16 * 1024 * 1024;
   const total = Math.max(1, Math.ceil(file.size / chunk));
@@ -404,12 +425,13 @@ async function startVodUpload(vod, file, doneList) {
         try {
           await vodPutChunk(up, i, file.slice(i * chunk, i * chunk + sizeOf(i)));
           up.done += sizeOf(i);
+          up.retrying = false;
           renderUploadProgressPanel();
           break;
         } catch (err) {
           if (up.stopped || err.status === -1) return;
-          if ([400, 401, 403, 404, 409, 410].includes(err.status) || ++tries > 8) throw err;
-          await new Promise(r => setTimeout(r, Math.min(30000, 1500 * tries)));  // Netz weg -> warten, nochmal
+          if (VOD_FATAL.includes(err.status) || ++tries > VOD_MAX_TRIES) throw err;
+          await vodRetryPause(up, tries);
         }
       }
     }
@@ -418,7 +440,16 @@ async function startVodUpload(vod, file, doneList) {
   try {
     await Promise.all(Array.from({ length: Math.min(VOD_PARALLEL, Math.max(1, queue.length)) }, worker));
     if (up.stopped) return;
-    await api(`/vods/${vod.id}/complete`, { method: "POST" });
+    // Abschluss ebenfalls wiederholen (z. B. wenn genau dann die API neu startet)
+    for (let tries = 0; ; ) {
+      try { await api(`/vods/${vod.id}/complete`, { method: "POST" }); break; }
+      catch (err) {
+        if (up.stopped) return;
+        if (VOD_FATAL.includes(err.status) || ++tries > VOD_MAX_TRIES) throw err;
+        await vodRetryPause(up, tries);
+      }
+    }
+    up.retrying = false;
     delete vodState.uploads[vod.id];
     toast(vt("upload_done"));
   } catch (err) {
@@ -496,8 +527,11 @@ function drawUploadPanel() {
     const eta = speed > 0 ? (u.size - cur) / speed : 0;
     row.querySelector("[data-bar]").style.transform = `scaleX(${(pct / 100).toFixed(4)})`;
     row.querySelector("[data-pct]").textContent = `${Math.floor(pct)}%`;
-    row.querySelector("[data-stats]").textContent =
-      `${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)}` + (speed > 0 ? ` · ${(speed / 1024 / 1024).toFixed(1)} MB/s · ~${vodFmtTime(eta)}` : "");
+    row.classList.toggle("is-retrying", !!u.retrying);
+    row.querySelector("[data-stats]").textContent = u.retrying
+      ? `${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)} · ` + (navigator.onLine === false ? vt("retry_offline")
+        : vt("retry_in", { n: Math.max(0, Math.ceil(((u.retryAt || 0) - Date.now()) / 1000)) }))
+      : `${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)}` + (speed > 0 ? ` · ${(speed / 1024 / 1024).toFixed(1)} MB/s · ~${vodFmtTime(eta)}` : "");
   }
 }
 

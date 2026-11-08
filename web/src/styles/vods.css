@@ -204,3 +204,4 @@ main.vod-main { max-width: 1500px; }
 .vod-up-other { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
 .vod-up-bar { height: 5px; border-radius: 5px; background: var(--border); overflow: hidden; }
 .vod-up-bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s; }
+.vod-upload-row.is-retrying [data-stats] { color: var(--accent); font-weight: 600; } .vod-upload-row.is-retrying .vod-progress span { opacity: .5; }

@@ -659,6 +659,8 @@ const fi: Partial<Dict & ExtraDict> = {
   att_title: "{a}/{t} tapahtumaa",
   rh_open_web: "Discord-sovellusta ei löytynyt – klikkaa uudelleen avataksesi selaimessa.",
   att_count: "{a} tapahtumaa",
+  vod_retry_in: "Yhteys katkesi – uusi yritys {n} s päästä",
+  vod_retry_offline: "Olet offline-tilassa – jatkuu, kun yhteys palaa",
 };
 
 export default fi;
