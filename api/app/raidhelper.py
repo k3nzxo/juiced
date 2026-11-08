@@ -175,7 +175,7 @@ def events(db: DbSession = Depends(get_db), user: models.User = Depends(require_
     profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role,
                                "alt_paths": u.alt_path_list} for u in users}
     can_edit = user.level >= models.RANK_LEVEL["vice"]
-    partners = [[m["id"] for m in json.loads(x.members)] for x in db.query(models.Partnership).order_by(models.Partnership.position).all()] if can_edit else []
+    partners = _all_partnerships(db, users) if can_edit else []
     return {**data, "channels": _named_channels(data.get("channels") or []) if can_edit else [],
             "can_edit": can_edit, "partnerships": partners, "can_remind": bool(DISCORD_BOT_TOKEN and DISCORD_GUILD_ID) and can_edit,
             "profiles": {d: profiles[d] for e in evs for s in e["signups"] if (d := s["user_id"]) in profiles},
@@ -634,3 +634,39 @@ def delete_event(event_id: str, db: DbSession = Depends(get_db), user: models.Us
         db.commit()
     _drop_cache()
     return {"ok": True}
+
+
+
+def _all_partnerships(db: DbSession, users=None) -> list:
+    """Leader-Liste + was Mitglieder im Profil als Partner eingetragen haben."""
+    out = [[m["id"] for m in json.loads(x.members)] for x in db.query(models.Partnership).order_by(models.Partnership.position).all()]
+    for u in users if users is not None else db.query(models.User).all():
+        if u.partner_list:
+            out.append([u.discord_id, *u.partner_list])
+    return out
+
+
+@router.get("/people")
+def people(db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
+    """Personen zum Auswählen (z. B. Partner im Profil): Discord-Mitglieder über den Bot, sonst Website-Mitglieder."""
+    try:
+        members = _guild_members()
+        if members:
+            return sorted(({"id": m["id"], "name": m["name"]} for m in members if m["id"] != user.discord_id), key=lambda m: m["name"].lower())
+    except HTTPException:
+        pass
+    return sorted(({"id": u.discord_id, "name": u.display_name} for u in db.query(models.User).filter(models.User.rank != "guest").all()
+                   if u.discord_id != user.discord_id), key=lambda m: m["name"].lower())
+
+
+@router.get("/profile-partnerships")
+def profile_partnerships(db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    """Für das Leader-Fenster: welche Partner die Mitglieder selbst eingetragen haben."""
+    try:
+        names = {m["id"]: m["name"] for m in _guild_members()}
+    except HTTPException:
+        names = {}
+    users = db.query(models.User).all()
+    names.update({u.discord_id: u.display_name for u in users})
+    return [{"owner": names.get(u.discord_id, u.display_name), "partners": [names.get(pid, pid) for pid in u.partner_list]}
+            for u in users if u.partner_list]

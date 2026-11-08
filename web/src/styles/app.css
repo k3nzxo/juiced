@@ -540,3 +540,18 @@ main.vod-main, .vod-main { max-width: none; }
 .ro-ptoggle { gap: 6px; font-size: 13px; }
 .ro-ptoggle span { display: inline-flex; align-items: center; gap: 5px; }
 .ro-ptoggle svg { width: 13px; height: 13px; color: var(--accent); }
+/* Profil: Ingame-Partner */
+.pp-partners { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.pp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); background: var(--accent-soft); font-size: 13.5px; }
+.pp-chip > svg { width: 13px; height: 13px; color: var(--accent); }
+.pp-chip button { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.pp-chip button:hover { color: var(--danger); background: var(--surface); }
+.pp-chip button svg { width: 12px; height: 12px; }
+.pp-none { font-size: 13px; }
+.pp-search { position: relative; max-width: 360px; }
+.pp-sugg { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); display: flex; flex-direction: column; padding: 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-lg); }
+.pp-sugg[hidden] { display: none; }
+.pp-sugg button { text-align: left; padding: 8px 10px; border-radius: 7px; font-size: 14px; }
+.pp-sugg button:hover { background: var(--surface-2); }
+.pt-prof { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.pt-prof:empty { display: none; }

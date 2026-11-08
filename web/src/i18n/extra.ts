@@ -329,6 +329,11 @@ const en = {
   rh_deleted: "Event deleted",
   roster_partners: "Use partnerships",
   roster_slots: "slots",
+  prof_partners: "In-game partners",
+  prof_partners_hint: "Who do you always play with? You'll be put in the same group for raids.",
+  prof_partners_ph: "Search a name…",
+  prof_partners_none: "No partner yet",
+  pt_from_profiles: "From member profiles ({n}), used automatically",
 };
 
 export type ExtraDict = typeof en;
@@ -654,6 +659,11 @@ const de: Partial<ExtraDict> = {
   rh_deleted: "Event gelöscht",
   roster_partners: "Partnerschaften beachten",
   roster_slots: "Plätze",
+  prof_partners: "Ingame-Partner",
+  prof_partners_hint: "Mit wem spielst du immer zusammen? Bei Raids kommt ihr in dieselbe Gruppe.",
+  prof_partners_ph: "Name suchen…",
+  prof_partners_none: "Noch kein Partner",
+  pt_from_profiles: "Aus den Profilen der Mitglieder ({n}), wird automatisch beachtet",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -970,6 +980,11 @@ const fr: Partial<ExtraDict> = {
   rh_deleted: "Événement supprimé",
   roster_partners: "Respecter les partenariats",
   roster_slots: "places",
+  prof_partners: "Partenaires en jeu",
+  prof_partners_hint: "Avec qui joues-tu toujours ? Vous serez dans le même groupe en raid.",
+  prof_partners_ph: "Chercher un nom…",
+  prof_partners_none: "Pas encore de partenaire",
+  pt_from_profiles: "Depuis les profils ({n}), pris en compte automatiquement",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1286,6 +1301,11 @@ const es: Partial<ExtraDict> = {
   rh_deleted: "Evento eliminado",
   roster_partners: "Respetar parejas",
   roster_slots: "plazas",
+  prof_partners: "Compañeros en el juego",
+  prof_partners_hint: "¿Con quién juegas siempre? En las raids iréis al mismo grupo.",
+  prof_partners_ph: "Buscar nombre…",
+  prof_partners_none: "Aún sin compañero",
+  pt_from_profiles: "De los perfiles ({n}), se usa automáticamente",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1602,6 +1622,11 @@ const pt: Partial<ExtraDict> = {
   rh_deleted: "Evento excluído",
   roster_partners: "Respeitar parcerias",
   roster_slots: "vagas",
+  prof_partners: "Parceiros no jogo",
+  prof_partners_hint: "Com quem você sempre joga? Nas raids vocês ficam no mesmo grupo.",
+  prof_partners_ph: "Buscar nome…",
+  prof_partners_none: "Nenhum parceiro ainda",
+  pt_from_profiles: "Dos perfis ({n}), usado automaticamente",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1918,6 +1943,11 @@ const ru: Partial<ExtraDict> = {
   rh_deleted: "Событие удалено",
   roster_partners: "Учитывать связки",
   roster_slots: "мест",
+  prof_partners: "Напарники в игре",
+  prof_partners_hint: "С кем ты всегда играешь? В рейдах вы будете в одной группе.",
+  prof_partners_ph: "Найти имя…",
+  prof_partners_none: "Пока нет напарника",
+  pt_from_profiles: "Из профилей ({n}), учитывается автоматически",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2234,6 +2264,11 @@ const tr: Partial<ExtraDict> = {
   rh_deleted: "Etkinlik silindi",
   roster_partners: "Ortaklıkları dikkate al",
   roster_slots: "yer",
+  prof_partners: "Oyun içi partnerler",
+  prof_partners_hint: "Hep kiminle oynuyorsun? Raidlerde aynı gruba konursunuz.",
+  prof_partners_ph: "İsim ara…",
+  prof_partners_none: "Henüz partner yok",
+  pt_from_profiles: "Profillerden ({n}), otomatik kullanılır",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2550,6 +2585,11 @@ const pl: Partial<ExtraDict> = {
   rh_deleted: "Wydarzenie usunięte",
   roster_partners: "Uwzględnij partnerstwa",
   roster_slots: "miejsc",
+  prof_partners: "Partnerzy w grze",
+  prof_partners_hint: "Z kim zawsze grasz? W rajdach traficie do tej samej grupy.",
+  prof_partners_ph: "Szukaj imienia…",
+  prof_partners_none: "Brak partnera",
+  pt_from_profiles: "Z profili ({n}), uwzględniane automatycznie",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

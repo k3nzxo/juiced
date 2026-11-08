@@ -1,4 +1,5 @@
 import json
+import re
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -137,6 +138,7 @@ class ProfileIn(BaseModel):
     main_path: Optional[str] = None
     alt_paths: Optional[list[str]] = None
     inner_ways: Optional[list[str]] = None
+    partners: Optional[list[str]] = None
     country: Optional[str] = None
     show_on_team: Optional[bool] = None
     lang: Optional[str] = None
@@ -162,6 +164,9 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.alt_paths = ",".join(alt[:10]) or None
     elif user.main_path and user.main_path in user.alt_path_list:
         user.alt_paths = ",".join(p for p in user.alt_path_list if p != user.main_path) or None
+    if "partners" in data:
+        ids = [p for p in dict.fromkeys(data["partners"] or []) if re.fullmatch(r"\d{1,25}|dev-[a-z0-9]+", str(p)) and p != user.discord_id]
+        user.partners = ",".join(ids[:8]) or None
     if "inner_ways" in data:
         ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
         user.inner_ways = ",".join(ways[:24]) or None

@@ -43,6 +43,7 @@ class User(Base):
     main_path = Column(String(32), nullable=True)      # Haupt-Pfad (Waffenpaar), siehe wwm.py
     alt_paths = Column(String(240), nullable=True)     # weitere spielbare Pfade, kommagetrennt
     inner_ways = Column(String(900), nullable=True)    # gewählte Inner Ways, kommagetrennt
+    partners = Column(String(400), nullable=True)      # Ingame-Partner (Discord-IDs), kommagetrennt
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
     lang = Column(String(5), nullable=True)
@@ -56,6 +57,10 @@ class User(Base):
     @property
     def alt_path_list(self) -> list[str]:
         return [p for p in (self.alt_paths or "").split(",") if p]
+
+    @property
+    def partner_list(self) -> list[str]:
+        return [p for p in (self.partners or "").split(",") if p]
 
     @property
     def inner_way_list(self) -> list[str]:

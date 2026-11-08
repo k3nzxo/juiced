@@ -20,7 +20,7 @@ def _add_missing_columns():
                          "build": "TEXT", "build_link": "VARCHAR(300)", "inner_ways": "TEXT", "build_images": "TEXT",
                          "region": "VARCHAR(8)", "gear_score": "INTEGER", "arena_rank": "VARCHAR(40)"},
         "users": {"weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)", "main_path": "VARCHAR(32)", "alt_paths": "VARCHAR(240)",
-                  "inner_ways": "VARCHAR(900)"},
+                  "inner_ways": "VARCHAR(900)", "partners": "VARCHAR(400)"},
         "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false", "repeat_days": "VARCHAR(7)"},
         "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
     }

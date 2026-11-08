@@ -9,7 +9,7 @@ import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText } 
 type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
-  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[];
+  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[];
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; rank_manual: boolean;
 };
 
@@ -386,8 +386,14 @@ async function editPartners(done: () => void) {
   const m = modal(T("pt_title"), `
     <p class="hint">${esc(T("pt_hint"))}</p>
     <textarea class="textarea pt-text" id="pt-text" rows="8" placeholder="${esc(T("pt_ph"))}">${esc(current.map((c) => c.members.map((x: any) => x.name).join(", ")).join("\n"))}</textarea>
-    <div class="pt-check" id="pt-check"></div>`,
+    <div class="pt-check" id="pt-check"></div>
+    <div class="pt-prof" id="pt-prof"></div>`,
     `<button class="btn btn-primary" data-save>${esc(T("save"))}</button>`);
+  api<any[]>("/raidhelper/profile-partnerships").then((l) => {
+    if (!l.length) return;
+    m.el.querySelector<HTMLElement>("#pt-prof")!.innerHTML = `<span class="label">${esc(T("pt_from_profiles", { n: l.length }))}</span>
+      ${l.map((x) => `<div class="pt-line"><span class="pt-n is-ok">${esc(x.owner)}</span>${x.partners.map((n: string) => `<span class="pt-n is-ok">${esc(n)}</span>`).join("")}</div>`).join("")}`;
+  }).catch(() => {});
   const ta = m.el.querySelector<HTMLTextAreaElement>("#pt-text")!;
   const out = m.el.querySelector<HTMLElement>("#pt-check")!;
   const render = (rep: any[][]) => {
@@ -974,6 +980,8 @@ function viewProfile(view: HTMLElement) {
   const alt = new Set<string>(me!.alt_paths || []);
   const ways = new Set<string>(me!.inner_ways || []);
   let showAll = false;
+  const partners: string[] = [...(me!.partners || [])];
+  let people: { id: string; name: string }[] = [];
   // erst die Rolle wählen, dann nur deren Pfade zeigen (Tank, Heiler, DPS)
   const PATH_ROLES = ["tank", "healer", "dps"] as const;
   const byRole = [...PATHS].sort((a, b) => PATH_ROLES.indexOf(a.role) - PATH_ROLES.indexOf(b.role));
@@ -993,6 +1001,9 @@ function viewProfile(view: HTMLElement) {
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
       <p class="hint">${esc(T("prof_iw_hint"))}</p><div data-iw></div></div>
+    <div class="field"><span class="label">${esc(T("prof_partners"))}</span><p class="hint">${esc(T("prof_partners_hint"))}</p>
+      <div class="pp-partners" data-partners></div>
+      <div class="pp-search"><input class="input" id="p-psearch" autocomplete="off" placeholder="${esc(T("prof_partners_ph"))}"><div class="pp-sugg" data-sugg hidden></div></div></div>
     <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>
     <button class="btn btn-primary" type="submit">${esc(T("save"))}</button>
   </form>`;
@@ -1018,6 +1029,32 @@ function viewProfile(view: HTMLElement) {
     b.setAttribute("aria-pressed", String(ways.has(id)));
     view.querySelector("[data-iw-count]")!.textContent = ways.size ? `(${ways.size})` : "";
   });
+  // Ingame-Partner: Suche über die Discord-Mitglieder, Auswahl als Chips
+  const nameOf = (id: string) => people.find((x) => x.id === id)?.name || "…";
+  const drawPartners = () => {
+    view.querySelector("[data-partners]")!.innerHTML = partners.map((id) => `<span class="pp-chip">${icon.link}<b>${esc(nameOf(id))}</b><button type="button" data-unp="${esc(id)}" aria-label="×">${icon.x}</button></span>`).join("")
+      || `<span class="muted pp-none">${esc(T("prof_partners_none"))}</span>`;
+  };
+  const search = view.querySelector<HTMLInputElement>("#p-psearch")!;
+  const sugg = view.querySelector<HTMLElement>("[data-sugg]")!;
+  const showSugg = () => {
+    const q = search.value.trim().toLowerCase();
+    const list = q ? people.filter((x) => !partners.includes(x.id) && x.name.toLowerCase().includes(q)).slice(0, 8) : [];
+    sugg.innerHTML = list.map((x) => `<button type="button" data-addp="${esc(x.id)}">${esc(x.name)}</button>`).join("");
+    sugg.hidden = !list.length;
+  };
+  api<{ id: string; name: string }[]>("/raidhelper/people").then((l) => { people = l; drawPartners(); }).catch(() => drawPartners());
+  drawPartners();
+  search.addEventListener("input", showSugg);
+  search.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); sugg.querySelector<HTMLElement>("[data-addp]")?.click(); } });
+  view.addEventListener("click", (ev) => {
+    const t = ev.target as HTMLElement;
+    const add = t.closest<HTMLElement>("[data-addp]");
+    if (add) { if (partners.length < 8) partners.push(add.dataset.addp!); search.value = ""; sugg.hidden = true; drawPartners(); search.focus(); return; }
+    const un = t.closest<HTMLElement>("[data-unp]");
+    if (un) { partners.splice(partners.indexOf(un.dataset.unp!), 1); drawPartners(); return; }
+    if (!t.closest(".pp-search")) sugg.hidden = true;
+  });
   view.querySelector<HTMLInputElement>("[data-iw-all]")!.addEventListener("change", (e) => { showAll = (e.target as HTMLInputElement).checked; drawWays(); });
   view.querySelectorAll<HTMLElement>("[data-prole]").forEach((b) => b.addEventListener("click", () => {
     pickRole = b.dataset.prole!;
@@ -1042,7 +1079,7 @@ function viewProfile(view: HTMLElement) {
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
-        main_path: mainPath, alt_paths: [...alt], inner_ways: [...ways],
+        main_path: mainPath, alt_paths: [...alt], inner_ways: [...ways], partners,
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });
