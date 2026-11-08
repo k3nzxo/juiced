@@ -57,6 +57,21 @@ def _signup(s: dict) -> dict:
     }
 
 
+CANCEL_PREFIX = "❌ CANCELLED – "
+
+
+_CANCEL_RX = re.compile(r"^\s*(❌\s*((CANCELLED|ABGESAGT)\s*[–:-]?\s*)?|(CANCELLED|ABGESAGT)\s*[–:-]\s*)", re.I)
+
+
+def _is_cancelled(title: str) -> bool:
+    return bool(_CANCEL_RX.match(title or ""))
+
+
+def _plain_title(title: str) -> str:
+    """Titel ohne Absage-Markierung."""
+    return _CANCEL_RX.sub("", title or "", count=1).strip() or (title or "")
+
+
 def _event(e: dict) -> dict:
     signups = [_signup(s) for s in (e.get("signUps") or []) if isinstance(s, dict)]
     signups.sort(key=lambda x: (x["position"] if isinstance(x["position"], (int, float)) else 0))
@@ -65,6 +80,7 @@ def _event(e: dict) -> dict:
     return {
         "id": eid,
         "title": str(e.get("title") or e.get("displayTitle") or "Event")[:120],
+        "cancelled": _is_cancelled(str(e.get("title") or "")),
         "description": str(e.get("description") or "")[:500],
         "start": _ts(e.get("startTime")),
         "end": _ts(e.get("endTime")),
@@ -564,3 +580,57 @@ def save_partnerships(payload: PartnersIn, db: DbSession = Depends(get_db), user
             pos += 1
     db.commit()
     return {"saved": pos, "report": report}
+
+
+
+# ------------------------------------------------------------------ Absagen / wieder aktivieren / löschen
+
+class CancelIn(BaseModel):
+    reason: str = ""
+    ping: bool = False
+
+
+@router.post("/events/{event_id}/cancel")
+def cancel_event(event_id: str, payload: CancelIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    """Event bleibt stehen, Titel bekommt "❌ CANCELLED"; optional werden alle Angemeldeten im Kanal gepingt."""
+    ev = _find_event(event_id)
+    reason = " ".join((payload.reason or "").split())[:300]
+    _rh("PATCH", f"/events/{event_id}", {"title": (CANCEL_PREFIX + _plain_title(ev["title"]))[:100]})
+    _drop_cache()
+    pinged = 0
+    if payload.ping and DISCORD_BOT_TOKEN and ev.get("channel_id"):
+        ids = list(dict.fromkeys(s["user_id"] for s in ev["signups"] if s["user_id"] and s["status"] == "primary" and s["class"].lower() not in ("absence", "absent")))
+        head = f"❌ **{_plain_title(ev['title'])}** – cancelled" + (f": {reason}" if reason else "") + (f"\n{ev['url']}" if ev.get("url") else "")
+        chunks, cur = [], head + "\n"
+        for uid in ids:
+            tag = f"<@{uid}> "
+            if len(cur) + len(tag) > 1900:
+                chunks.append(cur)
+                cur = ""
+            cur += tag
+        chunks.append(cur)
+        for c in chunks:
+            _discord("POST", f"/channels/{ev['channel_id']}/messages", json={
+                "content": c, "allowed_mentions": {"parse": [], "users": [u for u in ids if u in c][:100]}})
+        pinged = len(ids)
+    return {"ok": True, "pinged": pinged}
+
+
+@router.post("/events/{event_id}/restore")
+def restore_event(event_id: str, user: models.User = Depends(require_management)):
+    ev = _find_event(event_id)
+    _rh("PATCH", f"/events/{event_id}", {"title": _plain_title(ev["title"])[:100]})
+    _drop_cache()
+    return {"ok": True}
+
+
+@router.delete("/events/{event_id}")
+def delete_event(event_id: str, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    _find_event(event_id)
+    _rh("DELETE", f"/events/{event_id}")
+    r = db.get(models.Roster, event_id)
+    if r:
+        db.delete(r)
+        db.commit()
+    _drop_cache()
+    return {"ok": True}

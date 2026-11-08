@@ -513,3 +513,8 @@ main.vod-main, .vod-main { max-width: none; }
 .pt-n.is-ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
 .pt-n.is-unsure { color: #b7791f; background: color-mix(in srgb, #ca8a04 14%, transparent); }
 .pt-n.is-missing, .pt-n.is-ambiguous { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+/* abgesagte Events */
+.rh-ev.is-cancelled { opacity: .72; }
+.rh-ev.is-cancelled h3 { color: var(--muted); }
+.rh-cancel-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; vertical-align: 2px; color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, transparent); }
+.rh-cancel-btn:hover { color: var(--danger); }

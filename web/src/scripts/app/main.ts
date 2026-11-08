@@ -325,12 +325,16 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
   const gName = (g: any, i: number) => g.name || T("roster_group", { n: i + 1 });
   card.innerHTML = `
     <header class="rh-head">
-      <div><h3>${esc(e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
+      <div><h3>${e.cancelled ? `<span class="rh-cancel-badge">${esc(T("rh_cancelled"))}</span> ` : ""}${esc(e.cancelled ? plainTitle(e.title) : e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
       <div class="rh-side">
         <span class="rh-count"><b>${e.count}</b> ${esc(T("rh_signed"))}</span>
         ${e.me ? `<span class="rh-me ok">${icon.check} ${esc(T("rh_you", { cls: rhLabel(e.me.spec || e.me.class || "") }))}</span>` : `<span class="rh-me">${esc(T("rh_not_you"))}</span>`}
-        ${data.can_remind ? `<button class="btn btn-ghost btn-sm" data-remind>${icon.bell} ${esc(T("rh_remind"))}</button>` : ""}
-        ${data.can_edit ? `<button class="btn btn-primary btn-sm" data-plan>${icon.users} ${esc(T(roster ? "roster_edit" : "roster_plan"))}</button>` : ""}
+        ${data.can_remind && !e.cancelled ? `<button class="btn btn-ghost btn-sm" data-remind>${icon.bell} ${esc(T("rh_remind"))}</button>` : ""}
+        ${data.can_edit ? (e.cancelled
+          ? `<button class="btn btn-outline btn-sm" data-restore>${icon.refresh} ${esc(T("rh_restore"))}</button>`
+          : `<button class="btn btn-ghost btn-sm rh-cancel-btn" data-cancel-ev>${icon.x} ${esc(T("rh_cancel"))}</button>`) : ""}
+        ${data.can_edit ? `<button class="btn btn-ghost btn-sm" data-del-ev title="${esc(T("rh_delete"))}">${icon.trash}</button>` : ""}
+        ${data.can_edit && !e.cancelled ? `<button class="btn btn-primary btn-sm" data-plan>${icon.users} ${esc(T(roster ? "roster_edit" : "roster_plan"))}</button>` : ""}
         ${e.url ? `<a class="btn btn-ghost btn-sm" href="${esc(e.url)}" target="_blank" rel="noopener">${icon.external} ${esc(T("rh_open"))}</a>` : ""}
       </div>
     </header>
@@ -357,7 +361,18 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
         </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
       ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p"><b>${esc(s.name)}</b><small>${esc(s.status !== "primary" ? s.status : rhLabel(s.class))}</small></span>`).join("")}</div>` : ""}
     </details>`;
+  card.classList.toggle("is-cancelled", !!e.cancelled);
   card.querySelector("[data-plan]")?.addEventListener("click", () => editRoster(card, e, data, players));
+  card.querySelector("[data-cancel-ev]")?.addEventListener("click", () => cancelRhEvent(e, data));
+  card.querySelector("[data-restore]")?.addEventListener("click", async () => {
+    try { await api(`/raidhelper/events/${encodeURIComponent(e.id)}/restore`, { method: "POST" }); toast(T("rh_restored")); refreshSignups(); }
+    catch (x) { toast((x as Error).message); }
+  });
+  card.querySelector("[data-del-ev]")?.addEventListener("click", async () => {
+    if (!confirm(T("rh_delete_confirm", { title: plainTitle(e.title) }))) return;
+    try { await api(`/raidhelper/events/${encodeURIComponent(e.id)}`, { method: "DELETE" }); toast(T("rh_deleted")); refreshSignups(); }
+    catch (x) { toast((x as Error).message); }
+  });
   card.querySelector("[data-push]")?.addEventListener("click", () => pushRoster(e, data));
   card.querySelector("[data-img]")?.addEventListener("click", () => rosterImageAction(e, data, false));
   card.querySelector("[data-img-copy]")?.addEventListener("click", () => rosterImageAction(e, data, true));
@@ -394,6 +409,27 @@ async function editPartners(done: () => void) {
     try {
       const r = await api<any>("/raidhelper/partnerships", { method: "PUT", json: { text: ta.value } });
       m.close(); toast(T("pt_saved", { n: r.saved })); done();
+    } catch (x) { toast((x as Error).message); b.disabled = false; }
+  });
+}
+
+// Absagen: Event bleibt stehen (Titel "❌ CANCELLED – …"), optional alle Angemeldeten pingen
+const plainTitle = (t: string) => String(t || "").replace(/^\s*(❌\s*((CANCELLED|ABGESAGT)\s*[–:-]?\s*)?|(CANCELLED|ABGESAGT)\s*[–:-]\s*)/i, "").trim() || t;
+const refreshSignups = () => { const v = document.getElementById("view"); if (v && location.hash.startsWith("#/signups")) viewSignups(v); };
+function cancelRhEvent(e: any, data: any) {
+  const signed = e.signups.filter((x: any) => x.status === "primary" && !["absence", "absent"].includes(String(x.class).toLowerCase())).length;
+  const m = modal(T("rh_cancel_t", { title: e.title }), `
+    <p class="hint">${esc(T("rh_cancel_hint"))}</p>
+    <div class="field"><label>${esc(T("rh_cancel_reason"))}</label><input class="input" id="cx-reason" maxlength="300" placeholder="${esc(T("rh_cancel_reason_ph"))}"></div>
+    ${data.can_remind ? `<label class="check"><input type="checkbox" id="cx-ping" ${signed ? "checked" : "disabled"}> <span>${esc(T("rh_cancel_ping", { n: signed }))}</span></label>` : ""}`,
+    `<button class="btn btn-danger" data-save>${icon.x} ${esc(T("rh_cancel"))}</button>`);
+  m.el.querySelector<HTMLElement>("[data-save]")!.addEventListener("click", async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement;
+    b.disabled = true;
+    try {
+      await api(`/raidhelper/events/${encodeURIComponent(e.id)}/cancel`, { method: "POST", json: {
+        reason: m.el.querySelector<HTMLInputElement>("#cx-reason")!.value, ping: !!m.el.querySelector<HTMLInputElement>("#cx-ping")?.checked } });
+      m.close(); toast(T("rh_cancelled_done")); refreshSignups();
     } catch (x) { toast((x as Error).message); b.disabled = false; }
   });
 }

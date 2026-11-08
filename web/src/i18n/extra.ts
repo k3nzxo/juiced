@@ -314,6 +314,19 @@ const en = {
   roster_warn_cluster: "Partnership too big for one group: {names}",
   roster_warn_tank: "{g} has no tank",
   roster_warn_heal: "{g} has no healer",
+  rh_cancel: "Cancel event",
+  rh_cancelled: "Cancelled",
+  rh_cancel_t: "Cancel: {title}",
+  rh_cancel_hint: "The event stays in Discord and gets “❌ CANCELLED” in its title, so everyone sees it. You can bring it back any time.",
+  rh_cancel_reason: "Reason (optional)",
+  rh_cancel_reason_ph: "e.g. not enough players",
+  rh_cancel_ping: "Ping everyone who signed up ({n}) in the channel",
+  rh_cancelled_done: "Event cancelled",
+  rh_restore: "Reactivate",
+  rh_restored: "Event is on again",
+  rh_delete: "Delete event",
+  rh_delete_confirm: "Delete “{title}” for good? The post in Discord and all sign-ups are removed. This can't be undone.",
+  rh_deleted: "Event deleted",
 };
 
 export type ExtraDict = typeof en;
@@ -624,6 +637,19 @@ const de: Partial<ExtraDict> = {
   roster_warn_cluster: "Partnerschaft zu groß für eine Gruppe: {names}",
   roster_warn_tank: "{g} hat keinen Tank",
   roster_warn_heal: "{g} hat keinen Heiler",
+  rh_cancel: "Absagen",
+  rh_cancelled: "Abgesagt",
+  rh_cancel_t: "Absagen: {title}",
+  rh_cancel_hint: "Das Event bleibt in Discord stehen und bekommt „❌ CANCELLED“ in den Titel, damit es jeder sieht. Du kannst es jederzeit wieder aktivieren.",
+  rh_cancel_reason: "Grund (optional)",
+  rh_cancel_reason_ph: "z. B. zu wenige Spieler",
+  rh_cancel_ping: "Alle Angemeldeten ({n}) im Kanal pingen",
+  rh_cancelled_done: "Event abgesagt",
+  rh_restore: "Wieder aktivieren",
+  rh_restored: "Event findet wieder statt",
+  rh_delete: "Event löschen",
+  rh_delete_confirm: "„{title}“ endgültig löschen? Der Post in Discord und alle Anmeldungen verschwinden. Das lässt sich nicht rückgängig machen.",
+  rh_deleted: "Event gelöscht",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -925,6 +951,19 @@ const fr: Partial<ExtraDict> = {
   roster_warn_cluster: "Partenariat trop grand pour un groupe : {names}",
   roster_warn_tank: "{g} n'a pas de tank",
   roster_warn_heal: "{g} n'a pas de soigneur",
+  rh_cancel: "Annuler",
+  rh_cancelled: "Annulé",
+  rh_cancel_t: "Annuler : {title}",
+  rh_cancel_hint: "L'événement reste sur Discord avec « ❌ CANCELLED » dans le titre. Tu peux le réactiver à tout moment.",
+  rh_cancel_reason: "Raison (facultatif)",
+  rh_cancel_reason_ph: "p. ex. pas assez de joueurs",
+  rh_cancel_ping: "Mentionner les inscrits ({n}) dans le salon",
+  rh_cancelled_done: "Événement annulé",
+  rh_restore: "Réactiver",
+  rh_restored: "L'événement est maintenu",
+  rh_delete: "Supprimer l'événement",
+  rh_delete_confirm: "Supprimer « {title} » définitivement ? Le post Discord et les inscriptions disparaissent. Irréversible.",
+  rh_deleted: "Événement supprimé",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1226,6 +1265,19 @@ const es: Partial<ExtraDict> = {
   roster_warn_cluster: "Pareja demasiado grande para un grupo: {names}",
   roster_warn_tank: "{g} no tiene tanque",
   roster_warn_heal: "{g} no tiene sanador",
+  rh_cancel: "Cancelar",
+  rh_cancelled: "Cancelado",
+  rh_cancel_t: "Cancelar: {title}",
+  rh_cancel_hint: "El evento se queda en Discord con «❌ CANCELLED» en el título. Puedes reactivarlo cuando quieras.",
+  rh_cancel_reason: "Motivo (opcional)",
+  rh_cancel_reason_ph: "p. ej. pocos jugadores",
+  rh_cancel_ping: "Mencionar a los apuntados ({n}) en el canal",
+  rh_cancelled_done: "Evento cancelado",
+  rh_restore: "Reactivar",
+  rh_restored: "El evento vuelve a estar activo",
+  rh_delete: "Eliminar evento",
+  rh_delete_confirm: "¿Eliminar «{title}» para siempre? Se borran el post de Discord y las inscripciones. No se puede deshacer.",
+  rh_deleted: "Evento eliminado",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1527,6 +1579,19 @@ const pt: Partial<ExtraDict> = {
   roster_warn_cluster: "Parceria grande demais para um grupo: {names}",
   roster_warn_tank: "{g} não tem tanque",
   roster_warn_heal: "{g} não tem curandeiro",
+  rh_cancel: "Cancelar",
+  rh_cancelled: "Cancelado",
+  rh_cancel_t: "Cancelar: {title}",
+  rh_cancel_hint: "O evento fica no Discord com “❌ CANCELLED” no título. Você pode reativá-lo quando quiser.",
+  rh_cancel_reason: "Motivo (opcional)",
+  rh_cancel_reason_ph: "ex.: poucos jogadores",
+  rh_cancel_ping: "Marcar os inscritos ({n}) no canal",
+  rh_cancelled_done: "Evento cancelado",
+  rh_restore: "Reativar",
+  rh_restored: "O evento voltou",
+  rh_delete: "Excluir evento",
+  rh_delete_confirm: "Excluir “{title}” de vez? O post no Discord e as inscrições somem. Não dá para desfazer.",
+  rh_deleted: "Evento excluído",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1828,6 +1893,19 @@ const ru: Partial<ExtraDict> = {
   roster_warn_cluster: "Связка слишком большая для группы: {names}",
   roster_warn_tank: "В {g} нет танка",
   roster_warn_heal: "В {g} нет хила",
+  rh_cancel: "Отменить",
+  rh_cancelled: "Отменено",
+  rh_cancel_t: "Отменить: {title}",
+  rh_cancel_hint: "Событие останется в Discord с пометкой «❌ CANCELLED» в названии. Его можно вернуть в любой момент.",
+  rh_cancel_reason: "Причина (необязательно)",
+  rh_cancel_reason_ph: "напр. мало игроков",
+  rh_cancel_ping: "Упомянуть записавшихся ({n}) в канале",
+  rh_cancelled_done: "Событие отменено",
+  rh_restore: "Вернуть",
+  rh_restored: "Событие снова в силе",
+  rh_delete: "Удалить событие",
+  rh_delete_confirm: "Удалить «{title}» навсегда? Пост в Discord и все записи исчезнут. Это нельзя отменить.",
+  rh_deleted: "Событие удалено",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2129,6 +2207,19 @@ const tr: Partial<ExtraDict> = {
   roster_warn_cluster: "Ortaklık bir grup için çok büyük: {names}",
   roster_warn_tank: "{g} grubunda tank yok",
   roster_warn_heal: "{g} grubunda şifacı yok",
+  rh_cancel: "İptal et",
+  rh_cancelled: "İptal",
+  rh_cancel_t: "İptal: {title}",
+  rh_cancel_hint: "Etkinlik Discord'da kalır ve başlığına “❌ CANCELLED” eklenir. İstediğin zaman geri alabilirsin.",
+  rh_cancel_reason: "Sebep (isteğe bağlı)",
+  rh_cancel_reason_ph: "ör. yeterli oyuncu yok",
+  rh_cancel_ping: "Kayıtlı herkesi ({n}) kanalda etiketle",
+  rh_cancelled_done: "Etkinlik iptal edildi",
+  rh_restore: "Yeniden etkinleştir",
+  rh_restored: "Etkinlik yeniden aktif",
+  rh_delete: "Etkinliği sil",
+  rh_delete_confirm: "“{title}” kalıcı olarak silinsin mi? Discord gönderisi ve kayıtlar silinir. Geri alınamaz.",
+  rh_deleted: "Etkinlik silindi",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2430,6 +2521,19 @@ const pl: Partial<ExtraDict> = {
   roster_warn_cluster: "Partnerstwo za duże na jedną grupę: {names}",
   roster_warn_tank: "{g} nie ma tanka",
   roster_warn_heal: "{g} nie ma healera",
+  rh_cancel: "Odwołaj",
+  rh_cancelled: "Odwołane",
+  rh_cancel_t: "Odwołaj: {title}",
+  rh_cancel_hint: "Wydarzenie zostaje na Discordzie z „❌ CANCELLED” w tytule. Możesz je w każdej chwili przywrócić.",
+  rh_cancel_reason: "Powód (opcjonalnie)",
+  rh_cancel_reason_ph: "np. za mało graczy",
+  rh_cancel_ping: "Oznacz zapisanych ({n}) na kanale",
+  rh_cancelled_done: "Wydarzenie odwołane",
+  rh_restore: "Przywróć",
+  rh_restored: "Wydarzenie znów aktualne",
+  rh_delete: "Usuń wydarzenie",
+  rh_delete_confirm: "Usunąć „{title}” na zawsze? Post na Discordzie i zapisy znikną. Nie da się tego cofnąć.",
+  rh_deleted: "Wydarzenie usunięte",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
