@@ -652,11 +652,11 @@ def people(db: DbSession = Depends(get_db), user: models.User = Depends(require_
     try:
         members = _guild_members()
         if members:
-            return sorted(({"id": m["id"], "name": m["name"]} for m in members if m["id"] != user.discord_id), key=lambda m: m["name"].lower())
+            return sorted(({"id": m["id"], "name": m["name"]} for m in members), key=lambda m: m["name"].lower())
     except HTTPException:
         pass
-    return sorted(({"id": u.discord_id, "name": u.display_name} for u in db.query(models.User).filter(models.User.rank != "guest").all()
-                   if u.discord_id != user.discord_id), key=lambda m: m["name"].lower())
+    return sorted(({"id": u.discord_id, "name": u.display_name} for u in db.query(models.User).filter(models.User.rank != "guest").all()),
+                  key=lambda m: m["name"].lower())
 
 
 @router.get("/profile-partnerships")

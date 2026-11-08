@@ -165,8 +165,7 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
     elif user.main_path and user.main_path in user.alt_path_list:
         user.alt_paths = ",".join(p for p in user.alt_path_list if p != user.main_path) or None
     if "partners" in data:
-        ids = [p for p in dict.fromkeys(data["partners"] or []) if re.fullmatch(r"\d{1,25}|dev-[a-z0-9]+", str(p)) and p != user.discord_id]
-        user.partners = ",".join(ids[:8]) or None
+        user.partners = _clean_partner_ids(data["partners"], user.discord_id)
     if "inner_ways" in data:
         ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
         user.inner_ways = ",".join(ways[:24]) or None
@@ -199,12 +198,55 @@ def member_out(u: models.User) -> dict:
             "country": u.country, "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
 
 
+def _clean_partner_ids(ids, own_id: str) -> Optional[str]:
+    out = [p for p in dict.fromkeys(ids or []) if re.fullmatch(r"\d{1,25}|dev-[a-z0-9]+", str(p)) and p != own_id]
+    return ",".join(out[:8]) or None
+
+
+def _partner_info(db: DbSession, u: models.User) -> dict:
+    """Eingetragene Partner + wer diese Person selbst als Partner eingetragen hat (Namen auch ohne Website-Konto)."""
+    users = db.query(models.User).all()
+    by_did = {x.discord_id: x for x in users}
+    names = {}
+    try:
+        from .raidhelper import _guild_members
+        names = {m["id"]: m["name"] for m in _guild_members()}
+    except Exception:  # ohne Bot: nur Website-Namen
+        pass
+
+    def one(did: str) -> dict:
+        x = by_did.get(did)
+        return {"id": did, "name": names.get(did) or (x.display_name if x else did),
+                "uid": x.id if x and x.rank != "guest" else None}
+
+    return {"partners": [one(d) for d in u.partner_list],
+            "partner_of": [one(x.discord_id) for x in users if u.discord_id in x.partner_list and x.discord_id not in u.partner_list]}
+
+
 @router.get("/members/{uid}")
 def member(uid: int, db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
     u = db.get(models.User, uid)
     if not u or u.rank == "guest":
         raise HTTPException(status_code=404, detail="Not found")
-    return member_out(u)
+    return {**member_out(u), **_partner_info(db, u),
+            "can_edit_partners": user.id == u.id or user.level >= models.RANK_LEVEL["vice"]}
+
+
+class PartnersSet(BaseModel):
+    partners: list[str] = []
+
+
+@router.put("/members/{uid}/partners")
+def set_member_partners(uid: int, payload: PartnersSet, db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
+    """Partner einer Person setzen: man selbst oder Leader/Vice für alle."""
+    u = db.get(models.User, uid)
+    if not u or u.rank == "guest":
+        raise HTTPException(status_code=404, detail="Not found")
+    if user.id != u.id and user.level < models.RANK_LEVEL["vice"]:
+        raise HTTPException(status_code=403, detail="Not allowed")
+    u.partners = _clean_partner_ids(payload.partners, u.discord_id)
+    db.commit()
+    return _partner_info(db, u)
 
 
 # ------------------------------------------------------------------ Ankündigungen

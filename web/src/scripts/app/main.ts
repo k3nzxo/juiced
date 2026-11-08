@@ -889,6 +889,55 @@ function buildBlock(u: any, compact = false) {
     ${ways.length ? `<div class="build-row"><span class="label">${esc(T("prof_inner_ways"))}</span><div class="iw-grid ${compact ? "small" : ""}">${ways.map((w: string) => iwTile(w, compact)).join("")}</div></div>` : ""}`;
 }
 
+// Ingame-Partner auf der Profilseite: eingetragene Partner + wer diese Person als Partner hat
+function partnerBox(u: any) {
+  const chip = (p: any) => p.uid ? `<a class="pp-chip" href="#/roster/${p.uid}">${icon.link}<b>${esc(p.name)}</b></a>` : `<span class="pp-chip">${icon.link}<b>${esc(p.name)}</b></span>`;
+  return `${u.partners.length ? `<div class="pp-partners">${u.partners.map(chip).join("")}</div>` : `<p class="muted pp-none">${esc(T("prof_partners_none"))}</p>`}
+    ${u.partner_of.length ? `<p class="muted pp-of">${esc(T("prof_partner_of"))} ${u.partner_of.map((p: any) => p.uid ? `<a href="#/roster/${p.uid}">${esc(p.name)}</a>` : esc(p.name)).join(", ")}</p>` : ""}`;
+}
+
+// Partner einer Person bearbeiten (eigene oder als Leader/Vice von allen)
+async function editPartnersFor(u: any, done: (info: any) => void) {
+  let people: { id: string; name: string }[] = [];
+  const sel: { id: string; name: string }[] = u.partners.map((p: any) => ({ id: p.id, name: p.name }));
+  const m = modal(`${T("prof_partners")}: ${u.display_name}`, `
+    <p class="hint">${esc(T("prof_partners_hint"))}</p>
+    <div class="pp-partners" data-sel></div>
+    <div class="pp-search"><input class="input" id="pe-search" autocomplete="off" placeholder="${esc(T("prof_partners_ph"))}"><div class="pp-sugg" data-sugg hidden></div></div>`,
+    `<button class="btn btn-primary" data-save>${esc(T("save"))}</button>`);
+  const q = <X extends HTMLElement>(s: string) => m.el.querySelector(s) as X;
+  const draw = () => {
+    q<HTMLElement>("[data-sel]").innerHTML = sel.map((p) => `<span class="pp-chip">${icon.link}<b>${esc(p.name)}</b><button type="button" data-unp="${esc(p.id)}" aria-label="×">${icon.x}</button></span>`).join("")
+      || `<span class="muted pp-none">${esc(T("prof_partners_none"))}</span>`;
+  };
+  const input = q<HTMLInputElement>("#pe-search"), sugg = q<HTMLElement>("[data-sugg]");
+  const show = () => {
+    const t = input.value.trim().toLowerCase();
+    const list = t ? people.filter((x) => x.id !== u.discord_id && !sel.some((s) => s.id === x.id) && x.name.toLowerCase().includes(t)).slice(0, 8) : [];
+    sugg.innerHTML = list.map((x) => `<button type="button" data-addp="${esc(x.id)}">${esc(x.name)}</button>`).join("");
+    sugg.hidden = !list.length;
+  };
+  draw();
+  api<any[]>("/raidhelper/people").then((l) => { people = l; }).catch(() => {});
+  input.addEventListener("input", show);
+  input.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); sugg.querySelector<HTMLElement>("[data-addp]")?.click(); } });
+  m.el.addEventListener("click", async (ev) => {
+    const t = ev.target as HTMLElement;
+    const add = t.closest<HTMLElement>("[data-addp]");
+    if (add) { const p = people.find((x) => x.id === add.dataset.addp); if (p && sel.length < 8) sel.push(p); input.value = ""; sugg.hidden = true; draw(); input.focus(); return; }
+    const un = t.closest<HTMLElement>("[data-unp]");
+    if (un) { sel.splice(sel.findIndex((x) => x.id === un.dataset.unp), 1); draw(); return; }
+    if (t.closest("[data-save]")) {
+      try {
+        const info = await api<any>(`/members/${u.id}/partners`, { method: "PUT", json: { partners: sel.map((x) => x.id) } });
+        m.close(); toast(T("saved")); done(info);
+      } catch (x) { toast((x as Error).message); }
+      return;
+    }
+    if (!t.closest(".pp-search")) sugg.hidden = true;
+  });
+}
+
 async function viewMember(view: HTMLElement, id: number) {
   view.innerHTML = `<a class="back-link" href="#/roster">← ${esc(T("mem_back"))}</a><div id="mem">${loading}</div>`;
   const el = view.querySelector<HTMLElement>("#mem")!;
@@ -907,12 +956,19 @@ async function viewMember(view: HTMLElement, id: number) {
     </section>
     <h2 class="v-sub">Build</h2>
     <section class="card build-card">${buildBlock(u)}</section>
+    <h2 class="v-sub v-sub-link"><span>${esc(T("prof_partners"))}</span>${u.can_edit_partners ? `<button class="btn btn-ghost btn-sm" data-edit-partners>${icon.edit} ${esc(T("edit"))}</button>` : ""}</h2>
+    <section class="card build-card" data-partner-box>${partnerBox(u)}</section>
     <h2 class="v-sub">${esc(T("mem_vods"))} <span class="muted">${own.length || ""}</span></h2>
     ${own.length ? `<div class="table card">${own.map((v) => `<a class="tr mem-vod" href="#/vods/${v.id}">
         <span class="mv-ico">${icon.play}</span>
         <div class="tr-main"><strong>${esc(v.title)}</strong><span class="muted">${v.match_date ? esc(fmtDate(v.match_date)) : ""}${v.opponent ? ` · vs ${esc(v.opponent)}` : ""}${v.note_count ? ` · ${v.note_count} ✎` : ""}</span></div>
         ${v.reviewed ? `<span class="mv-ok">${icon.check}</span>` : ""}
       </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_no_vods"))}</p>`}`;
+  el.querySelector("[data-edit-partners]")?.addEventListener("click", () => editPartnersFor(u, (info) => {
+    Object.assign(u, info);
+    el.querySelector<HTMLElement>("[data-partner-box]")!.innerHTML = partnerBox(u);
+    if (u.id === me!.id) me!.partners = info.partners.map((p: any) => p.id);
+  }));
 }
 
 async function viewApplications(view: HTMLElement) {
@@ -1063,7 +1119,7 @@ function viewProfile(view: HTMLElement) {
   const sugg = view.querySelector<HTMLElement>("[data-sugg]")!;
   const showSugg = () => {
     const q = search.value.trim().toLowerCase();
-    const list = q ? people.filter((x) => !partners.includes(x.id) && x.name.toLowerCase().includes(q)).slice(0, 8) : [];
+    const list = q ? people.filter((x) => x.id !== me!.discord_id && !partners.includes(x.id) && x.name.toLowerCase().includes(q)).slice(0, 8) : [];
     sugg.innerHTML = list.map((x) => `<button type="button" data-addp="${esc(x.id)}">${esc(x.name)}</button>`).join("");
     sugg.hidden = !list.length;
   };

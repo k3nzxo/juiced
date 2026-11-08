@@ -566,3 +566,7 @@ main.vod-main, .vod-main { max-width: none; }
 .rh-bar-admin .btn { color: var(--muted); }
 .rh-bar-admin .rh-cancel-btn:hover, .rh-bar-admin .rh-del-btn:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, transparent); }
 @media (max-width: 600px) { .rh-head { flex-direction: column; align-items: flex-start; } }
+a.pp-chip { color: inherit; padding-right: 10px; }
+a.pp-chip:hover { border-color: var(--accent); }
+.pp-of { font-size: 13px; margin-top: 4px; }
+.pp-of a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
