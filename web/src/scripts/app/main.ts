@@ -1238,7 +1238,7 @@ function viewProfile(view: HTMLElement, target: any = null) {
   drawPartners();
   search.addEventListener("input", showSugg);
   search.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); sugg.querySelector<HTMLElement>("[data-addp]")?.click(); } });
-  view.addEventListener("click", (ev) => {
+  view.querySelector("form")!.addEventListener("click", (ev) => {
     const t = ev.target as HTMLElement;
     const add = t.closest<HTMLElement>("[data-addp]");
     if (add) { if (partners.length < 8) partners.push(add.dataset.addp!); search.value = ""; sugg.hidden = true; drawPartners(); search.focus(); return; }
@@ -1262,7 +1262,7 @@ function viewProfile(view: HTMLElement, target: any = null) {
     view.querySelectorAll<HTMLElement>("[data-prole]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.prole === role)));
   };
   drawMain(); drawAlts();
-  view.addEventListener("click", (ev) => {
+  view.querySelector("form")!.addEventListener("click", (ev) => {
     const t = ev.target as HTMLElement;
     const pr = t.closest<HTMLElement>("[data-prole]");
     if (pr) { setRole(role === pr.dataset.prole ? null : pr.dataset.prole!); return; }
