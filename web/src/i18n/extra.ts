@@ -44,6 +44,7 @@ const en = {
   apps_platforms: "Platform", apps_vods: "VODs",
   join_lang_note: "Our guild language is English, in voice and on Discord.",
   b_gvg_next: "Next GvG",
+  b_discord_b: "Plans, polls and voice all happen on our Discord.",
 };
 
 export type ExtraDict = typeof en;
@@ -93,6 +94,7 @@ const de: Partial<ExtraDict> = {
   kind_friday: "Event",
   join_lang_note: "Unsere Gildensprache ist Englisch, im Voice und auf Discord.",
   b_gvg_next: "Nächste GvG",
+  b_discord_b: "Absprachen, Abstimmungen und Voice laufen über unseren Discord.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -133,6 +135,7 @@ const fr: Partial<ExtraDict> = {
   kind_friday: "Événement",
   join_lang_note: "La langue de la guilde est l'anglais, en vocal et sur Discord.",
   b_gvg_next: "Prochains GvG",
+  b_discord_b: "Organisation, votes et vocal se passent sur notre Discord.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -173,6 +176,7 @@ const es: Partial<ExtraDict> = {
   kind_friday: "Evento",
   join_lang_note: "El idioma del gremio es el inglés, en voz y en Discord.",
   b_gvg_next: "Próximos GvG",
+  b_discord_b: "Planes, votaciones y voz, todo pasa en nuestro Discord.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -213,6 +217,7 @@ const pt: Partial<ExtraDict> = {
   kind_friday: "Evento",
   join_lang_note: "O idioma da guilda é o inglês, no voice e no Discord.",
   b_gvg_next: "Próximos GvG",
+  b_discord_b: "Combinados, votações e voice rolam no nosso Discord.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -253,6 +258,7 @@ const ru: Partial<ExtraDict> = {
   kind_friday: "Ивент",
   join_lang_note: "Язык гильдии: английский: в голосе и в Discord.",
   b_gvg_next: "Ближайшие GvG",
+  b_discord_b: "Планы, голосования и голосовой чат у нас в Discord.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -293,6 +299,7 @@ const tr: Partial<ExtraDict> = {
   kind_friday: "Etkinlik",
   join_lang_note: "Lonca dilimiz İngilizce, seste ve Discord'da.",
   b_gvg_next: "Sıradaki GvG",
+  b_discord_b: "Planlar, oylamalar ve sesli sohbet Discord'umuzda.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -333,6 +340,7 @@ const pl: Partial<ExtraDict> = {
   kind_friday: "Event",
   join_lang_note: "Językiem gildii jest angielski, na głosowym i na Discordzie.",
   b_gvg_next: "Najbliższe GvG",
+  b_discord_b: "Ustalenia, głosowania i voice są u nas na Discordzie.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
