@@ -23,7 +23,7 @@ export function flag(cc: string | null, title = ""): string {
 }
 
 export function avatar(m: { display_name: string; avatar_url: string | null }, size = 56): string {
-  if (m.avatar_url) return `<img src="${esc(m.avatar_url)}" alt="" width="${size}" height="${size}" loading="lazy" referrerpolicy="no-referrer">`;
+  if (m.avatar_url) return `<img class="avatar" src="${esc(m.avatar_url)}" alt="" width="${size}" height="${size}" loading="lazy" referrerpolicy="no-referrer">`;
   return `<span class="avatar-fallback" aria-hidden="true">${esc((m.display_name || "?").slice(0, 1).toUpperCase())}</span>`;
 }
 

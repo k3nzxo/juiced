@@ -4,60 +4,21 @@ import { useT, DISCORD_INVITE, type Lang } from "../i18n";
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useT(lang);
-const week = [
-  { k: "gvg", label: t("kind_gvg") },
-  { k: "scrim", label: t("kind_scrim") },
-  { k: "ingame", label: t("kind_ingame") },
-  { k: "friday", label: t("kind_friday") },
-];
 ---
 <section class="hero">
   <div class="hero-grid-bg" aria-hidden="true"></div>
-  <div class="container hero-copy">
-    <span class="pill reveal"><span class="dot"></span>{t("hero2_badge")}</span>
-    <h1 data-split>
-      {t("hero2_title_1")}<br /><span class="grad-text">{t("hero2_title_2")}</span>
-    </h1>
-    <p class="lead reveal" style="--d:260ms">{t("hero2_sub")}</p>
-    <div class="cta reveal" style="--d:340ms">
-      <a class="btn btn-primary" href={`/${lang}/join/`}>{t("hero_cta_join")} <Icon name="arrow" class="arrow" /></a>
-      <a class="btn btn-outline" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> {t("hero_cta_discord")}</a>
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <p class="kicker reveal">EUW · Where Winds Meet</p>
+      <h1 class="wordmark reveal" style="--d:80ms">JUICED</h1>
+      <p class="lead reveal" style="--d:160ms">{t("hero2_sub")}</p>
+      <div class="cta reveal" style="--d:240ms">
+        <a class="btn btn-primary" href={`/${lang}/join/`}>{t("hero_cta_join")} <Icon name="arrow" class="arrow" /></a>
+        <a class="btn btn-outline" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> Discord</a>
+      </div>
     </div>
-  </div>
-
-  <div class="container stage-wrap reveal" style="--d:420ms">
-    <div class="stage">
-      <canvas class="ribbons" data-ribbons aria-hidden="true"></canvas>
-
-      <div class="float f-week card" aria-hidden="true">
-        <div class="f-label">{t("f_week_t")}</div>
-        <ul>
-          {week.map((w, i) => (
-            <li class={`kind-${w.k}`} style={`--i:${i}`}>
-              <span class="k-dot"></span><span>{w.label}</span><span class="k-bar"></span>
-            </li>
-          ))}
-        </ul>
-        <a class="f-link" href={`/${lang}/schedule/`}>{t("week_cta")} <Icon name="arrow" size={13} /></a>
-      </div>
-
-      <div class="float f-region card" aria-hidden="true">
-        <span class="f-ico"><Icon name="swords" size={16} /></span>
-        <div>
-          <div class="f-title">{t("b_gvg_t")} <span class="tag-live">EUW</span></div>
-          <div class="f-sub">30 vs 30 · Where Winds Meet</div>
-        </div>
-      </div>
-
-      <div class="float f-friday card" aria-hidden="true">
-        <div class="f-head"><span class="f-badge">{t("f_friday_t")}</span></div>
-        <div class="poll">
-          {t("b_friday_chips").split("|").slice(0, 3).map((g, i) => (
-            <div class="poll-row" style={`--i:${i};--v:${[62, 27, 11][i]}%`}><span>{g}</span><span class="poll-bar"></span></div>
-          ))}
-        </div>
-        <p class="f-sub"><Icon name="discord" size={13} /> {t("f_friday_b")}</p>
-      </div>
+    <div class="hero-art reveal" style="--d:200ms" aria-hidden="true">
+      <canvas class="ribbons" data-ribbons></canvas>
     </div>
   </div>
 </section>
@@ -69,66 +30,24 @@ const week = [
 </script>
 
 <style>
-  .hero { position: relative; padding: 72px 0 8px; overflow: hidden; }
+  .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--border); }
   .hero-grid-bg {
     position: absolute; inset: 0; pointer-events: none;
     background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 56px 56px; opacity: 0.45;
-    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
-    animation: grid-drift 30s linear infinite;
+    background-size: 56px 56px; opacity: 0.35;
+    mask-image: radial-gradient(ellipse 80% 70% at 70% 50%, #000 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 50%, #000 20%, transparent 75%);
   }
-  @keyframes grid-drift { to { background-position: 56px 56px; } }
-  .hero-copy { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
-  h1 { font-size: clamp(42px, 6.6vw, 80px); line-height: 1.02; letter-spacing: -0.035em; max-width: 960px; }
-  .lead { max-width: 680px; font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); }
-  .cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
-
-  .stage-wrap { position: relative; margin-top: 36px; }
-  .stage { position: relative; height: 540px; }
-  .ribbons { position: absolute; left: 50%; top: 0; width: min(560px, 90%); height: 100%; transform: translateX(-50%); }
-
-  .float { position: absolute; padding: 14px 16px; border-radius: 16px; box-shadow: var(--shadow); background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(8px); animation: float 7s ease-in-out infinite; }
-  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-  .f-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-
-  .f-week { left: 0; top: 60px; width: 250px; animation-delay: -1s; }
-  .f-week ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  .f-week li { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
-  .k-dot { width: 10px; height: 10px; border-radius: 3px; background: var(--k); flex: none; }
-  .k-bar { flex: 1; height: 6px; border-radius: 4px; background: color-mix(in srgb, var(--k) 18%, transparent); position: relative; overflow: hidden; }
-  .k-bar::after { content: ""; position: absolute; inset: 0; background: var(--k); border-radius: 4px; transform-origin: left; animation: fill 3.6s var(--ease) infinite; animation-delay: calc(var(--i) * 0.4s); }
-  @keyframes fill { 0% { transform: scaleX(0); } 45%, 70% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
-  .f-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); width: 100%; font-size: 12.5px; font-weight: 600; color: var(--c-pink); pointer-events: auto; }
-
-  .f-region { left: 50%; top: 0; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; animation-name: float-c; }
-  @keyframes float-c { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -8px); } }
-  .f-ico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: var(--grad-brand); flex: none; }
-  .f-title { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-  .f-sub { font-size: 12.5px; color: var(--muted); }
-  .tag-live { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 5px; color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
-
-  .f-friday { right: 0; top: 140px; width: 260px; animation-delay: -3s; }
-  .f-head { margin-bottom: 10px; }
-  .f-badge { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .poll { display: flex; flex-direction: column; gap: 8px; }
-  .poll-row { display: grid; grid-template-columns: 82px 1fr; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
-  .poll-bar { height: 6px; border-radius: 4px; background: var(--surface-2); position: relative; overflow: hidden; }
-  .poll-bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); border-radius: 4px; background: var(--text-2); transform-origin: left; animation: vote 5s var(--ease) infinite; animation-delay: calc(var(--i) * 0.15s); }
-  .poll-row:first-child .poll-bar::after { background: var(--accent); }
-  @keyframes vote { 0% { transform: scaleX(0); } 30%, 85% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
-  .f-friday .f-sub { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
-
-  @media (max-width: 980px) {
-    .stage { height: 500px; }
-    .f-week { top: auto; bottom: 10px; width: 220px; }
-    .f-friday { top: auto; bottom: 40px; width: 230px; }
-  }
-  @media (max-width: 640px) {
-    .hero { padding-top: 48px; }
-    .stage { height: 420px; }
-    .f-week { display: none; }
-    .f-friday { right: 50%; transform: translateX(50%); animation: none; bottom: 0; }
-    .f-region { top: 6px; }
+  .hero-inner { position: relative; display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: 40px; min-height: min(640px, 82vh); padding-top: 48px; padding-bottom: 48px; }
+  .hero-copy { display: flex; flex-direction: column; gap: 20px; }
+  .kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .wordmark { font-size: clamp(64px, 11vw, 148px); font-weight: 800; letter-spacing: -0.045em; line-height: 0.9; }
+  .lead { max-width: 520px; font-size: clamp(16px, 1.5vw, 18px); color: var(--muted); }
+  .cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .hero-art { position: relative; height: 520px; }
+  .ribbons { position: absolute; inset: 0; width: 100%; height: 100%; }
+  @media (max-width: 900px) {
+    .hero-inner { grid-template-columns: 1fr; min-height: 0; padding-top: 56px; gap: 8px; }
+    .hero-art { height: 320px; }
   }
 </style>

@@ -13,7 +13,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from . import models
-from .config import PUBLIC_URL, SECRET_KEY, SESSION_COOKIE, SESSION_DAYS, IS_PROD
+from .config import OWNER_DISCORD_IDS, PUBLIC_URL, SECRET_KEY, SESSION_COOKIE, SESSION_DAYS, IS_PROD
 from .db import get_db
 
 
@@ -65,7 +65,12 @@ def current_user_optional(request: Request, db: DbSession = Depends(get_db)) -> 
         db.delete(s)
         db.commit()
         return None
-    return db.query(models.User).filter(models.User.id == s.user_id).first()
+    user = db.query(models.User).filter(models.User.id == s.user_id).first()
+    # Owner ist immer Developer, auch wenn der Rang mal manuell geändert wurde
+    if user and user.discord_id in OWNER_DISCORD_IDS and user.rank != "developer":
+        user.rank = "developer"
+        db.commit()
+    return user
 
 
 def require_user(user: models.User | None = Depends(current_user_optional)) -> models.User:

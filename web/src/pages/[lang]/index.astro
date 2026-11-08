@@ -11,7 +11,13 @@ const t = useT(lang);
 const d = dict(lang);
 const L = Object.fromEntries(Object.entries(d).filter(([k]) => k.startsWith("kind_") || k.startsWith("sched_")));
 const ranks = { developer: t("rank_developer"), leader: t("rank_leader"), vice: t("rank_vice"), coach: t("rank_coach"), role_healer: t("role_healer"), role_tank: t("role_tank"), role_nameless: t("role_nameless") };
-const fridayChips = t("b_friday_chips").split("|");
+const tiles = [
+  { k: "gvg", icon: "swords", title: t("b_gvg_t"), body: t("b_gvg_b"), wide: true },
+  { k: "scrim", icon: "users", title: t("b_custom_t"), body: t("b_custom_b"), link: { href: `/${lang}/matches/`, label: t("b_custom_cta") } },
+  { k: "ingame", icon: "calendar", title: t("b_events_t"), body: t("b_events_b") },
+  { k: "friday", icon: "layers", title: t("b_friday_t"), body: t("b_friday_b") },
+  { k: "other", icon: "play", title: t("b_review_t"), body: t("b_review_b") },
+];
 ---
 <Base lang={lang} page="home">
   <Hero lang={lang} />
@@ -19,82 +25,25 @@ const fridayChips = t("b_friday_chips").split("|");
   <section class="section">
     <div class="container">
       <header class="sec-head">
-        <span class="eyebrow reveal">{t("b_eyebrow")}</span>
-        <h2 data-split>{t("b_title")}</h2>
-        <p class="reveal" style="--d:200ms">{t("b_sub")}</p>
+        <h2 class="reveal">{t("b_title")}</h2>
       </header>
-
-      <div class="bento">
-        <article class="tile t-gvg reveal" data-tilt="4">
-          <div class="tile-copy">
-            <span class="tile-k kind-gvg">{t("kind_gvg")}</span>
-            <h3>{t("b_gvg_t")}</h3>
-            <p>{t("b_gvg_b")}</p>
-          </div>
-          <div class="viz-gvg" aria-hidden="true">
-            <div class="team a">{Array.from({ length: 30 }, (_, i) => <span style={`--i:${i}`}></span>)}</div>
-            <div class="vs">VS</div>
-            <div class="team b">{Array.from({ length: 30 }, (_, i) => <span style={`--i:${i}`}></span>)}</div>
-          </div>
-        </article>
-
-        <article class="tile t-custom reveal" style="--d:80ms" data-tilt="5">
-          <span class="tile-k kind-scrim">{t("kind_scrim")}</span>
-          <h3>{t("b_custom_t")}</h3>
-          <p>{t("b_custom_b")}</p>
-          <div class="viz-vs" aria-hidden="true"><span class="p us">JUICED</span><span class="vs-txt">VS</span><span class="p them">?</span></div>
-          <a class="tile-link" href={`/${lang}/matches/`}>{t("b_custom_cta")} <Icon name="arrow" size={14} /></a>
-        </article>
-
-        <article class="tile t-events reveal" style="--d:140ms" data-tilt="5">
-          <span class="tile-k kind-ingame">{t("kind_ingame")}</span>
-          <h3>{t("b_events_t")}</h3>
-          <p>{t("b_events_b")}</p>
-          <div class="viz-cal" aria-hidden="true">{Array.from({ length: 21 }, (_, i) => <span class={[3, 9, 12, 17].includes(i) ? "on" : ""} style={`--i:${i}`}></span>)}</div>
-        </article>
-
-        <article class="tile t-friday reveal" style="--d:200ms" data-tilt="5">
-          <span class="tile-k kind-friday">{t("kind_friday")}</span>
-          <h3>{t("b_friday_t")}</h3>
-          <p>{t("b_friday_b")}</p>
-          <div class="viz-poll" aria-hidden="true">
-            {fridayChips.slice(0, 3).map((c, i) => (
-              <div class="vp-row" style={`--i:${i};--v:${[58, 31, 11][i]}%`}><span class="vp-name">{c}</span><span class="vp-bar"></span><span class="vp-pct">{[58, 31, 11][i]}%</span></div>
-            ))}
-          </div>
-        </article>
-
-        <article class="tile t-review reveal" style="--d:260ms" data-tilt="4">
-          <div class="tile-copy">
-            <span class="tile-k kind-other">VOD</span>
-            <h3>{t("b_review_t")}</h3>
-            <p>{t("b_review_b")}</p>
-          </div>
-          <div class="viz-tl" aria-hidden="true">
-            <div class="tl-bar"><span class="m m1"></span><span class="m m2"></span><span class="m m3"></span><span class="head"></span></div>
-            <div class="tl-notes">
-              <span class="n n1"><b>04:12</b> {t("vod_c_good")}</span>
-              <span class="n n2"><b>12:41</b> {t("vod_c_mistake")}</span>
-              <span class="n n3"><b>18:07</b> {t("vod_c_question")}</span>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <div class="stats reveal">
-        <div><strong data-count-to="0" data-stat="members">0</strong><span>{t("s_members")}</span></div>
-        <div><strong data-count-to="0" data-stat="events">0</strong><span>{t("s_events")}</span></div>
+      <div class="tiles">
+        {tiles.map((x, i) => (
+          <article class:list={["tile", "reveal", `kind-${x.k}`, { wide: x.wide }]} style={`--d:${i * 70}ms`}>
+            <span class="tile-ico"><Icon name={x.icon} size={18} /></span>
+            <h3>{x.title}</h3>
+            <p>{x.body}</p>
+            {x.link && <a class="tile-link" href={x.link.href}>{x.link.label} <Icon name="arrow" size={14} /></a>}
+          </article>
+        ))}
       </div>
     </div>
   </section>
 
-  <section class="section week-sec">
+  <section class="section">
     <div class="container">
       <header class="sec-head row">
-        <div>
-          <span class="eyebrow reveal">{t("week_eyebrow")}</span>
-          <h2 data-split>{t("week_title")}</h2>
-        </div>
+        <h2 class="reveal">{t("week_title")}</h2>
         <a class="btn btn-outline btn-sm reveal" href={`/${lang}/schedule/`}>{t("week_cta")} <Icon name="arrow" size={15} /></a>
       </header>
       <div class="week" data-home-week data-lang={lang} data-l={JSON.stringify(L)}></div>
@@ -104,10 +53,7 @@ const fridayChips = t("b_friday_chips").split("|");
   <section class="section">
     <div class="container">
       <header class="sec-head row">
-        <div>
-          <span class="eyebrow reveal">{t("lead_eyebrow")}</span>
-          <h2 data-split>{t("lead_title")}</h2>
-        </div>
+        <h2 class="reveal">{t("lead_title")}</h2>
         <a class="btn btn-outline btn-sm reveal" href={`/${lang}/team/`}>{t("lead_cta")} <Icon name="arrow" size={15} /></a>
       </header>
       <div class="lead-grid" data-lead-grid data-empty={t("lead_empty")} data-ranks={JSON.stringify(ranks)}>
@@ -118,15 +64,15 @@ const fridayChips = t("b_friday_chips").split("|");
 
   <section class="section">
     <div class="container duo">
-      <div class="cta-card dark reveal" data-tilt="3">
+      <div class="cta-card reveal">
         <h2>{t("cta_join_t")}</h2>
         <p>{t("cta_join_b")}</p>
         <div class="cta-actions">
           <a class="btn btn-primary" href={`/${lang}/join/`}>{t("hero_cta_join")} <Icon name="arrow" class="arrow" /></a>
-          <a class="btn btn-ghost-dark" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> Discord</a>
+          <a class="btn btn-outline" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> Discord</a>
         </div>
       </div>
-      <div class="cta-card light reveal" style="--d:120ms" data-tilt="3">
+      <div class="cta-card reveal" style="--d:100ms">
         <h2>{t("cta_scrim_t")}</h2>
         <p>{t("cta_scrim_b")}</p>
         <div class="cta-actions">
@@ -138,151 +84,66 @@ const fridayChips = t("b_friday_chips").split("|");
 </Base>
 
 <script>
-  import { renderLeadership, fetchTeam } from "../../scripts/team";
+  import { renderLeadership } from "../../scripts/team";
   import { addDays, fetchEvents, renderWeek, startOfWeek } from "../../scripts/schedule";
-  import { setCount } from "../../scripts/motion";
 
   const grid = document.querySelector<HTMLElement>("[data-lead-grid]");
   if (grid) renderLeadership(grid);
-
-  const statMembers = document.querySelector<HTMLElement>('[data-stat="members"]');
-  const statEvents = document.querySelector<HTMLElement>('[data-stat="events"]');
-  fetchTeam().then((all) => statMembers && setCount(statMembers, all.length)).catch(() => {});
 
   const week = document.querySelector<HTMLElement>("[data-home-week]");
   if (week) {
     const monday = startOfWeek();
     const L = JSON.parse(week.dataset.l || "{}");
     fetchEvents(monday, addDays(monday, 7))
-      .then((ev) => { renderWeek(week, ev, monday, week.dataset.lang || "en", L); if (statEvents) setCount(statEvents, ev.length); })
+      .then((ev) => renderWeek(week, ev, monday, week.dataset.lang || "en", L))
       .catch(() => renderWeek(week, [], monday, week.dataset.lang || "en", L));
   }
 </script>
 
 <style>
-  .section { padding: 104px 0 0; }
-  .sec-head { display: flex; flex-direction: column; gap: 12px; max-width: 680px; margin-bottom: 40px; }
-  .sec-head h2 { font-size: clamp(32px, 4vw, 50px); }
-  .sec-head p { color: var(--muted); font-size: 17px; }
-  .sec-head.row { max-width: none; flex-direction: row; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
-  .sec-head.row > div { display: flex; flex-direction: column; gap: 12px; }
+  .section { padding: 88px 0 0; }
+  .sec-head { margin-bottom: 28px; }
+  .sec-head h2 { font-size: clamp(28px, 3.2vw, 40px); }
+  .sec-head.row { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s, transform 0.3s var(--ease); }
+  .tile:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .tile.wide { grid-column: span 2; }
+  .tile-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--k); background: color-mix(in srgb, var(--k) 12%, transparent); margin-bottom: 8px; }
+  .tile.kind-other .tile-ico { color: var(--text-2); background: var(--surface-2); }
+  .tile h3 { font-size: 19px; }
+  .tile p { color: var(--muted); font-size: 15px; max-width: 46ch; }
+  .tile-link { margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
+  .tile-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-  /* Bento */
-  .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
-  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; position: relative; }
-  .tile:hover { box-shadow: var(--shadow); border-color: var(--border-strong); }
-  .tile h3 { font-size: 22px; }
-  .tile p { color: var(--muted); font-size: 15px; }
-  .tile-k { align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: var(--k); background: color-mix(in srgb, var(--k) 12%, transparent); }
-  .tile-link { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
-  .tile-link:hover { gap: 9px; }
-  .t-gvg { grid-column: span 4; flex-direction: row; align-items: center; gap: 28px; }
-  .t-gvg .tile-copy { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-  .t-custom { grid-column: span 2; }
-  .t-events, .t-friday { grid-column: span 2; }
-  .t-review { grid-column: span 2; }
-  .t-review { flex-direction: column; }
-
-  /* 30 vs 30 */
-  .viz-gvg { flex: 1.2; display: flex; align-items: center; gap: 14px; justify-content: center; }
-  .team { display: grid; grid-template-columns: repeat(6, 12px); gap: 6px; }
-  .team span { width: 12px; height: 12px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); animation: dot 4s var(--ease) infinite; animation-delay: calc(var(--i) * 45ms); }
-  .team.a span { --c: var(--accent); }
-  .team.b span { --c: var(--text-2); animation-delay: calc(var(--i) * 45ms + 0.6s); }
-  @keyframes dot { 0%, 10% { background: var(--surface-2); border-color: var(--border); transform: scale(0.85); } 30%, 75% { background: var(--c); border-color: var(--c); transform: scale(1); } 100% { background: var(--surface-2); border-color: var(--border); transform: scale(0.85); } }
-  .vs { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--faint); animation: vs 4s var(--ease) infinite; }
-  @keyframes vs { 0%, 40% { transform: scale(1); color: var(--faint); } 55% { transform: scale(1.3); color: var(--text); } 70%, 100% { transform: scale(1); color: var(--faint); } }
-
-  /* Custom game */
-  .viz-vs { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
-  .viz-vs .p { padding: 7px 12px; border-radius: 9px; font-family: var(--font-display); font-weight: 800; font-size: 14px; }
-  .viz-vs .us { color: #fff; background: var(--grad-brand); animation: push-r 2.6s var(--ease) infinite; }
-  .viz-vs .them { border: 1px solid var(--border-strong); color: var(--muted); animation: push-l 2.6s var(--ease) infinite; }
-  .vs-txt { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: 0.04em; color: var(--muted); animation: vs-pop 2.6s var(--ease) infinite; }
-  @keyframes vs-pop { 0%, 30%, 100% { transform: scale(1); color: var(--muted); } 45% { transform: scale(1.25); color: var(--text); } }
-  @keyframes push-r { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(6px); } }
-  @keyframes push-l { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(-6px); } }
-
-  /* Kalender */
-  .viz-cal { margin-top: auto; display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding-top: 8px; }
-  .viz-cal span { aspect-ratio: 1; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); }
-  .viz-cal span.on { --k: var(--c-cyan); background: color-mix(in srgb, var(--k) 18%, transparent); border-color: color-mix(in srgb, var(--k) 45%, transparent); animation: cal 3.2s var(--ease) infinite; animation-delay: calc(var(--i) * 90ms); }
-  @keyframes cal { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); background: var(--k); } 30% { transform: scale(1); } }
-
-  /* Abstimmung */
-  .viz-poll { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
-  .vp-row { display: grid; grid-template-columns: 1fr 2fr 34px; align-items: center; gap: 10px; font-size: 13px; }
-  .vp-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vp-pct { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
-  .vp-bar { height: 8px; border-radius: 5px; background: var(--surface-2); position: relative; overflow: hidden; }
-  .vp-bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); border-radius: 5px; background: var(--text-2); transform-origin: left; animation: vp 6s var(--ease) infinite; animation-delay: calc(var(--i) * 0.12s); }
-  .vp-row:first-child .vp-bar::after { background: var(--accent); }
-  @keyframes vp { 0% { transform: scaleX(0); } 25%, 88% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
-
-  /* VOD-Timeline */
-  .viz-tl { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
-  .tl-bar { position: relative; height: 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); }
-  .tl-bar .m { position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 2px; }
-  .m1 { left: 18%; background: var(--ok); } .m2 { left: 52%; background: var(--danger); } .m3 { left: 77%; background: #e8a317; }
-  .tl-bar .head { position: absolute; top: -5px; width: 2px; height: 18px; background: var(--text); border-radius: 2px; animation: head 6s linear infinite; }
-  @keyframes head { from { left: 0; } to { left: 100%; } }
-  .tl-notes { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
-  .tl-notes .n { color: var(--muted); opacity: 0.35; transition: opacity 0.3s; animation: note 6s linear infinite; }
-  .tl-notes b { font-family: ui-monospace, Menlo, monospace; font-weight: 600; color: var(--text-2); margin-right: 4px; }
-  .n1 { animation-delay: 0s; } .n2 { animation-delay: 0s; } .n3 { animation-delay: 0s; }
-  .n1 { animation-name: note1; } .n2 { animation-name: note2; } .n3 { animation-name: note3; }
-  @keyframes note1 { 0%, 16% { opacity: 0.35; } 18%, 40% { opacity: 1; } 45%, 100% { opacity: 0.35; } }
-  @keyframes note2 { 0%, 50% { opacity: 0.35; } 52%, 72% { opacity: 1; } 77%, 100% { opacity: 0.35; } }
-  @keyframes note3 { 0%, 75% { opacity: 0.35; } 77%, 97% { opacity: 1; } 100% { opacity: 0.35; } }
-
-  /* Zahlen */
-  .stats { margin-top: 28px; display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--border); border-radius: 20px; background: var(--surface); }
-  .stats div { padding: 22px 26px; display: flex; align-items: baseline; gap: 10px; }
-  .stats div + div { border-left: 1px solid var(--border); }
-  .stats strong { font-family: var(--font-display); font-size: clamp(32px, 4vw, 46px); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-  .stats span { color: var(--muted); font-size: 15px; }
-
-  /* Leitung */
-  .lead-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  :global(.person) { border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-height: 180px; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
-  :global(.person:hover) { transform: translateY(-3px); box-shadow: var(--shadow); }
-  :global(.person img), :global(.person .avatar-fallback) { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
-  :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--grad-brand); }
-  :global(.person .p-name) { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
-  :global(.person .p-sub) { font-size: 13.5px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .lead-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  :global(.person) { border: 1px solid var(--border); background: var(--surface); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-height: 160px; transition: transform 0.3s var(--ease), border-color 0.2s; }
+  :global(.person:hover) { transform: translateY(-2px); border-color: var(--border-strong); }
+  :global(.person .avatar), :global(.person .avatar-fallback) { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
+  :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--accent); }
+  :global(.person .p-name) { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+  :global(.person .p-sub) { font-size: 13.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
   :global(.person.skeleton) { background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
   @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-  :global(.lead-empty) { grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: var(--r-lg); }
+  :global(.lead-empty) { grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: 16px; }
 
-  /* Abschluss */
-  .duo { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
-  .cta-card { border-radius: 24px; padding: 48px 40px; display: flex; flex-direction: column; gap: 14px; }
-  .cta-card h2 { font-size: clamp(28px, 3.4vw, 40px); }
-  .cta-card.dark { background: #121016; color: #f4f2ee; position: relative; overflow: hidden; }
-  .cta-card.dark::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--grad-brand); }
-  .cta-card.dark p { color: #b9b3c2; }
-  .cta-card.light { background: var(--surface); border: 1px solid var(--border); }
-  .cta-card.light p { color: var(--muted); }
-  .cta-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 10px; }
-  .btn-ghost-dark { color: #f4f2ee; border: 1px solid #3a3546; }
-  .btn-ghost-dark:hover { border-color: #f4f2ee; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cta-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 36px; display: flex; flex-direction: column; gap: 10px; }
+  .cta-card h2 { font-size: clamp(24px, 2.6vw, 32px); }
+  .cta-card p { color: var(--muted); }
+  .cta-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 
-  @media (max-width: 980px) {
-    .bento { grid-template-columns: repeat(2, 1fr); }
-    .t-gvg { grid-column: span 2; }
-    .t-custom, .t-events, .t-friday, .t-review { grid-column: span 1; }
+  @media (max-width: 900px) {
+    .tiles { grid-template-columns: 1fr 1fr; }
     .lead-grid { grid-template-columns: repeat(2, 1fr); }
     .duo { grid-template-columns: 1fr; }
   }
-  @media (max-width: 640px) {
-    .section { padding-top: 80px; }
-    .bento { grid-template-columns: 1fr; }
-    .t-gvg { flex-direction: column; align-items: stretch; }
-    .t-custom, .t-events, .t-friday, .t-review, .t-gvg { grid-column: span 1; }
-    .stats { grid-template-columns: 1fr; }
-    .stats div + div { border-left: 0; border-top: 1px solid var(--border); }
+  @media (max-width: 600px) {
+    .section { padding-top: 64px; }
+    .tiles { grid-template-columns: 1fr; }
+    .tile.wide { grid-column: span 1; }
     .lead-grid { grid-template-columns: 1fr; }
-    .cta-card { padding: 36px 24px; }
+    .cta-card { padding: 26px; }
   }
 </style>

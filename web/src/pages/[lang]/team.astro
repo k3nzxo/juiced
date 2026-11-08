@@ -52,8 +52,8 @@ const labels = {
   :global(.group-title span) { font-size: 13px; font-family: var(--font-sans); font-weight: 600; color: var(--muted); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); }
   :global(.person) { border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 12px; min-height: 170px; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
   :global(.person:hover) { transform: translateY(-3px); box-shadow: var(--shadow); }
-  :global(.person img), :global(.person .avatar-fallback) { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
-  :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--grad-brand); }
+  :global(.person .avatar), :global(.person .avatar-fallback) { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
+  :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--accent); }
   :global(.person .p-name) { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
   :global(.person .p-sub) { font-size: 13.5px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
   :global(.person.skeleton) { background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }

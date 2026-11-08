@@ -1,6 +1,6 @@
 // Basis-Sprache. Alle anderen Sprachen fallen pro Schlüssel auf Englisch zurück.
 const en = {
-  meta_title: "JUICED — EUW guild · Where Winds Meet",
+  meta_title: "JUICED · EUW guild · Where Winds Meet",
   meta_desc: "JUICED is an EUW guild in Where Winds Meet: GvG, custom games against other guilds, in-game and community events and VOD reviews with role coaches.",
   nav_home: "Home", nav_team: "Team", nav_join: "Join", nav_members: "Members area", nav_login: "Sign in", nav_logout: "Sign out",
   nav_discord: "Discord", nav_menu: "Menu", theme_toggle: "Switch light / dark mode", lang_label: "Language", skip: "Skip to content",
@@ -18,12 +18,12 @@ const en = {
   what_eyebrow: "What we do", what_title: "Built around the weekend",
   what_sub: "No filler. We play GvG seriously, talk about it afterwards and turn it into a plan for the next match.",
   what_gvg_t: "Competitive GvG", what_gvg_b: "Two days, four to six matches each. We set the lineup, call it live and adjust between games.",
-  what_review_t: "Reviews that stick", what_review_b: "Upload your recording, pick your role, and a coach goes through it with you — timestamped, on our own site.",
+  what_review_t: "Reviews that stick", what_review_b: "Upload your recording, pick your role, and a coach goes through it with you: timestamped, on our own site.",
   what_structure_t: "Clear structure", what_structure_b: "Leader, Vice and a coach for every role. Everyone knows who to ask.",
 
   loop_eyebrow: "Our week", loop_title: "From match to improvement",
   loop_1_t: "Play", loop_1_b: "Saturday and Sunday GvG on EUW.",
-  loop_2_t: "Record", loop_2_b: "Members record their POV and upload it here — no YouTube, no music claims.",
+  loop_2_t: "Record", loop_2_b: "Members record their POV and upload it here: no YouTube, no music claims.",
   loop_3_t: "Review", loop_3_b: "Your role coach marks the key moments. You reply right on the timeline.",
   loop_4_t: "Repeat", loop_4_b: "Takeaways go straight into next weekend's plan.",
 
@@ -57,7 +57,7 @@ const en = {
 
   privacy_title: "Privacy",
   privacy_p1: "This website is run by the JUICED guild for its members. We only store what we need for it to work.",
-  privacy_p2: "Sign-in uses Discord. We receive your Discord ID, username, avatar and — if you're on our Discord server — your roles there. We use this to show you the right parts of the site.",
+  privacy_p2: "Sign-in uses Discord. We receive your Discord ID, username, avatar and: if you're on our Discord server: your roles there. We use this to show you the right parts of the site.",
   privacy_p3: "Applications are stored until they're decided and then deleted. Uploaded VODs are deleted automatically after a few days unless they're kept as an example.",
   privacy_p4: "We use one essential cookie to keep you signed in, and your browser remembers your language and theme. No tracking, no ads, no third-party analytics.",
   privacy_p5: "Want your data removed? Message a Leader or Vice on Discord and we'll delete your account.",
@@ -93,11 +93,11 @@ const en = {
   vod_upload: "Upload VOD", vod_back: "All VODs", vod_search: "Search title, opponent…",
   vod_empty: "No VODs yet", vod_empty_hint: "Upload the first recording to start reviewing.",
   vod_storage: "{used} of {limit} used",
-  vod_f_file: "Video file", vod_f_file_hint: "MP4, MKV, MOV, WEBM, FLV — max. {max}. OBS recordings work directly (H.264 recommended).",
+  vod_f_file: "Video file", vod_f_file_hint: "MP4, MKV, MOV, WEBM, FLV: max. {max}. OBS recordings work directly (H.264 recommended).",
   vod_f_title: "Title", vod_f_opponent: "Opponent guild", vod_f_date: "Match date", vod_f_result: "Result", vod_f_desc: "Notes / context (optional)",
   vod_f_role: "Role", vod_role_hint: "Coaches of this role will see your VOD and get notified.", vod_role_hint_team: "Team VODs are visible to all members.",
   vod_r_none: "—", vod_r_win: "Win", vod_r_loss: "Loss", vod_r_draw: "Draw",
-  vod_start_upload: "Start upload", vod_upload_done: "Upload complete — processing…",
+  vod_start_upload: "Start upload", vod_upload_done: "Upload complete: processing…",
   vod_upload_failed: "Upload interrupted. You can resume it from the list.", vod_keep_open: "Keep this tab open until the upload is finished.",
   vod_st_uploading: "Upload incomplete", vod_st_processing: "Processing…", vod_st_failed: "Failed", vod_resume: "Resume upload",
   vod_resume_pick: "Select the same file again to resume ({name}).", vod_resume_wrong: "That's not the same file.",
@@ -108,14 +108,14 @@ const en = {
   vod_edit: "Edit VOD", vod_del_confirm: "Delete this VOD including all notes? This can't be undone.",
   vod_del_note_confirm: "Delete this note?", vod_deleted: "Deleted",
   vod_copy_link: "Copy link to this moment", vod_copied: "Link copied",
-  vod_processing_hint: "The video is being prepared. This usually takes a minute or two — the page updates by itself.",
+  vod_processing_hint: "The video is being prepared. This usually takes a minute or two: the page updates by itself.",
   vod_failed_hint: "Processing failed:", vod_missing_fields: "Pick a file and enter a title.", vod_missing_role: "Please pick a role.",
   vod_hotkeys: "Space play/pause · J / L ±5 s · , / . frame step · N new note",
   vod_leave_warn: "An upload is still running. Leave anyway?",
-  vod_pin: "Keep", vod_unpin: "Kept", vod_pinned_toast: "Kept — won't be deleted automatically", vod_unpinned_toast: "Will be deleted automatically again",
+  vod_pin: "Keep", vod_unpin: "Kept", vod_pinned_toast: "Kept: won't be deleted automatically", vod_unpinned_toast: "Will be deleted automatically again",
   vod_expires_in: "deleted in {n} d", vod_expires_today: "deleted today",
   vod_retention_hint: "VODs are deleted after {n} days unless they're kept.",
-  vod_storage_down: "VOD storage is not connected right now — uploads are paused.",
+  vod_storage_down: "VOD storage is not connected right now: uploads are paused.",
 };
 
 export type Dict = typeof en;

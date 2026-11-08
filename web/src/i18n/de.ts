@@ -1,7 +1,7 @@
 import type { Dict } from "./en";
 
 const de: Partial<Dict> = {
-  meta_title: "JUICED — EUW-Gilde · Where Winds Meet",
+  meta_title: "JUICED · EUW-Gilde · Where Winds Meet",
   meta_desc: "JUICED ist eine EUW-Gilde in Where Winds Meet: GvG, Custom Games gegen andere Gilden, Ingame- und Community-Events und VOD-Reviews mit Rollen-Coaches.",
   nav_home: "Start", nav_team: "Team", nav_join: "Bewerben", nav_members: "Mitgliederbereich", nav_login: "Anmelden", nav_logout: "Abmelden",
   nav_discord: "Discord", nav_menu: "Menü", theme_toggle: "Hell / Dunkel umschalten", lang_label: "Sprache", skip: "Zum Inhalt springen",
@@ -18,12 +18,12 @@ const de: Partial<Dict> = {
   what_eyebrow: "Was wir machen", what_title: "Alles dreht sich ums Wochenende",
   what_sub: "Kein Füllmaterial. Wir spielen GvG ernsthaft, sprechen danach darüber und machen daraus den Plan fürs nächste Match.",
   what_gvg_t: "Kompetitives GvG", what_gvg_b: "Zwei Tage, jeweils vier bis sechs Matches. Wir stellen das Lineup auf, callen live und passen zwischen den Spielen an.",
-  what_review_t: "Reviews, die hängen bleiben", what_review_b: "Lade deine Aufnahme hoch, wähle deine Rolle, und ein Coach geht sie mit dir durch — mit Zeitstempeln, auf unserer eigenen Seite.",
+  what_review_t: "Reviews, die hängen bleiben", what_review_b: "Lade deine Aufnahme hoch, wähle deine Rolle, und ein Coach geht sie mit dir durch: mit Zeitstempeln, auf unserer eigenen Seite.",
   what_structure_t: "Klare Struktur", what_structure_b: "Leader, Vice und ein Coach für jede Rolle. Jeder weiß, wen er fragen kann.",
 
   loop_eyebrow: "Unsere Woche", loop_title: "Vom Match zur Verbesserung",
   loop_1_t: "Spielen", loop_1_b: "Samstag und Sonntag GvG auf EUW.",
-  loop_2_t: "Aufnehmen", loop_2_b: "Mitglieder nehmen ihre Sicht auf und laden sie hier hoch — kein YouTube, keine Musik-Sperren.",
+  loop_2_t: "Aufnehmen", loop_2_b: "Mitglieder nehmen ihre Sicht auf und laden sie hier hoch: kein YouTube, keine Musik-Sperren.",
   loop_3_t: "Reviewen", loop_3_b: "Dein Rollen-Coach markiert die entscheidenden Momente. Du antwortest direkt in der Timeline.",
   loop_4_t: "Wiederholen", loop_4_b: "Die Erkenntnisse fließen direkt in den Plan fürs nächste Wochenende.",
 
@@ -57,7 +57,7 @@ const de: Partial<Dict> = {
 
   privacy_title: "Datenschutz",
   privacy_p1: "Diese Website wird von der Gilde JUICED für ihre Mitglieder betrieben. Wir speichern nur, was wir dafür brauchen.",
-  privacy_p2: "Die Anmeldung läuft über Discord. Wir erhalten deine Discord-ID, deinen Namen, dein Profilbild und — falls du auf unserem Discord bist — deine Rollen dort. Damit zeigen wir dir die passenden Bereiche der Seite.",
+  privacy_p2: "Die Anmeldung läuft über Discord. Wir erhalten deine Discord-ID, deinen Namen, dein Profilbild und: falls du auf unserem Discord bist: deine Rollen dort. Damit zeigen wir dir die passenden Bereiche der Seite.",
   privacy_p3: "Bewerbungen werden gespeichert, bis entschieden ist, und dann gelöscht. Hochgeladene VODs werden nach einigen Tagen automatisch gelöscht, außer sie werden als Beispiel behalten.",
   privacy_p4: "Wir verwenden ein notwendiges Cookie, damit du angemeldet bleibst. Sprache und Design merkt sich dein Browser. Kein Tracking, keine Werbung, keine Analyse-Tools von Dritten.",
   privacy_p5: "Du willst, dass deine Daten gelöscht werden? Schreib Leader oder Vice auf Discord, dann löschen wir dein Konto.",
@@ -91,11 +91,11 @@ const de: Partial<Dict> = {
   vod_upload: "VOD hochladen", vod_back: "Alle VODs", vod_search: "Titel, Gegner suchen…",
   vod_empty: "Noch keine VODs", vod_empty_hint: "Lade die erste Aufnahme hoch, um mit dem Review zu starten.",
   vod_storage: "{used} von {limit} belegt",
-  vod_f_file: "Videodatei", vod_f_file_hint: "MP4, MKV, MOV, WEBM, FLV — max. {max}. OBS-Aufnahmen gehen direkt (am besten H.264).",
+  vod_f_file: "Videodatei", vod_f_file_hint: "MP4, MKV, MOV, WEBM, FLV: max. {max}. OBS-Aufnahmen gehen direkt (am besten H.264).",
   vod_f_title: "Titel", vod_f_opponent: "Gegner-Gilde", vod_f_date: "Match-Datum", vod_f_result: "Ergebnis", vod_f_desc: "Notizen / Kontext (optional)",
   vod_f_role: "Rolle", vod_role_hint: "Die Coaches dieser Rolle sehen dein VOD und werden benachrichtigt.", vod_role_hint_team: "Team-VODs sehen alle Mitglieder.",
   vod_r_win: "Sieg", vod_r_loss: "Niederlage", vod_r_draw: "Unentschieden",
-  vod_start_upload: "Upload starten", vod_upload_done: "Upload fertig — wird verarbeitet…",
+  vod_start_upload: "Upload starten", vod_upload_done: "Upload fertig: wird verarbeitet…",
   vod_upload_failed: "Upload abgebrochen. Du kannst ihn in der Liste fortsetzen.", vod_keep_open: "Lass diesen Tab offen, bis der Upload fertig ist.",
   vod_st_uploading: "Upload unvollständig", vod_st_processing: "Wird verarbeitet…", vod_st_failed: "Fehlgeschlagen", vod_resume: "Upload fortsetzen",
   vod_resume_pick: "Wähle dieselbe Datei nochmal aus, um fortzusetzen ({name}).", vod_resume_wrong: "Das ist nicht dieselbe Datei.",
@@ -106,14 +106,14 @@ const de: Partial<Dict> = {
   vod_edit: "VOD bearbeiten", vod_del_confirm: "Dieses VOD inkl. aller Notizen löschen? Das kann nicht rückgängig gemacht werden.",
   vod_del_note_confirm: "Diese Notiz löschen?", vod_deleted: "Gelöscht",
   vod_copy_link: "Link zu dieser Stelle kopieren", vod_copied: "Link kopiert",
-  vod_processing_hint: "Das Video wird vorbereitet. Dauert meist ein, zwei Minuten — die Seite aktualisiert sich selbst.",
+  vod_processing_hint: "Das Video wird vorbereitet. Dauert meist ein, zwei Minuten: die Seite aktualisiert sich selbst.",
   vod_failed_hint: "Verarbeitung fehlgeschlagen:", vod_missing_fields: "Datei auswählen und Titel eingeben.", vod_missing_role: "Bitte eine Rolle wählen.",
   vod_hotkeys: "Leertaste Play/Pause · J / L ±5 s · , / . Einzelbild · N neue Notiz",
   vod_leave_warn: "Ein Upload läuft noch. Trotzdem verlassen?",
-  vod_pin: "Behalten", vod_unpin: "Behalten ✓", vod_pinned_toast: "Behalten — wird nicht automatisch gelöscht", vod_unpinned_toast: "Wird wieder automatisch gelöscht",
+  vod_pin: "Behalten", vod_unpin: "Behalten ✓", vod_pinned_toast: "Behalten: wird nicht automatisch gelöscht", vod_unpinned_toast: "Wird wieder automatisch gelöscht",
   vod_expires_in: "weg in {n} T.", vod_expires_today: "wird heute gelöscht",
   vod_retention_hint: "VODs werden nach {n} Tagen gelöscht, außer sie werden behalten.",
-  vod_storage_down: "Der VOD-Speicher ist gerade nicht verbunden — Uploads sind pausiert.",
+  vod_storage_down: "Der VOD-Speicher ist gerade nicht verbunden: Uploads sind pausiert.",
 };
 
 export default de;
