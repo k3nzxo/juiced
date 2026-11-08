@@ -79,11 +79,6 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
           <div class="shots" data-shots></div>
           <span class="hint">{t("join_shots_hint")}</span>
         </div>
-        <div class="field">
-          <label for="f-build">{t("join_build")}</label>
-          <textarea class="textarea" id="f-build" name="build" maxlength="2000" rows="3" placeholder={t("join_build_ph")}></textarea>
-        </div>
-        <div class="field"><label for="f-inner">{t("join_inner")}</label><input class="input" id="f-inner" name="inner_ways" maxlength="500" placeholder={t("join_inner_ph")} autocomplete="off" /></div>
         <div class="field"><label for="f-exp">{t("join_exp")} *</label><textarea class="textarea" id="f-exp" name="experience" required maxlength="2000" placeholder={t("join_exp_ph")}></textarea></div>
         <div class="field">
           <span class="label">{t("join_vods")} *</span>
@@ -221,7 +216,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
       platforms: [...platforms], vod_links: vodLinks,
       weapons: [...weapons], weapon_other: val("weapon_other"),
-      build: val("build"), inner_ways: val("inner_ways"), build_images: shots.map((s) => s.data),
+      build_images: shots.map((s) => s.data),
       region, gear_score: Number(val("gear_score")) || 0, arena_rank: val("arena_rank"),
     };
     if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.experience) {
@@ -285,7 +280,6 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   @media (max-width: 900px) { .join { grid-template-columns: 1fr; gap: 32px; } .intro { position: static; } }
   @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .form-wrap { padding: 22px; } }
   .weapon-other { width: auto; flex: 1 1 160px; min-width: 140px; height: 38px; padding: 6px 12px; }
-  #f-build + .input { margin-top: 8px; }
   .reveal-in { animation: field-in 0.35s var(--ease); }
   @keyframes field-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
   .shots-drop { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 14px; border: 1.5px dashed var(--border-strong); border-radius: 12px; color: var(--muted); font-size: 14px; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
