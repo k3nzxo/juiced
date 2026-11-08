@@ -894,21 +894,26 @@ const buildTag = (id: string | null | undefined, main = false) => {
 };
 // Kategorie für Übersichten: Tank / Healer / DPS, Twinblades-DPS extra als "TB" (lila)
 const CAT_COLOR: Record<string, string> = { tank: "#eab308", healer: "#22c55e", dps: "#3b82f6", tb: "#a855f7" };
-// Kategorie eines Builds aus den Waffen (für weitere Kombis ohne eigene Rolle)
-function buildCategory(id: string | null | undefined, role: string | null = null): string | null {
+// Kategorien eines Builds aus den Waffen; eine Kombi kann mehrere haben (Mo/TB = Tank + TB)
+const HEAL_W = ["museflow_drum", "panacea_fan", "soulshade_umbrella"], TANK_W = ["stormbreaker_spear", "thundercry_blade"];
+function buildCats(id: string | null | undefined, role: string | null = null): string[] {
   const ws = buildWeapons(id).map((w) => w.id);
-  let r: string | null = role;
-  if (!r && ws.length) r = ws.some((w) => ["museflow_drum", "panacea_fan", "soulshade_umbrella"].includes(w)) ? "healer" : ws.some((w) => ["stormbreaker_spear", "thundercry_blade"].includes(w)) ? "tank" : "dps";  // Mo-Klinge = Tank (z. B. Mo/TB)
-  if (r === "dps" && ws.some((w) => w.endsWith("twinblades"))) return "tb";
-  return r;
+  if (!ws.length) return role ? [role] : [];
+  const out = new Set<string>();
+  if (role) out.add(role);
+  else if (ws.some((w) => HEAL_W.includes(w))) out.add("healer");
+  else if (ws.some((w) => TANK_W.includes(w))) out.add("tank");
+  else out.add("dps");
+  if (ws.some((w) => w.endsWith("twinblades"))) { out.add("tb"); if (out.has("dps")) out.delete("dps"); }
+  return [...out];
 }
-const category = (u: any) => buildCategory(u.main_build, u.main_role || null);
-// alle Kategorien einer Person: Haupt-Build (mit Rolle) + weitere Kombis -> Kategorie => Build
+// Haupt-Kategorie für die Pill: gewählte Rolle, bei Twinblades-DPS "TB"
+const category = (u: any): string | null => { const c = buildCats(u.main_build, u.main_role || null); return c.includes("tb") && !["tank", "healer"].includes(c[0]) ? "tb" : c[0] || null; };
+// alle Kategorien einer Person: Haupt-Build + weitere Kombis -> Kategorie => Build
 function memberCats(u: any): Map<string, string | null> {
   const m = new Map<string, string | null>();
-  const main = category(u);
-  if (main) m.set(main, u.main_build || null);
-  for (const b of u.alt_builds || []) { const c = buildCategory(b); if (c && !m.has(c)) m.set(c, b); }
+  for (const c of buildCats(u.main_build, u.main_role || null)) m.set(c, u.main_build || null);
+  for (const b of u.alt_builds || []) for (const c of buildCats(b)) if (!m.has(c)) m.set(c, b);
   return m;
 }
 const matchesCat = (u: any, cat: string) => { const m = memberCats(u); return m.has(cat) || (cat === "dps" && m.has("tb")); };
@@ -939,8 +944,8 @@ async function viewRoster(view: HTMLElement) {
         <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
         ${(() => {  // passt nur über eine weitere Kombi? Dann zeigen, welche
-          const c = memFilter.role, m = memberCats(u), main = category(u);
-          if (!c || main === c || (c === "dps" && main === "tb")) return "";
+          const c = memFilter.role, m = memberCats(u), mainCats = buildCats(u.main_build, u.main_role || null);
+          if (!c || mainCats.includes(c) || (c === "dps" && mainCats.includes("tb"))) return "";
           const b = m.get(c) ?? (c === "dps" ? m.get("tb") : null);
           return b ? `<div class="mc-also">${esc(T("mem_also"))} ${buildTag(b)}</div>` : "";
         })()}
