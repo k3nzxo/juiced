@@ -882,10 +882,11 @@ function buildBlock(u: any, compact = false) {
   const main = pathById(u.main_path);
   const alt = (u.alt_paths || []).filter((p: string) => pathById(p));
   const ways = (u.inner_ways || []).filter((w: string) => innerWayById(w));
-  if (!main && !alt.length && !ways.length) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
+  const other = String(u.weapon_other || "").trim();
+  if (!main && !alt.length && !ways.length && !other) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
   return `${main ? `<div class="path-main role-${main.role}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${esc(main.name)}</strong>
       <span class="pm-weapons">${esc(main.weapons.join(" + "))}</span>${roleTag(main.role)}</div>` : ""}
-    ${alt.length ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((p: string) => pathTag(p)).join("")}</div></div>` : ""}
+    ${alt.length || other ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((p: string) => pathTag(p)).join("")}${other ? `<span class="path-tag path-other"><i></i>${esc(other)}</span>` : ""}</div></div>` : ""}
     ${ways.length ? `<div class="build-row"><span class="label">${esc(T("prof_inner_ways"))}</span><div class="iw-grid ${compact ? "small" : ""}">${ways.map((w: string) => iwTile(w, compact)).join("")}</div></div>` : ""}`;
 }
 
@@ -1077,7 +1078,8 @@ function viewProfile(view: HTMLElement) {
       <div class="path-pick">${byRole.map((p) => `<button type="button" class="pp role-${p.role}" data-main="${p.id}" data-for-role="${p.role}" aria-pressed="${mainPath === p.id}" ${p.role === pickRole ? "" : "hidden"}>
         <strong>${esc(p.name)}</strong><span>${esc(p.weapons.join(" + "))}</span></button>`).join("")}</div></div>
     <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span>
-      <div class="chips">${byRole.map((p) => `<button type="button" class="chip path-chip role-${p.role}" data-alt="${p.id}" aria-pressed="${alt.has(p.id)}" ${mainPath === p.id ? "hidden" : ""}>${esc(p.name)}</button>`).join("")}</div></div>
+      <div class="chips">${byRole.map((p) => `<button type="button" class="chip path-chip role-${p.role}" data-alt="${p.id}" aria-pressed="${alt.has(p.id)}" ${mainPath === p.id ? "hidden" : ""}>${esc(p.name)}</button>`).join("")}</div>
+      <input class="input alt-other" id="p-other" maxlength="40" value="${esc(me!.weapon_other || "")}" placeholder="${esc(T("prof_alt_other_ph"))}"></div>
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
       <p class="hint">${esc(T("prof_iw_hint"))}</p><div data-iw></div></div>
@@ -1160,6 +1162,7 @@ function viewProfile(view: HTMLElement) {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
         main_path: mainPath, alt_paths: [...alt], inner_ways: [...ways], partners,
+        weapon_other: (view.querySelector("#p-other") as HTMLInputElement).value,
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });

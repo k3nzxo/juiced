@@ -570,3 +570,5 @@ a.pp-chip { color: inherit; padding-right: 10px; }
 a.pp-chip:hover { border-color: var(--accent); }
 .pp-of { font-size: 13px; margin-top: 4px; }
 .pp-of a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
+.alt-other { max-width: 320px; margin-top: 8px; }
+.path-other { --role: var(--muted); font-weight: 500; }

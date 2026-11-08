@@ -170,7 +170,7 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
         user.inner_ways = ",".join(ways[:24]) or None
     if not user.main_role:
-        user.weapons, user.weapon_other = None, None
+        user.weapons = None  # Freitext (weapon_other) bleibt: "kann auch spielen", z. B. Mo/TB
     elif user.weapons:  # nach Rollenwechsel nur passende Waffen behalten
         user.weapons = models.clean_weapons(user.weapons.split(","), user.main_role) or None
     if "country" in data:

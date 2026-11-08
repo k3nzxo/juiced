@@ -335,6 +335,7 @@ const en = {
   prof_partners_none: "No partner yet",
   pt_from_profiles: "From member profiles ({n}), used automatically",
   prof_partner_of: "Listed as partner by:",
+  prof_alt_other_ph: "Other, e.g. Mo/TB",
 };
 
 export type ExtraDict = typeof en;
@@ -666,6 +667,7 @@ const de: Partial<ExtraDict> = {
   prof_partners_none: "Noch kein Partner",
   pt_from_profiles: "Aus den Profilen der Mitglieder ({n}), wird automatisch beachtet",
   prof_partner_of: "Als Partner eingetragen von:",
+  prof_alt_other_ph: "Sonstiges, z. B. Mo/TB",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -988,6 +990,7 @@ const fr: Partial<ExtraDict> = {
   prof_partners_none: "Pas encore de partenaire",
   pt_from_profiles: "Depuis les profils ({n}), pris en compte automatiquement",
   prof_partner_of: "Indiqué comme partenaire par :",
+  prof_alt_other_ph: "Autre, ex. Mo/TB",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1310,6 +1313,7 @@ const es: Partial<ExtraDict> = {
   prof_partners_none: "Aún sin compañero",
   pt_from_profiles: "De los perfiles ({n}), se usa automáticamente",
   prof_partner_of: "Marcado como compañero por:",
+  prof_alt_other_ph: "Otro, p. ej. Mo/TB",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1632,6 +1636,7 @@ const pt: Partial<ExtraDict> = {
   prof_partners_none: "Nenhum parceiro ainda",
   pt_from_profiles: "Dos perfis ({n}), usado automaticamente",
   prof_partner_of: "Marcado como parceiro por:",
+  prof_alt_other_ph: "Outro, ex. Mo/TB",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1954,6 +1959,7 @@ const ru: Partial<ExtraDict> = {
   prof_partners_none: "Пока нет напарника",
   pt_from_profiles: "Из профилей ({n}), учитывается автоматически",
   prof_partner_of: "Указан напарником у:",
+  prof_alt_other_ph: "Другое, напр. Mo/TB",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2276,6 +2282,7 @@ const tr: Partial<ExtraDict> = {
   prof_partners_none: "Henüz partner yok",
   pt_from_profiles: "Profillerden ({n}), otomatik kullanılır",
   prof_partner_of: "Partner olarak ekleyen:",
+  prof_alt_other_ph: "Diğer, ör. Mo/TB",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2598,6 +2605,7 @@ const pl: Partial<ExtraDict> = {
   prof_partners_none: "Brak partnera",
   pt_from_profiles: "Z profili ({n}), uwzględniane automatycznie",
   prof_partner_of: "Dodany jako partner przez:",
+  prof_alt_other_ph: "Inne, np. Mo/TB",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
