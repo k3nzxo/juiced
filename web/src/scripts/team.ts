@@ -36,17 +36,14 @@ export async function fetchTeam(): Promise<PublicMember[]> {
 }
 
 export function personCard(m: PublicMember, labels: Record<string, string>): string {
+  // öffentlich nur die Rolle (DPS / Tank / Healer), keine Waffen
   const roleLabel = m.main_role ? labels["role_" + m.main_role] || m.main_role : "";
-  const wt = [...(m.weapons || []).map((w) => labels["weapon_" + w] || w), ...(m.weapon_other ? [m.weapon_other] : [])].join(", ");
   return `<article class="person">
     ${avatar(m)}
     <div class="p-info">
       <div class="p-name"><span>${esc(m.display_name)}</span>${m.country ? flag(m.country) : ""}</div>
       <div class="p-sub"><span class="badge badge-${esc(m.rank)}">${esc(labels[m.rank] || m.rank)}</span></div>
-      ${roleLabel || wt ? `<div class="p-role">
-        ${roleLabel ? `<span class="role-tag role-${esc(m.main_role)}">${esc(roleLabel)}</span>` : ""}
-        ${wt ? `<span class="weapons">${roleLabel ? "· " : ""}${esc(wt)}</span>` : ""}
-      </div>` : ""}
+      ${roleLabel ? `<div class="p-role"><span class="role-tag role-${esc(m.main_role)}">${esc(roleLabel)}</span></div>` : ""}
     </div>
   </article>`;
 }
