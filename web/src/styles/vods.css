@@ -204,3 +204,11 @@ main.vod-main { max-width: 1500px; }
 .vod-up-other { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
 .vod-up-bar { height: 5px; border-radius: 5px; background: var(--border); overflow: hidden; }
 .vod-up-bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s; }
+/* "Meine Reviews" */
+.vod-mine { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; font-size: 13.5px; font-weight: 600; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); background: var(--accent-soft); }
+.vod-mine b { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; font-size: 12px; line-height: 20px; text-align: center; color: #fff; background: var(--accent); }
+.vod-mine b:empty { display: none; }
+.vod-mine.active { color: #fff; background: var(--accent); }
+.vod-mine.active b { color: var(--accent); background: #fff; }
+.vod-mine[hidden] { display: none; }
+.vod-waiting { color: var(--accent); font-weight: 600; }

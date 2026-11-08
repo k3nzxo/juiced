@@ -657,6 +657,8 @@ const fi: Partial<Dict & ExtraDict> = {
   vod_uploading_now: "VODia ladataan juuri nyt",
   att_label: "Osallistuminen (30 pv):",
   att_title: "{a}/{t} tapahtumaa",
+  vod_my_reviews: "Omat arvioinnit",
+  vod_waiting_since: "odottaa {n} pv",
 };
 
 export default fi;

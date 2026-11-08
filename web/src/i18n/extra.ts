@@ -354,6 +354,8 @@ const en = {
   vod_uploading_now: "A VOD is being uploaded right now",
   att_label: "Attendance (30 days):",
   att_title: "{a} of {t} events",
+  vod_my_reviews: "My reviews",
+  vod_waiting_since: "waiting {n} d",
 };
 
 export type ExtraDict = typeof en;
@@ -704,6 +706,8 @@ const de: Partial<ExtraDict> = {
   vod_uploading_now: "Gerade wird ein VOD hochgeladen",
   att_label: "Anwesenheit (30 Tage):",
   att_title: "{a} von {t} Events",
+  vod_my_reviews: "Meine Reviews",
+  vod_waiting_since: "wartet seit {n} T.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1045,6 +1049,8 @@ const fr: Partial<ExtraDict> = {
   vod_uploading_now: "Une VOD est en cours d'envoi",
   att_label: "Présence (30 jours) :",
   att_title: "{a} sur {t} événements",
+  vod_my_reviews: "Mes revues",
+  vod_waiting_since: "attend depuis {n} j",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1386,6 +1392,8 @@ const es: Partial<ExtraDict> = {
   vod_uploading_now: "Se está subiendo un VOD",
   att_label: "Asistencia (30 días):",
   att_title: "{a} de {t} eventos",
+  vod_my_reviews: "Mis revisiones",
+  vod_waiting_since: "espera {n} d",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1727,6 +1735,8 @@ const pt: Partial<ExtraDict> = {
   vod_uploading_now: "Um VOD está sendo enviado",
   att_label: "Presença (30 dias):",
   att_title: "{a} de {t} eventos",
+  vod_my_reviews: "Minhas revisões",
+  vod_waiting_since: "espera há {n} d",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2068,6 +2078,8 @@ const ru: Partial<ExtraDict> = {
   vod_uploading_now: "Сейчас загружается VOD",
   att_label: "Посещаемость (30 дней):",
   att_title: "{a} из {t} событий",
+  vod_my_reviews: "Мои разборы",
+  vod_waiting_since: "ждёт {n} дн.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2409,6 +2421,8 @@ const tr: Partial<ExtraDict> = {
   vod_uploading_now: "Şu anda bir VOD yükleniyor",
   att_label: "Katılım (30 gün):",
   att_title: "{t} etkinlikten {a}",
+  vod_my_reviews: "İncelemelerim",
+  vod_waiting_since: "{n} gündür bekliyor",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2750,6 +2764,8 @@ const pl: Partial<ExtraDict> = {
   vod_uploading_now: "Właśnie wysyłany jest VOD",
   att_label: "Obecność (30 dni):",
   att_title: "{a} z {t} wydarzeń",
+  vod_my_reviews: "Moje recenzje",
+  vod_waiting_since: "czeka {n} dni",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

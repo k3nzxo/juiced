@@ -657,6 +657,8 @@ const ar: Partial<Dict & ExtraDict> = {
   vod_uploading_now: "يتم رفع VOD الآن",
   att_label: "الحضور (30 يومًا):",
   att_title: "{a} من {t} فعالية",
+  vod_my_reviews: "مراجعاتي",
+  vod_waiting_since: "ينتظر منذ {n} يوم",
 };
 
 export default ar;
