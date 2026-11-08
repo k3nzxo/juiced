@@ -25,7 +25,7 @@ export function initWind(canvas: HTMLCanvasElement) {
     p.px = p.x; p.py = p.y; p.vx = 0; p.vy = 0; p.hot = 0;
     p.s = 0.7 + Math.random() * 1.5;
     p.life = 160 + Math.random() * 360;
-    p.c = Math.random() < 0.8 ? 0 : 1;
+    p.c = Math.random() < 0.93 ? 0 : 1;
   };
 
   const resize = () => {
@@ -34,7 +34,7 @@ export function initWind(canvas: HTMLCanvasElement) {
     w = r.width; h = r.height;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.min(900, Math.round((w * h) / 1500));
+    const n = Math.min(320, Math.round((w * h) / 3500));
     parts = Array.from({ length: n }, () => { const p = {} as P; spawn(p, true); return p; });
   };
 
@@ -52,7 +52,7 @@ export function initWind(canvas: HTMLCanvasElement) {
     t += 0.004;
     // Spuren langsam ausblenden (funktioniert auf transparentem Canvas, egal welches Theme)
     ctx.globalCompositeOperation = "destination-out";
-    ctx.fillStyle = "rgba(0,0,0,0.055)";
+    ctx.fillStyle = "rgba(0,0,0,0.07)";
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
     ctx.lineCap = "round";
