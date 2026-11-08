@@ -54,13 +54,18 @@ export async function start() {
 }
 
 function renderLogin(configured = true) {
+  // kam man vom Discord-Login zurück, ohne angemeldet zu sein? Dann Hinweis zeigen und die URL aufräumen
+  const params = new URLSearchParams(location.search);
+  const failed = params.has("login");
+  if (failed) history.replaceState(null, "", location.pathname + location.hash);
   const next = encodeURIComponent(location.pathname + location.hash);
   root.innerHTML = `<div class="app-center">
     <div class="login-card card">
       <span class="login-ico">${icon.shield}</span>
       <h1>${esc(T("app_login_t"))}</h1>
       <p>${esc(T("app_login_b"))}</p>
-      <a class="btn btn-primary discord-btn ${configured ? "" : "disabled"}" href="/api/auth/login?next=${next}">
+      ${failed ? `<p class="login-failed">${esc(T("app_login_failed"))}</p>` : ""}
+      <a class="btn btn-primary discord-btn ${configured ? "" : "disabled"}" href="/api/auth/login?next=${next}" data-astro-prefetch="false" rel="nofollow">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.9A17.6 17.6 0 0 0 15.9 3.5l-.6 1.2a16.3 16.3 0 0 0-6.6 0L8.1 3.5a17.6 17.6 0 0 0-4.4 1.4C1 9 .3 13 .6 16.9a17.8 17.8 0 0 0 5.4 2.7l1.2-1.9c-.7-.2-1.3-.5-1.9-.9l.5-.4a12.7 12.7 0 0 0 12.4 0l.5.4c-.6.4-1.2.7-1.9.9l1.2 1.9a17.8 17.8 0 0 0 5.4-2.7c.4-4.5-.7-8.4-3.1-12ZM8.5 14.6c-1 0-1.9-1-1.9-2.1s.8-2.1 1.9-2.1 1.9 1 1.9 2.1-.8 2.1-1.9 2.1Zm7 0c-1 0-1.9-1-1.9-2.1s.8-2.1 1.9-2.1 1.9 1 1.9 2.1-.8 2.1-1.9 2.1Z"/></svg>
         ${esc(T("app_login_btn"))}
       </a>

@@ -1,4 +1,5 @@
 """Login mit Discord (OAuth2 Authorization Code). Rollen werden optional vom JUICED-Server übernommen."""
+import re
 import secrets
 from datetime import datetime, timezone
 from urllib.parse import urlencode
@@ -77,6 +78,8 @@ def login(request: Request, next: str | None = None):
     resp = RedirectResponse(url, status_code=302)
     resp.set_cookie(STATE_COOKIE, sign(f"{state}|{_safe_next(next)}"), max_age=600, httponly=True,
                     secure=IS_PROD, samesite="lax", path="/api/auth")
+    # nie zwischenspeichern: jede Weiterleitung hat ihren eigenen Sicherheitscode (state)
+    resp.headers["Cache-Control"] = "no-store"
     return resp
 
 
@@ -85,10 +88,15 @@ def callback(request: Request, code: str | None = None, state: str | None = None
              db: DbSession = Depends(get_db)):
     raw = unsign(request.cookies.get(STATE_COOKIE, ""))
     if not raw or "|" not in raw:
-        return RedirectResponse("/?login=expired", status_code=302)
+        lang = request.cookies.get("juiced_lang", "en")
+        lang = lang if re.fullmatch(r"[a-z]{2}", lang or "") else "en"
+        return RedirectResponse(f"/{lang}/app/?login=expired", status_code=302)
     expected, nxt = raw.split("|", 1)
     if error or not code or not state or not secrets.compare_digest(state, expected):
-        return RedirectResponse(f"{nxt}?login=cancelled" if "?" not in nxt else nxt, status_code=302)
+        path, _, frag = nxt.partition("#")  # Hinweis vor das #, sonst sieht die Seite ihn nicht
+        if "?" not in path:
+            path += "?login=cancelled"
+        return RedirectResponse(path + (f"#{frag}" if frag else ""), status_code=302)
 
     try:
         with httpx.Client(timeout=10) as c:

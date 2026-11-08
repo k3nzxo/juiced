@@ -211,6 +211,7 @@ const en = {
   rh_open: "Open in Discord",
   rh_other: "Not playing / queue",
   rh_nobody: "Nobody has signed up yet.",
+  app_login_failed: "The Discord login didn't go through. Please try again.",
 };
 
 export type ExtraDict = typeof en;
@@ -427,6 +428,7 @@ const de: Partial<ExtraDict> = {
   rh_open: "In Discord öffnen",
   rh_other: "Nicht dabei / Warteliste",
   rh_nobody: "Noch niemand angemeldet.",
+  app_login_failed: "Der Discord-Login hat nicht geklappt. Bitte versuch es nochmal.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -634,6 +636,7 @@ const fr: Partial<ExtraDict> = {
   rh_open: "Ouvrir dans Discord",
   rh_other: "Absents / file d'attente",
   rh_nobody: "Personne n'est encore inscrit.",
+  app_login_failed: "La connexion Discord n'a pas fonctionné. Réessaie.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -841,6 +844,7 @@ const es: Partial<ExtraDict> = {
   rh_open: "Abrir en Discord",
   rh_other: "No juegan / en cola",
   rh_nobody: "Todavía no se ha apuntado nadie.",
+  app_login_failed: "El inicio de sesión con Discord no funcionó. Inténtalo de nuevo.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1048,6 +1052,7 @@ const pt: Partial<ExtraDict> = {
   rh_open: "Abrir no Discord",
   rh_other: "Fora / na fila",
   rh_nobody: "Ninguém se inscreveu ainda.",
+  app_login_failed: "O login com Discord não funcionou. Tente de novo.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1255,6 +1260,7 @@ const ru: Partial<ExtraDict> = {
   rh_open: "Открыть в Discord",
   rh_other: "Не играют / очередь",
   rh_nobody: "Пока никто не записался.",
+  app_login_failed: "Вход через Discord не удался. Попробуй ещё раз.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -1462,6 +1468,7 @@ const tr: Partial<ExtraDict> = {
   rh_open: "Discord'da aç",
   rh_other: "Katılmıyor / sırada",
   rh_nobody: "Henüz kimse kaydolmadı.",
+  app_login_failed: "Discord girişi olmadı. Lütfen tekrar dene.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -1669,6 +1676,7 @@ const pl: Partial<ExtraDict> = {
   rh_open: "Otwórz w Discordzie",
   rh_other: "Nie grają / kolejka",
   rh_nobody: "Nikt się jeszcze nie zapisał.",
+  app_login_failed: "Logowanie przez Discord się nie udało. Spróbuj ponownie.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

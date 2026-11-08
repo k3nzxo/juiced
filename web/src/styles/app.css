@@ -333,3 +333,5 @@ main.vod-main, .vod-main { max-width: none; }
 .rh-out > span:first-child { font-size: 12px; font-weight: 600; color: var(--muted); margin-right: 4px; }
 .rh-none { font-size: 14px; }
 .rh-stale { margin-bottom: 10px; }
+
+.login-failed { font-size: 13.5px; font-weight: 600; color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); padding: 8px 12px; border-radius: 8px; }
