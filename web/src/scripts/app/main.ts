@@ -687,6 +687,10 @@ function viewProfile(view: HTMLElement) {
   const alt = new Set<string>(me!.alt_paths || []);
   const ways = new Set<string>(me!.inner_ways || []);
   let showAll = false;
+  // erst die Rolle wählen, dann nur deren Pfade zeigen (Tank, Heiler, DPS)
+  const PATH_ROLES = ["tank", "healer", "dps"] as const;
+  const byRole = [...PATHS].sort((a, b) => PATH_ROLES.indexOf(a.role) - PATH_ROLES.indexOf(b.role));
+  let pickRole: string = pathById(mainPath)?.role || (me!.main_role && (PATH_ROLES as readonly string[]).includes(me!.main_role) ? me!.main_role : "dps");
   view.innerHTML = head(T("prof_title")) + `<form class="profile card" novalidate>
     <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div>
       <a class="btn btn-ghost btn-sm prof-view" href="#/roster/${me!.id}">${icon.user}</a></div>
@@ -694,10 +698,11 @@ function viewProfile(view: HTMLElement) {
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
     <h2 class="prof-sec">${esc(T("prof_build"))}</h2>
     <div class="field"><span class="label">${esc(T("prof_main_path"))}</span><p class="hint">${esc(T("prof_main_hint"))}</p>
-      <div class="path-pick">${PATHS.map((p) => `<button type="button" class="pp role-${p.role}" data-main="${p.id}" aria-pressed="${mainPath === p.id}">
-        <strong>${esc(p.name)}</strong><span>${esc(p.weapons.join(" + "))}</span>${roleTag(p.role)}</button>`).join("")}</div></div>
+      <div class="seg-tabs path-roles" role="group">${PATH_ROLES.map((r) => `<button type="button" data-prole="${r}" aria-pressed="${pickRole === r}"><span class="role-tag role-${r}">${esc(T("role_" + r))}</span></button>`).join("")}</div>
+      <div class="path-pick">${byRole.map((p) => `<button type="button" class="pp role-${p.role}" data-main="${p.id}" data-for-role="${p.role}" aria-pressed="${mainPath === p.id}" ${p.role === pickRole ? "" : "hidden"}>
+        <strong>${esc(p.name)}</strong><span>${esc(p.weapons.join(" + "))}</span></button>`).join("")}</div></div>
     <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span>
-      <div class="chips">${PATHS.map((p) => `<button type="button" class="chip" data-alt="${p.id}" aria-pressed="${alt.has(p.id)}" ${mainPath === p.id ? "hidden" : ""}>${esc(p.name)}</button>`).join("")}</div></div>
+      <div class="chips">${byRole.map((p) => `<button type="button" class="chip path-chip role-${p.role}" data-alt="${p.id}" aria-pressed="${alt.has(p.id)}" ${mainPath === p.id ? "hidden" : ""}>${esc(p.name)}</button>`).join("")}</div></div>
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
       <p class="hint">${esc(T("prof_iw_hint"))}</p><div data-iw></div></div>
@@ -727,6 +732,11 @@ function viewProfile(view: HTMLElement) {
     view.querySelector("[data-iw-count]")!.textContent = ways.size ? `(${ways.size})` : "";
   });
   view.querySelector<HTMLInputElement>("[data-iw-all]")!.addEventListener("change", (e) => { showAll = (e.target as HTMLInputElement).checked; drawWays(); });
+  view.querySelectorAll<HTMLElement>("[data-prole]").forEach((b) => b.addEventListener("click", () => {
+    pickRole = b.dataset.prole!;
+    view.querySelectorAll<HTMLElement>("[data-prole]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.prole === pickRole)));
+    view.querySelectorAll<HTMLElement>("[data-for-role]").forEach((x) => { x.hidden = x.dataset.forRole !== pickRole; });
+  }));
   view.querySelectorAll<HTMLElement>("[data-main]").forEach((b) => b.addEventListener("click", () => {
     mainPath = mainPath === b.dataset.main ? null : b.dataset.main!;
     if (mainPath) alt.delete(mainPath);

@@ -469,3 +469,6 @@ main.vod-main, .vod-main { max-width: none; }
 .ro-add:hover { color: var(--accent); border-color: var(--accent); }
 .ro-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
 @media (max-width: 760px) { .ro-board { grid-template-columns: minmax(0, 1fr); } .ro-pool { position: static; } .ro-pool .ro-list { max-height: 220px; flex-direction: row; flex-wrap: wrap; } .ro-pool .ro-p { width: auto; } }
+.path-roles { margin: 2px 0 10px; }
+.path-roles button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+.path-chip::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--role); vertical-align: 1px; }
