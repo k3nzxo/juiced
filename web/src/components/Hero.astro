@@ -4,10 +4,22 @@ import { useT, DISCORD_INVITE, type Lang } from "../i18n";
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useT(lang);
+// 30v30: zwei Formationen à 6 Reihen x 5 Spalten
+const team = (side: "us" | "them") => Array.from({ length: 30 }, (_, i) => {
+  const col = i % 5, row = Math.floor(i / 5);
+  const x = side === "us" ? 40 + col * 34 : 480 - col * 34;
+  return { x, y: 46 + row * 46, d: ((row * 5 + (side === "us" ? 4 - col : col)) * 97) % 2400 };
+});
+const us = team("us"), them = team("them");
 ---
 <section class="hero">
   <div class="hero-grid-bg" aria-hidden="true"></div>
-  <div class="hero-glow" aria-hidden="true"></div>
+  <svg class="clash" viewBox="0 0 520 330" aria-hidden="true">
+    <line class="mid" x1="260" y1="20" x2="260" y2="310" />
+    <g class="side side-us">{us.map((p) => <circle cx={p.x} cy={p.y} r="7" style={`--d:${p.d}ms`} />)}</g>
+    <g class="side side-them">{them.map((p) => <circle cx={p.x} cy={p.y} r="7" style={`--d:${p.d}ms`} />)}</g>
+    <text x="260" y="326" text-anchor="middle">30 v 30</text>
+  </svg>
   <div class="container hero-inner">
     <div class="hero-copy">
       <p class="kicker reveal">EU · Where Winds Meet</p>
@@ -31,16 +43,26 @@ const t = useT(lang);
     -webkit-mask-image: radial-gradient(ellipse 70% 80% at 85% 50%, #000 10%, transparent 70%);
   }
   @keyframes grid-drift { to { background-position: 56px 56px, 56px 56px; } }
-  .hero-glow { position: absolute; width: 520px; height: 520px; right: 6%; top: 50%; margin-top: -260px; border-radius: 50%; pointer-events: none;
-    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%); filter: blur(20px); opacity: 0.55;
-    animation: glow 9s ease-in-out infinite alternate; }
-  @keyframes glow { from { transform: translate(0, 0) scale(1); } to { transform: translate(-60px, 30px) scale(1.15); } }
-  .wordmark { background: linear-gradient(100deg, var(--text) 40%, var(--accent) 50%, var(--text) 60%) 0 0 / 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 7s var(--ease) 1.2s infinite; }
-  @keyframes shine { 0% { background-position: 100% 0; } 35%, 100% { background-position: 0% 0; } }
+  .clash { position: absolute; right: max(24px, calc((100vw - var(--container)) / 2 + 24px)); top: 50%; width: min(460px, 38vw); transform: translateY(-50%); overflow: visible; }
+  .clash .mid { stroke: var(--border-strong); stroke-width: 1.5; stroke-dasharray: 4 7; animation: dash 1.6s linear infinite; }
+  .clash text { font: 600 12px var(--font-sans); letter-spacing: 0.2em; fill: var(--faint); }
+  .side { animation: advance-us 5.5s var(--ease) infinite; }
+  .side-them { animation-name: advance-them; }
+  .side-us circle { fill: var(--accent); }
+  .side-them circle { fill: var(--text); opacity: 0.2; }
+  .side circle { transform-box: fill-box; transform-origin: center; animation: blink 2.4s ease-in-out infinite; animation-delay: var(--d); }
+  .side-them circle { animation-name: blink-them; }
+  @keyframes advance-us { 0%, 100% { transform: translateX(0); } 45%, 55% { transform: translateX(26px); } }
+  @keyframes advance-them { 0%, 100% { transform: translateX(0); } 45%, 55% { transform: translateX(-26px); } }
+  @keyframes blink { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.7); opacity: 0.55; } }
+  @keyframes blink-them { 0%, 100% { transform: scale(1); opacity: 0.22; } 50% { transform: scale(0.7); opacity: 0.1; } }
+  @keyframes dash { to { stroke-dashoffset: -22; } }
+  .wordmark { font-family: var(--font-sans); font-weight: 850; letter-spacing: -0.05em; }
+  @media (max-width: 960px) { .clash { display: none; } }
   .hero-inner { position: relative; display: flex; align-items: center; min-height: min(520px, 70vh); padding-top: 64px; padding-bottom: 64px; }
   .hero-copy { display: flex; flex-direction: column; gap: 20px; }
   .kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-  .wordmark { font-size: clamp(64px, 11vw, 148px); font-weight: 800; letter-spacing: -0.045em; line-height: 0.9; }
+  .wordmark { font-size: clamp(64px, 11vw, 148px); line-height: 0.9; }
   .lead { max-width: 520px; font-size: clamp(16px, 1.5vw, 18px); color: var(--muted); }
   .cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
   @media (max-width: 900px) {

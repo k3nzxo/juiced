@@ -154,7 +154,8 @@ const tiles = [
   :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--accent); }
   :global(.person .p-name) { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
   :global(.person .p-sub) { font-size: 13.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
-  :global(.person.skeleton) { background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+  :global(.person.skeleton) { background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite, skel-show 0.25s ease 0.5s both; }
+  @keyframes skel-show { from { opacity: 0; } to { opacity: 1; } }
   @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
   :global(.lead-empty) { grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: 16px; }
 
@@ -175,4 +176,9 @@ const tiles = [
     .lead-grid { grid-template-columns: 1fr; }
     .cta-card { padding: 26px; }
   }
+</style>
+<style>
+  :global(.person:not(.skeleton)) { animation: person-in 0.45s var(--ease) both; }
+  :global(.person:nth-child(2)) { animation-delay: 40ms; } :global(.person:nth-child(3)) { animation-delay: 80ms; } :global(.person:nth-child(4)) { animation-delay: 120ms; } :global(.person:nth-child(n+5)) { animation-delay: 160ms; }
+  @keyframes person-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 </style>
