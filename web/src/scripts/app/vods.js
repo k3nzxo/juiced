@@ -176,7 +176,7 @@ function drawVodList() {
         </div>
         <div class="vod-card-foot">
           <span>${v.uploader_name ? escapeHtml(vt("by", { name: v.uploader_name })) : ""}</span>
-          <span>${vodExpiryLabel(v)} ${vt("notes_n", { n: v.note_count })}</span>
+          <span class="vod-foot-right">${vodExpiryLabel(v)}<span>${vt("notes_n", { n: v.note_count })}</span></span>
         </div>
         ${v.status === "uploading" && !vodState.uploads[v.id] ? `<div class="vod-resume-row">
           <button class="btn btn-sm btn-outline" data-resume-id="${v.id}">${icon.refresh} ${vt("resume")}</button>

@@ -25,7 +25,10 @@
 .vod-card-body { padding: 0.75rem 0.85rem 0.85rem; }
 .vod-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vod-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-muted); }
-.vod-card-foot { display: flex; justify-content: space-between; margin-top: 0.55rem; font-size: 0.72rem; color: var(--text-faint); }
+.vod-card-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 0.55rem; font-size: 0.72rem; line-height: 1.2; color: var(--text-faint); }
+.vod-foot-right { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.vod-foot-right .vod-pinned, .vod-foot-right .vod-expiry { margin-right: 0; }
+.vod-pinned svg { display: block; flex: none; }
 .vod-pinned { color: var(--gold); font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; margin-right: 0.4rem; }
 .vod-expiry { color: var(--text-faint); margin-right: 0.4rem; }
 .vod-pin-active { color: var(--gold); border-color: rgba(245,196,81,0.4); }
