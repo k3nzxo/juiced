@@ -1407,7 +1407,7 @@ const es: Partial<ExtraDict> = {
   att_count: "{a} eventos",
   vod_retry_in: "Conexión interrumpida – reintento en {n} s",
   vod_retry_offline: "Sin conexión – sigue en cuanto vuelva la conexión",
-  rank_admin: "Admin",
+  rank_admin: "Administrador",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1754,7 +1754,7 @@ const pt: Partial<ExtraDict> = {
   att_count: "{a} eventos",
   vod_retry_in: "Conexão interrompida – nova tentativa em {n} s",
   vod_retry_offline: "Você está offline – continua assim que a conexão voltar",
-  rank_admin: "Admin",
+  rank_admin: "Administrador",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2101,7 +2101,7 @@ const ru: Partial<ExtraDict> = {
   att_count: "событий: {a}",
   vod_retry_in: "Соединение прервано — повтор через {n} с",
   vod_retry_offline: "Нет сети — продолжится, когда соединение вернётся",
-  rank_admin: "Admin",
+  rank_admin: "Админ",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2448,7 +2448,7 @@ const tr: Partial<ExtraDict> = {
   att_count: "{a} etkinlik",
   vod_retry_in: "Bağlantı kesildi – {n} sn sonra tekrar denenecek",
   vod_retry_offline: "Çevrimdışısın – bağlantı gelince devam eder",
-  rank_admin: "Admin",
+  rank_admin: "Yönetici",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2795,7 +2795,7 @@ const pl: Partial<ExtraDict> = {
   att_count: "{a} wydarzeń",
   vod_retry_in: "Połączenie przerwane – ponowna próba za {n} s",
   vod_retry_offline: "Jesteś offline – wznowi się po powrocie połączenia",
-  rank_admin: "Admin",
+  rank_admin: "Administrator",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

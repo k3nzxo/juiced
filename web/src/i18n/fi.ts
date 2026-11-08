@@ -661,6 +661,7 @@ const fi: Partial<Dict & ExtraDict> = {
   att_count: "{a} tapahtumaa",
   vod_retry_in: "Yhteys katkesi – uusi yritys {n} s päästä",
   vod_retry_offline: "Olet offline-tilassa – jatkuu, kun yhteys palaa",
+  rank_admin: "Ylläpitäjä",
 };
 
 export default fi;

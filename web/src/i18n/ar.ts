@@ -661,6 +661,7 @@ const ar: Partial<Dict & ExtraDict> = {
   att_count: "{a} فعالية",
   vod_retry_in: "انقطع الاتصال – إعادة المحاولة خلال {n} ث",
   vod_retry_offline: "أنت غير متصل – سيستمر عند عودة الاتصال",
+  rank_admin: "مشرف",
 };
 
 export default ar;

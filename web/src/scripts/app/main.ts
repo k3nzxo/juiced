@@ -1108,11 +1108,11 @@ async function viewApplications(view: HTMLElement) {
       </div>` : ""}
       <p class="app-text">${esc(a.experience)}</p>${a.why ? `<p class="app-text muted">${esc(a.why)}</p>` : ""}
       ${a.vod_links && a.vod_links.length ? `<div class="vod-links"><span class="muted">${esc(T("apps_vods"))}:</span>${a.vod_links.map((u: string) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(u))}</a>`).join("")}</div>` : ""}
-      <div class="row-gap">
+      ${me!.is_admin ? `<div class="row-gap">
         ${a.status !== "accepted" ? `<button class="btn btn-primary btn-sm" data-s="accepted">${icon.check} ${esc(T("apps_accept"))}</button>` : ""}
         ${a.status !== "rejected" ? `<button class="btn btn-outline btn-sm" data-s="rejected">${esc(T("apps_reject"))}</button>` : ""}
         <button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button>
-      </div></article>`).join("");
+      </div>` : ""}</article>`).join("");
     el.querySelectorAll<HTMLElement>(".app-card").forEach((c) => {
       const id = c.dataset.id;
       c.querySelectorAll<HTMLElement>("[data-s]").forEach((b) => b.addEventListener("click", async () => {
@@ -1120,7 +1120,7 @@ async function viewApplications(view: HTMLElement) {
         refreshBadges();
         viewApplications(view);
       }));
-      c.querySelector("[data-del]")!.addEventListener("click", async () => {
+      c.querySelector("[data-del]")?.addEventListener("click", async () => {
         if (!confirm(T("apps_delete_confirm"))) return;
         await api(`/applications/${id}`, { method: "DELETE" }).catch((e) => toast(e.message));
         viewApplications(view);
@@ -1134,18 +1134,20 @@ async function viewApplications(view: HTMLElement) {
 async function viewAdmin(view: HTMLElement) {
   view.innerHTML = head(T("admin_title"), T("admin_sub")) + `<input class="input search" placeholder="${esc(T("admin_search"))}" data-q><div id="adm">${loading}</div>`;
   let list: any[] = [];
-  const ranks = ["guest", "member", "vice", "leader", ...(me!.rank === "developer" ? ["developer"] : [])];
+  const ranks = ["guest", "member", "admin", "vice", "leader", ...(me!.rank === "developer" ? ["developer"] : [])];
+  const canEdit = me!.is_admin;  // Admin-Rang: nur ansehen
   const draw = () => {
     const q = (view.querySelector("[data-q]") as HTMLInputElement).value.toLowerCase();
     const items = list.filter((u) => !q || `${u.display_name} ${u.username}`.toLowerCase().includes(q));
     view.querySelector("#adm")!.innerHTML = `<div class="table card">${items.map((u) => `
       <div class="tr tr-admin" data-id="${u.id}">${avatar(u, 34)}
         <div class="tr-main"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)} · ${esc(u.rank_manual ? T("admin_manual") : T("admin_from_discord"))}</span></div>
-        <div class="tr-ctrl">
+        ${!canEdit ? `<div class="tr-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div></div>` : `<div class="tr-ctrl">
           <select class="select" data-rank aria-label="${esc(T("admin_rank"))}">${ranks.map((r) => `<option value="${r}" ${u.rank === r ? "selected" : ""}>${esc(T(RANK_KEYS[r]))}</option>`).join("")}</select>
           <div class="coach-pick"><span class="coach-label">${esc(T("admin_coach_for"))}:</span><div class="chips">${COACH_ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" aria-pressed="${u.coach_roles.includes(r)}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
           ${u.rank_manual ? `<button class="btn btn-ghost btn-sm" data-sync title="${esc(T("admin_use_discord"))}">${icon.refresh}</button>` : ""}
-        </div></div>`).join("")}</div>`;
+        </div></div>`}`).join("")}</div>`;
+    if (!canEdit) return;
     view.querySelectorAll<HTMLElement>(".tr-admin").forEach((row) => {
       const u = list.find((x) => x.id === Number(row.dataset.id));
       const save = async (json: any) => {
@@ -1451,13 +1453,13 @@ async function loadNextEvents(el: HTMLElement) {
 // Wochenplan verwalten: "Nächste 7 Tage" (nach Tagen) oder "Alle Termine" (jede Serie einmal)
 let schedTab: "week" | "all" = "week";
 async function viewSchedule(view: HTMLElement) {
-  view.innerHTML = head(T("app_nav_schedule"), "", `<a class="btn btn-ghost btn-sm" href="/${lang()}/schedule/" target="_blank">${esc(T("week_cta"))}</a><button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ev_new"))}</button>`)
+  view.innerHTML = head(T("app_nav_schedule"), "", `<a class="btn btn-ghost btn-sm" href="/${lang()}/schedule/" target="_blank">${esc(T("week_cta"))}</a>${me!.is_admin ? `<button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ev_new"))}</button>` : ""}`)
     + `<div class="seg-tabs" role="tablist">
         <button role="tab" data-tab="week" aria-selected="${schedTab === "week"}">${esc(T("ev_tab_week"))}</button>
         <button role="tab" data-tab="all" aria-selected="${schedTab === "all"}">${esc(T("ev_tab_all"))}</button>
       </div><div id="evs">${loading}</div>`;
   const reload = () => viewSchedule(view);
-  view.querySelector("[data-new]")!.addEventListener("click", () => editEvent(null, reload));
+  view.querySelector("[data-new]")?.addEventListener("click", () => editEvent(null, reload));
   view.querySelectorAll<HTMLElement>("[data-tab]").forEach((b) => b.addEventListener("click", () => {
     schedTab = b.dataset.tab as "week" | "all";
     reload();
@@ -1468,7 +1470,7 @@ async function viewSchedule(view: HTMLElement) {
   catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; return; }
   if (!list.length) { el.innerHTML = `<p class="empty">${esc(T("ev_none"))}</p>`; return; }
 
-  const actions = `<div class="ag-actions"><button class="btn btn-ghost btn-sm" data-edit title="${esc(T("edit"))}">${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del title="${esc(T("delete"))}">${icon.trash}</button></div>`;
+  const actions = !me!.is_admin ? "" : `<div class="ag-actions"><button class="btn btn-ghost btn-sm" data-edit title="${esc(T("edit"))}">${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del title="${esc(T("delete"))}">${icon.trash}</button></div>`;
   const timeOf = (e: any) => e.open_end ? T("sched_from", { t: timeShort(new Date(e.starts_at), lang()) }) : timeRange(new Date(e.starts_at), new Date(e.ends_at), lang());
   const title = (e: any) => `<strong>${esc(e.title)}${e.opponent ? ` <span>· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>`;
   const flags = (e: any) => `${e.open_end ? ` · ${esc(T("sched_open_end"))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}`;
@@ -1517,8 +1519,8 @@ async function viewSchedule(view: HTMLElement) {
   const byId = new Map(list.map((e) => [e.id, e]));
   el.querySelectorAll<HTMLElement>(".ag-ev").forEach((row) => {
     const e = byId.get(Number(row.dataset.id));
-    row.querySelector("[data-edit]")!.addEventListener("click", () => editEvent(e, reload));
-    row.querySelector("[data-del]")!.addEventListener("click", async () => {
+    row.querySelector("[data-edit]")?.addEventListener("click", () => editEvent(e, reload));
+    row.querySelector("[data-del]")?.addEventListener("click", async () => {
       if (!confirm(T("ev_delete_confirm"))) return;
       await api(`/events/${e.id}`, { method: "DELETE" }).catch((x) => toast(x.message));
       reload();
@@ -1601,12 +1603,12 @@ async function viewMatches(view: HTMLElement) {
         <span class="status status-${r.status === "declined" ? "rejected" : r.status}">${esc(st[r.status])}</span></div>
       <div class="app-tags">${r.format ? `<span class="badge">${esc(r.format)}</span>` : ""}<strong>${esc(r.proposed_times)}</strong></div>
       ${r.message ? `<p class="app-text">${esc(r.message)}</p>` : ""}
-      <textarea class="textarea mt-reply" rows="2" maxlength="1000" placeholder="${esc(T("mt_reply_ph"))}" data-reply>${esc(r.reply || "")}</textarea>
+      ${me!.is_admin ? `<textarea class="textarea mt-reply" rows="2" maxlength="1000" placeholder="${esc(T("mt_reply_ph"))}" data-reply>${esc(r.reply || "")}</textarea>
       <div class="row-gap">
         ${r.status !== "accepted" ? `<button class="btn btn-primary btn-sm" data-accept>${icon.check} ${esc(T("mt_accept"))}</button>` : ""}
         ${r.status !== "declined" ? `<button class="btn btn-outline btn-sm" data-decline>${esc(T("mt_decline"))}</button>` : ""}
         <button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button>
-      </div></article>`).join("");
+      </div>` : r.reply ? `<p class="app-text muted">${esc(r.reply)}</p>` : ""}</article>`).join("");
     el.querySelectorAll<HTMLElement>(".app-card").forEach((c) => {
       const r = list.find((x) => x.id === Number(c.dataset.id));
       const set = async (status: string) => {
@@ -1618,7 +1620,7 @@ async function viewMatches(view: HTMLElement) {
         editEvent(null, () => viewMatches(view), { kind: "scrim", title: T("kind_scrim"), opponent: r.guild_name, description: `${r.proposed_times}${r.format ? " · " + r.format : ""}` });
       });
       c.querySelector("[data-decline]")?.addEventListener("click", async () => { await set("declined").catch((x) => toast(x.message)); viewMatches(view); });
-      c.querySelector("[data-del]")!.addEventListener("click", async () => {
+      c.querySelector("[data-del]")?.addEventListener("click", async () => {
         if (!confirm(T("mt_delete_confirm"))) return;
         await api(`/scrims/${r.id}`, { method: "DELETE" }).catch((x) => toast(x.message));
         viewMatches(view);
