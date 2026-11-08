@@ -10,7 +10,9 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session as DbSession
 
-from . import models, notify
+from fastapi.responses import FileResponse
+
+from . import appimages, models, notify
 from .auth import user_out
 from .db import get_db
 from .security import client_ip, current_user_optional, limiter, require_admin, require_management, require_member, require_user
@@ -67,6 +69,11 @@ class ApplicationIn(BaseModel):
     weapon_other: Optional[str] = None
     build: Optional[str] = None
     build_link: Optional[str] = None
+    inner_ways: Optional[str] = None
+    build_images: list[str] = []
+    region: Optional[str] = None
+    gear_score: Optional[int] = None
+    arena_rank: Optional[str] = None
     country: str
     times: Optional[str] = None
     experience: str
@@ -88,20 +95,35 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
     platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
     links = clean_links(payload.vod_links)
     weapons, weapon_other = models.clean_weapons(payload.weapons), clean(payload.weapon_other, 40)
+    if payload.main_role != "dps":  # Waffen nur bei DPS
+        weapons, weapon_other = "", None
     if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms or not links:
         raise HTTPException(status_code=400, detail="Missing fields")
     if payload.main_role == "dps" and not (weapons or weapon_other):
         raise HTTPException(status_code=400, detail="Missing weapon")
     build = clean(payload.build, 2000)
     build_link = (clean_links([payload.build_link]) or [None])[0] if payload.build_link else None
-    if not build:
-        raise HTTPException(status_code=400, detail="Missing build")
+    inner_ways = clean(payload.inner_ways, 500)
+    # wie im alten Discord-Ticket: Region, Gear Score und Screenshots sind Pflicht
+    if payload.region not in models.REGIONS:
+        raise HTTPException(status_code=400, detail="Missing region")
+    if not payload.gear_score or not (1 <= payload.gear_score <= 999999):
+        raise HTTPException(status_code=400, detail="Missing gear score")
+    if not payload.build_images:
+        raise HTTPException(status_code=400, detail="Missing screenshots")
+    images = appimages.save_images(payload.build_images)
     a = models.Application(**fields, times=clean(payload.times, 120) or "", main_role=payload.main_role, weapons=weapons or None, weapon_other=weapon_other,
-                           build=build, build_link=build_link, why=clean(payload.why, 2000),
+                           build=build, build_link=build_link, inner_ways=inner_ways, build_images=json.dumps(images),
+                           region=payload.region, gear_score=payload.gear_score, arena_rank=clean(payload.arena_rank, 40),
+                           why=clean(payload.why, 2000),
                            lang=payload.lang if payload.lang in LANGS else None,
                            platforms=",".join(platforms), vod_links=json.dumps(links))
     db.add(a)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        appimages.delete_images(images)
+        raise
     notify.application_webhook(a)
     return {"ok": True}
 
@@ -129,6 +151,8 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.weapons = models.clean_weapons(data["weapons"]) or None
     if "weapon_other" in data:
         user.weapon_other = clean(data["weapon_other"], 40)
+    if user.main_role != "dps":
+        user.weapons, user.weapon_other = None, None
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None
@@ -207,10 +231,27 @@ def delete_announcement(aid: int, db: DbSession = Depends(get_db), user: models.
 
 # ------------------------------------------------------------------ Bewerbungen (Leader / Vice)
 
+def _app_images(a: models.Application) -> list[str]:
+    try:
+        return [n for n in json.loads(a.build_images or "[]") if isinstance(n, str)]
+    except ValueError:
+        return []
+
+
 def _cleanup_applications(db: DbSession):
     cutoff = datetime.now(timezone.utc) - timedelta(days=30)
-    db.query(models.Application).filter(models.Application.status != "pending", models.Application.decided_at < cutoff).delete()
+    old = db.query(models.Application).filter(models.Application.status != "pending", models.Application.decided_at < cutoff).all()
+    for a in old:
+        appimages.delete_images(_app_images(a))
+        db.delete(a)
     db.commit()
+
+
+@router.get("/applications/images/{name}")
+def application_image(name: str, user: models.User = Depends(require_management)):
+    """Build-Screenshots nur für Leader/Vice."""
+    return FileResponse(appimages.image_path(name), media_type="image/jpeg",
+                        headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"})
 
 
 @router.get("/applications")
@@ -219,7 +260,9 @@ def list_applications(db: DbSession = Depends(get_db), user: models.User = Depen
     apps = db.query(models.Application).order_by(models.Application.created_at.desc()).limit(200).all()
     return [{"id": a.id, "discord": a.discord, "ingame": a.ingame, "main_role": a.main_role,
              "weapons": [w for w in (a.weapons or "").split(",") if w], "weapon_other": a.weapon_other,
-             "build": a.build, "build_link": a.build_link, "country": a.country,
+             "build": a.build, "build_link": a.build_link, "inner_ways": a.inner_ways,
+             "region": a.region, "gear_score": a.gear_score, "arena_rank": a.arena_rank,
+             "build_images": [f"/api/applications/images/{n}" for n in _app_images(a)], "country": a.country,
              "times": a.times, "experience": a.experience, "why": a.why, "lang": a.lang, "status": a.status,
              "platforms": [p for p in (a.platforms or "").split(",") if p], "vod_links": json.loads(a.vod_links or "[]"),
              "created_at": iso(a.created_at)} for a in apps]
@@ -243,8 +286,11 @@ def set_application_status(aid: int, payload: StatusIn, db: DbSession = Depends(
 
 @router.delete("/applications/{aid}")
 def delete_application(aid: int, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
-    db.query(models.Application).filter(models.Application.id == aid).delete()
-    db.commit()
+    a = db.get(models.Application, aid)
+    if a:
+        appimages.delete_images(_app_images(a))
+        db.delete(a)
+        db.commit()
     return {"ok": True}
 
 

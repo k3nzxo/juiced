@@ -10,7 +10,7 @@ const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const d = dict(lang);
 const L = Object.fromEntries(Object.entries(d).filter(([k]) => k.startsWith("kind_") || k.startsWith("sched_")));
-const ranks = { developer: t("rank_developer"), leader: t("rank_leader"), vice: t("rank_vice"), coach: t("rank_coach"), role_healer: t("role_healer"), role_tank: t("role_tank"), role_nameless: t("role_nameless"), role_twinblades: t("role_twinblades"), role_dps: t("role_dps"), weapon_nameless: t("weapon_nameless"), weapon_twinblades: t("weapon_twinblades") };
+const ranks = { developer: t("rank_developer"), leader: t("rank_leader"), vice: t("rank_vice"), coach: t("rank_coach"), role_healer: t("role_healer"), role_tank: t("role_tank"), role_nameless: t("role_nameless"), role_twinblades: t("role_twinblades"), role_dps: t("role_dps"), weapon_nameless_sword: t("weapon_nameless_sword"), weapon_strategic_sword: t("weapon_strategic_sword"), weapon_nameless_spear: t("weapon_nameless_spear"), weapon_heavenquaker_spear: t("weapon_heavenquaker_spear"), weapon_infernal_twinblades: t("weapon_infernal_twinblades"), weapon_inkwell_fan: t("weapon_inkwell_fan"), weapon_vernal_umbrella: t("weapon_vernal_umbrella"), weapon_mortal_rope_dart: t("weapon_mortal_rope_dart"), weapon_ninefold_umbrella: t("weapon_ninefold_umbrella") };
 const tiles = [
   { k: "gvg", icon: "swords", title: t("b_gvg_t"), body: t("b_gvg_b"), next: true },
   { k: "scrim", icon: "users", title: t("b_custom_t"), body: t("b_custom_b"), link: { href: `/${lang}/matches/`, label: t("b_custom_cta") } },

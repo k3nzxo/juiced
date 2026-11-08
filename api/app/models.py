@@ -7,7 +7,9 @@ RANKS = ("guest", "member", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
 COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe, eigener Coach
 MAIN_ROLES = ("healer", "tank", "dps")
-WEAPONS = ("nameless", "twinblades")  # Auswahl; weitere Waffen per Freitext (weapon_other)
+# DPS-Waffen (Kampfstile) aus Where Winds Meet; weitere per Freitext (weapon_other)
+WEAPONS = ("nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella")
+OLD_WEAPONS = {"nameless": "nameless_sword", "twinblades": "infernal_twinblades"}
 
 
 def clean_weapons(items) -> str:
@@ -102,7 +104,12 @@ class Application(Base):
     platforms = Column(String(40), nullable=True)   # "pc,ps,mobile"
     vod_links = Column(Text, nullable=True)         # JSON-Liste mit URLs
     build = Column(Text, nullable=True)             # was man spielt / wie weit man ist
-    build_link = Column(String(300), nullable=True) # optional: Screenshot oder Build-Planer
+    build_link = Column(String(300), nullable=True) # (alt) Link zum Build
+    inner_ways = Column(Text, nullable=True)        # gewählte Inner Ways
+    region = Column(String(8), nullable=True)       # eu | other
+    gear_score = Column(Integer, nullable=True)
+    arena_rank = Column(String(40), nullable=True)
+    build_images = Column(Text, nullable=True)      # JSON-Liste mit Dateinamen der Build-Screenshots
     status = Column(String(12), nullable=False, default="pending")  # pending | accepted | rejected
     decided_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decided_at = Column(DateTime(timezone=True), nullable=True)
@@ -111,6 +118,7 @@ class Application(Base):
 
 EVENT_KINDS = ("gvg", "raid", "scrim", "ingame", "friday", "other")
 PLATFORMS = ("pc", "ps", "mobile")
+REGIONS = ("eu", "other")
 
 
 class Event(Base):

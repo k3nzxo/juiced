@@ -15,7 +15,7 @@ type Me = {
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
 const ROLES = ["healer", "tank", "dps"];                       // Hauptrollen
-const WEAPONS = ["nameless", "twinblades"];                    // Waffen-Auswahl (dazu Freitext)
+const WEAPONS = ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"];  // DPS-Waffen (dazu Freitext)
 const COACH_ROLES = ["healer", "tank", "nameless", "twinblades"]; // Coaches sind auf Waffen spezialisiert
 const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
@@ -253,9 +253,15 @@ async function viewApplications(view: HTMLElement) {
     el.innerHTML = list.map((a) => `<article class="app-card card" data-id="${a.id}" data-status="${a.status}">
       <div class="app-top"><div><h3>${esc(a.ingame)}</h3><span class="muted">${esc(a.discord)} · ${esc(a.country)} · ${esc(timeAgo(a.created_at))}</span></div>
         <span class="status status-${a.status}">${esc(st[a.status])}</span></div>
-      <div class="app-tags">${roleWeapons(a.main_role, a.weapons, a.weapon_other)}${a.times ? `<span class="muted">${esc(a.times)}</span>` : ""}${a.lang ? `<span class="badge">${esc(a.lang)}</span>` : ""}</div>
+      <div class="app-tags">${roleWeapons(a.main_role, a.weapons, a.weapon_other)}${a.region ? `<span class="badge">${esc(a.region.toUpperCase() === "EU" ? "EU" : T("region_other"))}</span>` : ""}${a.gear_score ? `<span class="badge badge-gs">${esc(T("apps_gs"))} ${esc(Number(a.gear_score).toLocaleString(loc()))}</span>` : ""}${a.arena_rank ? `<span class="badge">${esc(T("apps_arena"))}: ${esc(a.arena_rank)}</span>` : ""}${a.times ? `<span class="muted">${esc(a.times)}</span>` : ""}${a.lang ? `<span class="badge">${esc(a.lang)}</span>` : ""}</div>
       ${a.platforms && a.platforms.length ? `<div class="app-tags"><span class="muted">${esc(T("apps_platforms"))}:</span>${a.platforms.map((p: string) => `<span class="badge">${esc(T("plat_" + p))}</span>`).join("")}</div>` : ""}
-      ${a.build ? `<div class="app-build"><span class="muted">${esc(T("apps_build"))}</span><p class="app-text">${esc(a.build)}</p>${a.build_link ? `<a href="${esc(a.build_link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(a.build_link))}</a>` : ""}</div>` : ""}
+      ${a.build || a.inner_ways || (a.build_images || []).length ? `<div class="app-build">
+        <span class="muted">${esc(T("apps_build"))}</span>
+        ${a.build ? `<p class="app-text">${esc(a.build)}</p>` : ""}
+        ${a.inner_ways ? `<p class="app-text"><strong>${esc(T("apps_inner"))}:</strong> ${esc(a.inner_ways)}</p>` : ""}
+        ${a.build_link ? `<a href="${esc(a.build_link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(a.build_link))}</a>` : ""}
+        ${(a.build_images || []).length ? `<div class="app-shots">${a.build_images.map((u: string) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join("")}</div>` : ""}
+      </div>` : ""}
       <p class="app-text">${esc(a.experience)}</p>${a.why ? `<p class="app-text muted">${esc(a.why)}</p>` : ""}
       ${a.vod_links && a.vod_links.length ? `<div class="vod-links"><span class="muted">${esc(T("apps_vods"))}:</span>${a.vod_links.map((u: string) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(u))}</a>`).join("")}</div>` : ""}
       <div class="row-gap">
@@ -326,7 +332,7 @@ function viewProfile(view: HTMLElement) {
     <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div></div>
     <div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
     <div class="field"><span class="label">${esc(T("prof_role"))}</span><div class="chips">${ROLES.map((r) => `<button type="button" class="chip role-${r}" aria-pressed="${me!.main_role === r}" data-role="${r}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
-    <div class="field"><span class="label">${esc(T("prof_weapons"))}</span><div class="chips">${WEAPONS.map((w) => `<button type="button" class="chip role-${w}" aria-pressed="${(me!.weapons || []).includes(w)}" data-weapon="${w}">${esc(T("weapon_" + w))}</button>`).join("")}
+    <div class="field" data-weapons-field ${me!.main_role === "dps" ? "" : "hidden"}><span class="label">${esc(T("prof_weapons"))}</span><div class="chips">${WEAPONS.map((w) => `<button type="button" class="chip" aria-pressed="${(me!.weapons || []).includes(w)}" data-weapon="${w}">${esc(T("weapon_" + w))}</button>`).join("")}
       <input class="input weapon-other" id="p-wother" maxlength="40" placeholder="${esc(T("join_weapon_other"))}" value="${esc(me!.weapon_other || "")}"></div></div>
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
     <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>
@@ -341,6 +347,7 @@ function viewProfile(view: HTMLElement) {
   }));
   view.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.addEventListener("click", () => {
     role = role === b.dataset.role ? null : b.dataset.role!;
+    view.querySelector<HTMLElement>("[data-weapons-field]")!.hidden = role !== "dps";
     view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === role)));
   }));
   view.querySelector("form")!.addEventListener("submit", async (e) => {
@@ -348,7 +355,8 @@ function viewProfile(view: HTMLElement) {
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
-        main_role: role, weapons: [...weapons], weapon_other: (view.querySelector("#p-wother") as HTMLInputElement).value,
+        main_role: role, weapons: role === "dps" ? [...weapons] : [],
+        weapon_other: role === "dps" ? (view.querySelector("#p-wother") as HTMLInputElement).value : "",
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });

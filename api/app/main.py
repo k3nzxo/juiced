@@ -17,7 +17,8 @@ def _add_missing_columns():
     from sqlalchemy import inspect, text
     wanted = {
         "applications": {"platforms": "VARCHAR(40)", "vod_links": "TEXT", "weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)",
-                         "build": "TEXT", "build_link": "VARCHAR(300)"},
+                         "build": "TEXT", "build_link": "VARCHAR(300)", "inner_ways": "TEXT", "build_images": "TEXT",
+                         "region": "VARCHAR(8)", "gear_score": "INTEGER", "arena_rank": "VARCHAR(40)"},
         "users": {"weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)"},
         "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false", "repeat_days": "VARCHAR(7)"},
         "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
@@ -37,6 +38,14 @@ def _add_missing_columns():
                                   f"WHERE main_role IN ('nameless', 'twinblades')")).rowcount
             if n:
                 print(f"[db] {table}: {n} Einträge auf DPS + Waffe umgestellt")
+        # alte Waffen-Schlüssel (nameless, twinblades) auf die echten Waffennamen umstellen
+        from .models import OLD_WEAPONS
+        for table in ("users", "applications"):
+            rows = conn.execute(text(f"SELECT id, weapons FROM {table} WHERE weapons IS NOT NULL AND weapons <> ''")).fetchall()
+            for rid, w in rows:
+                new = ",".join(dict.fromkeys(OLD_WEAPONS.get(x, x) for x in w.split(",") if x))
+                if new != w:
+                    conn.execute(text(f"UPDATE {table} SET weapons = :w WHERE id = :id"), {"w": new, "id": rid})
 
 
 _add_missing_columns()

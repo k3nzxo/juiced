@@ -7,8 +7,8 @@ export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const roles = ["healer", "tank", "dps"] as const;
-const weapons = ["nameless", "twinblades"] as const;
-const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods"), weapon: t("join_err_weapon"), build: t("join_err_build") };
+const weapons = ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"] as const;
+const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods"), weapon: t("join_err_weapon"), build: t("join_err_build"), inner: t("join_err_inner"), img: t("join_err_img"), remove: t("remove"), region: t("join_err_region"), gs: t("join_err_gs"), shots: t("join_err_shots") };
 ---
 <Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>
   <section class="container join">
@@ -40,10 +40,10 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
             {roles.map((r) => <button type="button" class={`chip role-${r}`} aria-pressed="false" data-role={r}>{t(`role_${r}`)}</button>)}
           </div>
         </div>
-        <div class="field">
-          <span class="label">{t("join_weapons")} <span class="opt" data-weapon-star hidden>*</span></span>
+        <div class="field weapons-field" data-weapons-field hidden>
+          <span class="label">{t("join_weapons")} *</span>
           <div class="chips" data-weapon-chips>
-            {weapons.map((w) => <button type="button" class={`chip role-${w}`} aria-pressed="false" data-weapon={w}>{t(`weapon_${w}`)}</button>)}
+            {weapons.map((w) => <button type="button" class="chip" aria-pressed="false" data-weapon={w}>{t(`weapon_${w}`)}</button>)}
             <input class="input weapon-other" name="weapon_other" maxlength="40" placeholder={t("join_weapon_other")} autocomplete="off" />
           </div>
           <span class="hint">{t("join_weapons_hint")}</span>
@@ -54,12 +54,36 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
             {(["pc", "ps", "mobile"] as const).map((p) => <button type="button" class="chip" aria-pressed="false" data-plat={p}>{t(`plat_${p}`)}</button>)}
           </div>
         </div>
-        <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
         <div class="field">
-          <label for="f-build">{t("join_build")} *</label>
-          <textarea class="textarea" id="f-build" name="build" required maxlength="2000" rows="3" placeholder={t("join_build_ph")}></textarea>
-          <input class="input" type="url" inputmode="url" name="build_link" maxlength="300" placeholder={t("join_build_link_ph")} aria-label={t("join_build_link")} />
+          <span class="label">{t("join_region")} *</span>
+          <div class="chips" data-region-chips>
+            {(["eu", "other"] as const).map((r) => <button type="button" class="chip" aria-pressed="false" data-region={r}>{t(`region_${r}`)}</button>)}
+          </div>
         </div>
+        <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
+        <div class="row2">
+          <div class="field"><label for="f-gs">{t("join_gs")} *</label><input class="input" id="f-gs" name="gear_score" type="number" inputmode="numeric" min="1" max="999999" required placeholder={t("join_gs_ph")} /></div>
+          <div class="field"><label for="f-arena">{t("join_arena")}</label><input class="input" id="f-arena" name="arena_rank" maxlength="40" placeholder={t("join_arena_ph")} autocomplete="off" /></div>
+        </div>
+        <div class="field">
+          <span class="label">{t("join_shots")} *</span>
+          <div class="shots-need">
+            <span>{t("join_shots_need")}</span>
+            <ul>{([1, 2, 3, 4] as const).map((n) => <li>{t(`join_shots_${n}`)}</li>)}</ul>
+          </div>
+          <label class="shots-drop" data-shots-drop>
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple hidden data-shots-input />
+            <Icon name="plus" size={18} />
+            <span>{t("join_shots_drop")}</span>
+          </label>
+          <div class="shots" data-shots></div>
+          <span class="hint">{t("join_shots_hint")}</span>
+        </div>
+        <div class="field">
+          <label for="f-build">{t("join_build")}</label>
+          <textarea class="textarea" id="f-build" name="build" maxlength="2000" rows="3" placeholder={t("join_build_ph")}></textarea>
+        </div>
+        <div class="field"><label for="f-inner">{t("join_inner")}</label><input class="input" id="f-inner" name="inner_ways" maxlength="500" placeholder={t("join_inner_ph")} autocomplete="off" /></div>
         <div class="field"><label for="f-exp">{t("join_exp")} *</label><textarea class="textarea" id="f-exp" name="experience" required maxlength="2000" placeholder={t("join_exp_ph")}></textarea></div>
         <div class="field">
           <span class="label">{t("join_vods")} *</span>
@@ -99,7 +123,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
     }),
   );
   const weapons = new Set<string>();
-  const star = form.querySelector<HTMLElement>("[data-weapon-star]")!;
+  const wField = form.querySelector<HTMLElement>("[data-weapons-field]")!;
   form.querySelectorAll<HTMLButtonElement>("[data-weapon]").forEach((b) =>
     b.addEventListener("click", () => {
       const w = b.dataset.weapon!;
@@ -108,8 +132,59 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
     }),
   );
   form.querySelectorAll<HTMLButtonElement>("[data-role]").forEach((b) =>
-    b.addEventListener("click", () => { star.hidden = b.dataset.role !== "dps"; }),
+    b.addEventListener("click", () => {
+      const show = b.dataset.role === "dps";
+      if (show && wField.hidden) { wField.hidden = false; wField.classList.remove("reveal-in"); void wField.offsetWidth; wField.classList.add("reveal-in"); }
+      if (!show) wField.hidden = true;
+    }),
   );
+  // Build-Screenshots: im Browser verkleinern (max. 1800 px, JPEG), dann als Teil der Bewerbung senden
+  const MAX_SHOTS = 6;
+  let region = "";
+  form.querySelectorAll<HTMLButtonElement>("[data-region]").forEach((b) =>
+    b.addEventListener("click", () => {
+      region = b.dataset.region || "";
+      form.querySelectorAll("[data-region]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    }),
+  );
+  const shots: { data: string }[] = [];
+  const shotsEl = form.querySelector<HTMLElement>("[data-shots]")!;
+  const shotsInput = form.querySelector<HTMLInputElement>("[data-shots-input]")!;
+  const drop = form.querySelector<HTMLElement>("[data-shots-drop]")!;
+  const shrink = (file: File) => new Promise<string>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1800 / Math.max(im.width, im.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext("2d")!.drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.85));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); reject(new Error("img")); };
+    im.src = url;
+  });
+  const drawShots = () => {
+    shotsEl.innerHTML = shots.map((s, i) => `<figure class="shot"><img src="${s.data}" alt=""><button type="button" data-rm="${i}" aria-label="${msgs.remove}">×</button></figure>`).join("");
+    drop.hidden = shots.length >= MAX_SHOTS;
+  };
+  const addFiles = async (files: FileList | File[]) => {
+    for (const f of [...files]) {
+      if (shots.length >= MAX_SHOTS) break;
+      if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { err.textContent = msgs.img; err.hidden = false; continue; }
+      try { shots.push({ data: await shrink(f) }); } catch { err.textContent = msgs.img; err.hidden = false; }
+    }
+    drawShots();
+  };
+  shotsInput.addEventListener("change", () => { if (shotsInput.files) addFiles(shotsInput.files); shotsInput.value = ""; });
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
+  drop.addEventListener("drop", (e) => { e.preventDefault(); if ((e as DragEvent).dataTransfer?.files) addFiles((e as DragEvent).dataTransfer!.files); });
+  shotsEl.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-rm]");
+    if (b) { shots.splice(Number(b.dataset.rm), 1); drawShots(); }
+  });
   const platforms = new Set<string>();
   form.querySelectorAll<HTMLButtonElement>("[data-plat]").forEach((b) =>
     b.addEventListener("click", () => {
@@ -140,15 +215,18 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"),
       experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
       platforms: [...platforms], vod_links: vodLinks,
-      weapons: [...weapons], weapon_other: val("weapon_other"), build: val("build"), build_link: val("build_link"),
+      weapons: role === "dps" ? [...weapons] : [], weapon_other: role === "dps" ? val("weapon_other") : "",
+      build: val("build"), inner_ways: val("inner_ways"), build_images: shots.map((s) => s.data),
+      region, gear_score: Number(val("gear_score")) || 0, arena_rank: val("arena_rank"),
     };
     if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.experience) {
       err.textContent = msgs.required; err.hidden = false; return;
     }
     if (role === "dps" && !weapons.size && !payload.weapon_other) { err.textContent = msgs.weapon; err.hidden = false; return; }
     if (!platforms.size) { err.textContent = msgs.platform; err.hidden = false; return; }
-    if (!payload.build) { err.textContent = msgs.build; err.hidden = false; form.querySelector<HTMLElement>("#f-build")?.focus(); return; }
-    if (payload.build_link && !/^https?:\/\/[^\s<>"']+$/i.test(payload.build_link)) { err.textContent = msgs.url; err.hidden = false; return; }
+    if (!region) { err.textContent = msgs.region; err.hidden = false; return; }
+    if (!payload.gear_score || payload.gear_score < 1) { err.textContent = msgs.gs; err.hidden = false; form.querySelector<HTMLElement>("#f-gs")?.focus(); return; }
+    if (!shots.length) { err.textContent = msgs.shots; err.hidden = false; drop.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
     if (!vodLinks.length) { err.textContent = msgs.vods; err.hidden = false; links.querySelector<HTMLInputElement>("[data-link]")?.focus(); return; }
     if (vodLinks.some((u) => !/^https?:\/\/[^\s<>"']+$/i.test(u))) { err.textContent = msgs.url; err.hidden = false; return; }
     if (!fd.get("consent")) { err.textContent = msgs.consent; err.hidden = false; return; }
@@ -203,4 +281,20 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .form-wrap { padding: 22px; } }
   .weapon-other { width: auto; flex: 1 1 160px; min-width: 140px; height: 38px; padding: 6px 12px; }
   #f-build + .input { margin-top: 8px; }
+  .reveal-in { animation: field-in 0.35s var(--ease); }
+  @keyframes field-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .shots-drop { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 14px; border: 1.5px dashed var(--border-strong); border-radius: 12px; color: var(--muted); font-size: 14px; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
+  .shots-drop:hover, :global(.shots-drop.over) { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+  .shots-drop[hidden] { display: none; }
+  .shots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .shots:empty { display: none; }
+  :global(.shot) { position: relative; margin: 0; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); animation: field-in .3s var(--ease); }
+  :global(.shot img) { width: 100%; height: 100%; object-fit: cover; display: block; }
+  :global(.shot button) { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; line-height: 1; color: #fff; background: rgba(0,0,0,.6); }
+  :global(.shot button:hover) { background: var(--danger); }
+  @media (max-width: 560px) { .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .shots-need { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 10px 12px; border-radius: 10px; background: var(--bg-tint); border: 1px solid var(--border); font-size: 13.5px; color: var(--muted); }
+  .shots-need ul { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; color: var(--text-2); font-weight: 500; }
+  .shots-need li::before { content: "✓"; color: var(--accent); margin-right: 5px; font-weight: 700; }
+  .shots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 </style>

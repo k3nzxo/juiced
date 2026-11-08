@@ -68,7 +68,11 @@ def application_webhook(a) -> None:
         {"name": "Role", "value": a.main_role + (f" ({', '.join(filter(None, [*(a.weapons or '').split(','), a.weapon_other or '']))})"
                                                   if (a.weapons or a.weapon_other) else ""), "inline": True},
         {"name": "Country", "value": a.country[:100], "inline": True},
-        {"name": "Build", "value": ((a.build or "—")[:900] + (f"\n{a.build_link}" if a.build_link else ""))[:1000]},
+        {"name": "Region", "value": (a.region or "—").upper(), "inline": True},
+        {"name": "Gear Score", "value": str(a.gear_score or "—"), "inline": True},
+        {"name": "Arena", "value": (a.arena_rank or "—")[:100], "inline": True},
+        {"name": "Build", "value": ((a.build or "—")[:700] + (f"\nInner Ways: {a.inner_ways}" if a.inner_ways else "")
+                                    + (" (+ screenshots)" if a.build_images and a.build_images != "[]" else ""))[:1000]},
         {"name": "Experience", "value": a.experience[:1000] or "—"},
     ]
     if a.why:
