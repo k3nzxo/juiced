@@ -49,10 +49,10 @@ const kinds = ["gvg", "raid", "scrim", "ingame", "friday", "other"] as const;
     const sunday = addDays(monday, 6);
     const df = dateFmt(lang);
     document.querySelector("[data-range]")!.textContent = `${df.format(monday)} – ${df.format(sunday)}`;
-    grid.classList.add("loading");
-    try { renderWeek(grid, await fetchEvents(monday, addDays(monday, 7)), monday, lang, L); }
-    catch { renderWeek(grid, [], monday, lang, L); }
-    grid.classList.remove("loading");
+    renderWeek(grid, null, monday, lang, L);  // Gerüst sofort, Termine kommen gleich rein
+    let events: any[] = [];
+    try { events = await fetchEvents(monday, addDays(monday, 7)); } catch { /* leer anzeigen */ }
+    renderWeek(grid, events, monday, lang, L);
   };
   document.querySelectorAll<HTMLElement>("[data-week]").forEach((b) => b.addEventListener("click", () => {
     const v = Number(b.dataset.week);
@@ -72,7 +72,6 @@ const kinds = ["gvg", "raid", "scrim", "ingame", "friday", "other"] as const;
   .icon-nav:hover { border-color: var(--text); }
   :global(.flip) { transform: scaleX(-1); }
   .range { margin-left: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
-  :global(.week.loading) { opacity: 0.5; transition: opacity 0.2s; }
   .sched-cta { margin-top: 32px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 20px 24px; border: 1px dashed var(--border-strong); border-radius: 16px; }
   .sched-cta p { color: var(--text-2); }
 </style>

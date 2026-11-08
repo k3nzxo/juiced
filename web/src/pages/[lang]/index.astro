@@ -115,6 +115,7 @@ const tiles = [
   if (week) {
     const monday = startOfWeek();
     const L = JSON.parse(week.dataset.l || "{}");
+    renderWeek(week, null, monday, week.dataset.lang || "en", L);
     fetchEvents(monday, addDays(monday, 7))
       .then((ev) => renderWeek(week, ev, monday, week.dataset.lang || "en", L))
       .catch(() => renderWeek(week, [], monday, week.dataset.lang || "en", L));

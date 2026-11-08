@@ -7,7 +7,7 @@
 .kind-other { --k: var(--faint); }
 
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
-.day { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; min-height: 180px; display: flex; flex-direction: column; overflow: hidden;
+.day { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; min-height: 220px; display: flex; flex-direction: column; overflow: hidden;
   opacity: 0; transform: translateY(14px); animation: day-in 0.45s var(--ease) forwards; animation-delay: calc(var(--i) * 35ms); }
 @keyframes day-in { to { opacity: 1; transform: none; } }
 .day header { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-bottom: 1px solid var(--border); }
@@ -20,6 +20,9 @@
 .day-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .day-free { margin: auto; font-size: 12px; color: var(--faint); text-align: center; padding: 12px 0; }
 
+.ev { animation: ev-in 0.35s var(--ease) both; }
+.day-free { animation: ev-in 0.35s ease both; }
+@keyframes ev-in { from { opacity: 0; } }
 .ev { position: relative; padding: 8px 9px 8px 12px; border-radius: 9px; background: color-mix(in srgb, var(--k) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--k) 22%, var(--border));
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); cursor: default; }
 .ev::before { content: ""; position: absolute; left: 4px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--k); }

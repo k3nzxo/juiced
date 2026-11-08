@@ -50,18 +50,28 @@ export function eventChip(e: Ev, lang: string, L: Record<string, string>): strin
   </article>`;
 }
 
-/** Rendert 7 Tagesspalten ab `monday`. */
-export function renderWeek(el: HTMLElement, events: Ev[], monday: Date, lang: string, L: Record<string, string>) {
+/**
+ * Rendert 7 Tagesspalten ab `monday`. Mit `events = null` nur das leere Gerüst (Laden).
+ * Die Spalten werden nur einmal angelegt und danach nur befüllt, damit nichts springt oder neu einfliegt.
+ */
+export function renderWeek(el: HTMLElement, events: Ev[] | null, monday: Date, lang: string, L: Record<string, string>) {
   const today = new Date();
   const df = dayFmt(lang), dtf = dateFmt(lang);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  el.innerHTML = days.map((d, i) => {
+  if (el.children.length !== 7) {
+    el.innerHTML = days.map((_, i) => `<section class="day" style="--i:${i}"><header><span class="day-name"></span><span class="day-date"></span></header><div class="day-body"></div></section>`).join("");
+  }
+  days.forEach((d, i) => {
+    const sec = el.children[i] as HTMLElement;
+    sec.classList.toggle("today", sameDay(d, today));
+    sec.classList.toggle("past", d < startOfDay(today));
+    sec.querySelector(".day-name")!.textContent = df.format(d);
+    sec.querySelector(".day-date")!.textContent = dtf.format(d);
+    const body = sec.querySelector<HTMLElement>(".day-body")!;
+    if (!events) { body.innerHTML = ""; return; }
     const list = events.filter((e) => sameDay(new Date(e.starts_at), d));
-    return `<section class="day ${sameDay(d, today) ? "today" : ""} ${d < startOfDay(today) ? "past" : ""}" style="--i:${i}">
-      <header><span class="day-name">${esc(df.format(d))}</span><span class="day-date">${esc(dtf.format(d))}</span></header>
-      <div class="day-body">${list.length ? list.map((e) => eventChip(e, lang, L)).join("") : `<p class="day-free">${esc(L.sched_free)}</p>`}</div>
-    </section>`;
-  }).join("");
+    body.innerHTML = list.length ? list.map((e) => eventChip(e, lang, L)).join("") : `<p class="day-free">${esc(L.sched_free)}</p>`;
+  });
 }
 
 function startOfDay(d: Date) {

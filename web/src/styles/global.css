@@ -157,9 +157,10 @@ p { margin: 0; }
 /* ------------------------------------------------------------------ reveal on scroll */
 .reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); transition-delay: calc(var(--d, 0ms) * 0.6); }
 .reveal.in { opacity: 1; transform: none; }
+/* "Weniger Bewegung" im System: nichts abschalten, nur Verschieben/Endlos-Wackeln weg, Einblenden bleibt */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
-  .reveal { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
+  .reveal { transform: none; }
 }
 
 /* ------------------------------------------------------------------ toast */
@@ -224,9 +225,6 @@ p { margin: 0; }
 .nav-link:hover::after { transform: scaleX(0.4); }
 .nav-link.active:hover::after { transform: scaleX(1); }
 
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-}
 
 /* ---------- Scrollbar */
 html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent; }

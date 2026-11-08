@@ -4,7 +4,8 @@ type P = { x: number; y: number; px: number; py: number; vx: number; vy: number;
 export function initWind(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // "Weniger Bewegung" im System: Wind läuft trotzdem, nur ruhiger
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.55 : 1;
   let w = 0, h = 0, dpr = 1;
   let parts: P[] = [];
   let t = Math.random() * 100;
@@ -60,7 +61,7 @@ export function initWind(canvas: HTMLCanvasElement) {
     const mspeed = Math.min(40, Math.hypot(mouse.vx, mouse.vy));
     for (const p of parts) {
       const a = angle(p.x, p.y);
-      const tx = Math.cos(a) * p.s * 1.6, ty = Math.sin(a) * p.s * 1.6;
+      const tx = Math.cos(a) * p.s * 1.6 * calm, ty = Math.sin(a) * p.s * 1.6 * calm;
       p.vx += (tx - p.vx) * 0.06;
       p.vy += (ty - p.vy) * 0.06;
       p.hot *= 0.94;
@@ -108,10 +109,10 @@ export function initWind(canvas: HTMLCanvasElement) {
     step();
     raf = requestAnimationFrame(loop);
   };
-  const start = () => { if (!raf && !reduce) raf = requestAnimationFrame(loop); };
+  const start = () => { if (!raf) raf = requestAnimationFrame(loop); };
 
   // Ohne Animation (reduzierte Bewegung): einmal ein stehendes Bild zeichnen
-  const still = () => { if (reduce && w) for (let i = 0; i < 90; i++) step(); };
+  const still = () => { /* Bild baut sich über die Animation auf */ };
   readColors();
   resize();
   still();
@@ -126,7 +127,6 @@ export function initWind(canvas: HTMLCanvasElement) {
     clearTimeout(rt); rt = window.setTimeout(() => { resize(); still(); }, w ? 150 : 0);
   }).observe(canvas);
   window.addEventListener("themechange", () => requestAnimationFrame(() => { readColors(); still(); }));
-  if (reduce) return;
   document.addEventListener("visibilitychange", start);
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); }).observe(canvas);
 

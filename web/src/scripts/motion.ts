@@ -1,4 +1,4 @@
-// Dezente Bewegungen: Wort-für-Wort-Überschriften, Hochzählen, leichte 3D-Neigung. Alles aus bei reduced motion.
+// Dezente Bewegungen: Wort-für-Wort-Überschriften, Hochzählen, leichte 3D-Neigung, Lichtschein.
 
 const reduce = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -59,7 +59,7 @@ export function setCount(el: HTMLElement, to: number) {
 function animateCount(el: HTMLElement) {
   el.dataset.counted = "1";
   const to = Number(el.dataset.countTo || 0);
-  if (reduce() || !to) { el.textContent = String(to); return; }
+  if (!to) { el.textContent = String(to); return; }
   const from = Number(el.textContent) || 0;
   const dur = 1100, t0 = performance.now();
   const step = (now: number) => {
@@ -84,13 +84,10 @@ function tilt(el: HTMLElement) {
 }
 
 export function initMotion() {
-  if (reduce()) {
-    document.querySelectorAll<HTMLElement>("[data-count-to]").forEach((el) => (el.textContent = el.dataset.countTo || "0"));
-    return;
-  }
+  // Bei "weniger Bewegung" bleiben Einblenden, Zähler und Lichtschein; nur die 3D-Neigung fällt weg
   document.querySelectorAll<HTMLElement>("[data-split]").forEach(splitWords);
   document.querySelectorAll<HTMLElement>("[data-count-to]").forEach((el) => onVisible(el, () => animateCount(el)));
-  document.querySelectorAll<HTMLElement>("[data-tilt]").forEach(tilt);
+  if (!reduce()) document.querySelectorAll<HTMLElement>("[data-tilt]").forEach(tilt);
   initSpotlight();
 }
 
