@@ -16,7 +16,12 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       <span class="eyebrow reveal">{t("nav_join")}</span>
       <h1 class="reveal" style="--d:60ms">{t("join_title")}</h1>
       <p class="reveal" style="--d:120ms">{t("join_sub")}</p>
-      <div class="steps card reveal" style="--d:180ms">
+      <div class="expect card reveal" style="--d:160ms">
+        <h2>{t("join_expect_t")}</h2>
+        <ul>{([1, 2, 3, 4, 5, 6, 7] as const).map((n) => <li>{t(`join_expect_${n}`)}</li>)}</ul>
+        <p class="expect-note">{t("join_expect_vods")}</p>
+      </div>
+      <div class="steps card reveal" style="--d:220ms">
         <h2>{t("join_side_t")}</h2>
         <ol>
           <li><span>1</span>{t("join_side_1")}</li>
@@ -298,4 +303,10 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   .shots-need ul { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; color: var(--text-2); font-weight: 500; }
   .shots-need li::before { content: "✓"; color: var(--accent); margin-right: 5px; font-weight: 700; }
   .shots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .expect { padding: 22px; margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .expect h2 { font-size: 17px; }
+  .expect ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .expect li { position: relative; padding-left: 22px; font-size: 14.5px; color: var(--text-2); line-height: 1.45; }
+  .expect li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+  .expect-note { font-size: 13.5px; font-weight: 600; color: var(--text); padding-top: 12px; border-top: 1px solid var(--border); }
 </style>
