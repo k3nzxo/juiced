@@ -18,9 +18,7 @@ function vt(key, vars) {
 
 const VOD_CATS = ["good", "mistake", "info", "question"];
 const VOD_COACH_ROLES = ["healer", "tank", "nameless", "twinblades"];
-const vodState = { list: null, filter: "", uploads: {}, pollTimer: null, keyHandler: null, catFilter: "all", roleFilter: "all", reviewFilter: "all", me: null, mine: false };
-// "Meine Reviews": VODs, die ich reviewen darf, noch nicht fertig, nicht meine eigenen
-const myReviewItems = (list) => (list || []).filter(v => v.can_review && v.status === "ready" && !v.reviewed && !v.is_mine);
+const vodState = { list: null, filter: "", uploads: {}, pollTimer: null, keyHandler: null, catFilter: "all", roleFilter: "all", reviewFilter: "all", me: null };
 
 function vodIsCoach() { return vodState.me && (vodState.me.level === "coach" || vodState.me.level === "admin"); }
 function vodUploadRoles() { return VOD_COACH_ROLES; }
@@ -122,7 +120,6 @@ async function renderVodList() {
         <div class="vod-hint" id="vod-retention-hint" style="margin:-0.4rem 0 1rem;"></div>
         <div id="vod-upload-progress"></div>
         <div class="vod-filters">
-          <button type="button" class="vod-mine ${vodState.mine ? "active" : ""}" id="vod-mine-btn" hidden>${vt("my_reviews")} <b id="vod-mine-n"></b></button>
           <div class="vod-chip-row" id="vod-role-filter">
             ${["all", ...VOD_COACH_ROLES].map(r => `<button class="cat-tab ${vodState.roleFilter === r ? "active" : ""}" data-rf="${r}">${vt("role_" + r)}</button>`).join("")}
           </div>
@@ -133,11 +130,6 @@ async function renderVodList() {
         <div id="vod-list"><div class="loader"><span class="spinner"></span></div></div>
     </div>`;
   $app.querySelector("#vod-upload-btn").addEventListener("click", () => openVodUploadModal());
-  $app.querySelector("#vod-mine-btn").addEventListener("click", (e) => {
-    vodState.mine = !vodState.mine;
-    e.currentTarget.classList.toggle("active", vodState.mine);
-    drawVodList();
-  });
   $app.querySelectorAll("[data-rf]").forEach(b => b.addEventListener("click", () => {
     vodState.roleFilter = b.dataset.rf;
     $app.querySelectorAll("[data-rf]").forEach(x => x.classList.toggle("active", x === b));
@@ -184,17 +176,8 @@ function drawVodList() {
       ? `<span style="color:var(--danger);">${vt("storage_down")}</span>`
       : (st.retention_days > 0 ? escapeHtml(vt("retention_hint", { n: st.retention_days, m: st.max_per_user })) : "");
   }
-  // Knopf "Meine Reviews" nur zeigen, wenn es für mich etwas zu reviewen gibt (Coach / Leader / Vice)
-  const mineList = myReviewItems(vodState.list);
-  const mineBtn = document.getElementById("vod-mine-btn");
-  if (mineBtn) {
-    const canAny = vodState.list.some(v => v.can_review && !v.is_mine);
-    mineBtn.hidden = !canAny;
-    document.getElementById("vod-mine-n").textContent = mineList.length ? String(mineList.length) : "";
-    if (!canAny) vodState.mine = false;
-  }
   const q = vodState.filter.trim().toLowerCase();
-  const items = (vodState.mine ? [...mineList].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) : vodState.list).filter(v => (vodState.roleFilter === "all" || v.role === vodState.roleFilter)
+  const items = vodState.list.filter(v => (vodState.roleFilter === "all" || v.role === vodState.roleFilter)
     && (vodState.reviewFilter === "all" || (v.status === "ready" && (vodState.reviewFilter === "done" ? !!v.reviewed
         : vodState.reviewFilter === "progress" ? !!v.in_review : !v.reviewed && !v.in_review)))
     && (!q || [v.title, v.opponent, v.uploader_name, v.description].some(x => (x || "").toLowerCase().includes(q))));
@@ -219,7 +202,7 @@ function drawVodList() {
         </div>
         <div class="vod-card-foot">
           <span>${v.uploader_name ? escapeHtml(vt("by", { name: v.uploader_name })) : ""}</span>
-          <span class="vod-foot-right">${vodState.mine && v.created_at ? `<span class="vod-waiting">${escapeHtml(vt("waiting_since", { n: Math.max(0, Math.floor((Date.now() - new Date(v.created_at).getTime()) / 86400000)) }))}</span>` : vodExpiryLabel(v)}<span>${vt("notes_n", { n: v.note_count })}</span></span>
+          <span class="vod-foot-right">${vodExpiryLabel(v)}<span>${vt("notes_n", { n: v.note_count })}</span></span>
         </div>
         ${v.status === "uploading" && !v.is_mine ? `<div class="vod-up-other"><div class="vod-up-bar"><i style="width:${v.size_bytes ? Math.min(100, Math.round(v.received_bytes / v.size_bytes * 100)) : 0}%"></i></div>
           <span>${escapeHtml(vt("uploading_by", { name: v.uploader_name || "?", pct: v.size_bytes ? Math.min(100, Math.round(v.received_bytes / v.size_bytes * 100)) : 0 }))}</span></div>` : ""}
