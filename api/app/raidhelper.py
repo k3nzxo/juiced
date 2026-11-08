@@ -159,17 +159,10 @@ def events(db: DbSession = Depends(get_db), user: models.User = Depends(require_
     profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role,
                                "alt_paths": u.alt_path_list} for u in users}
     can_edit = user.level >= models.RANK_LEVEL["vice"]
-    members = [{"id": u.discord_id, "name": u.display_name} for u in sorted(users, key=lambda u: u.display_name.lower())]
-
-    def unsigned(e):
-        signed = {s["user_id"] for s in e["signups"]}
-        return [m for m in members if m["id"] not in signed]
-
-    return {**data, "can_edit": can_edit, "can_dm": bool(DISCORD_BOT_TOKEN) and can_edit,
+    return {**data, "can_edit": can_edit, "can_remind": bool(DISCORD_BOT_TOKEN and DISCORD_GUILD_ID) and can_edit,
             "profiles": {d: profiles[d] for e in evs for s in e["signups"] if (d := s["user_id"]) in profiles},
             "events": [{**e, "me": next((s for s in e["signups"] if s["user_id"] == mine), None),
-                        "roster": _roster_out(rosters.get(e["id"]), names),
-                        "unsigned": unsigned(e) if can_edit else []} for e in evs]}
+                        "roster": _roster_out(rosters.get(e["id"]), names)} for e in evs]}
 
 
 class RosterGroup(BaseModel):
@@ -340,37 +333,120 @@ def push_roster(event_id: str, payload: PushIn, db: DbSession = Depends(get_db),
 
 
 
+# ------------------------------------------------------------------ "unsigned": wer mit Rolle X hat noch nicht reagiert (eigener Bot)
+
+DISCORD_API = _env("DISCORD_API_BASE", "https://discord.com/api/v10")  # nur für Tests umstellbar
+_dc_cache: dict = {}
+
+
+def _discord(method: str, path: str, **kw):
+    if not DISCORD_BOT_TOKEN or not DISCORD_GUILD_ID:
+        raise HTTPException(status_code=503, detail="Discord bot is not configured")
+    try:
+        r = httpx.request(method, f"{DISCORD_API}{path}", timeout=15,
+                          headers={"Authorization": f"Bot {DISCORD_BOT_TOKEN}", "User-Agent": "juiced-site (https://juiced.team, 1)"}, **kw)
+    except httpx.HTTPError as ex:
+        print(f"[discord] {method} {path}: {type(ex).__name__}")
+        raise HTTPException(status_code=502, detail="Discord is not reachable")
+    if r.status_code in (401, 403):
+        print(f"[discord] {method} {path} -> {r.status_code} {r.text[:200]}")
+        raise HTTPException(status_code=502, detail="Discord bot has no access")
+    if r.status_code >= 400:
+        print(f"[discord] {method} {path} -> {r.status_code} {r.text[:200]}")
+        raise HTTPException(status_code=502, detail="Discord is not reachable")
+    return r.json() if r.content else None
+
+
+def _cached(key: str, ttl: int, fn):
+    hit = _dc_cache.get(key)
+    if hit and time.time() - hit[0] < ttl:
+        return hit[1]
+    val = fn()
+    _dc_cache[key] = (time.time(), val)
+    return val
+
+
+def _guild_roles() -> list:
+    def load():
+        roles = _discord("GET", f"/guilds/{DISCORD_GUILD_ID}/roles") or []
+        roles = [r for r in roles if r.get("name") != "@everyone" and not (r.get("managed") or False)]
+        roles.sort(key=lambda r: -int(r.get("position") or 0))
+        return [{"id": str(r["id"]), "name": str(r.get("name") or "")[:60], "color": int(r.get("color") or 0)} for r in roles]
+    return _cached("roles", 300, load)
+
+
+def _guild_members() -> list:
+    """Alle Mitglieder des Servers (braucht im Bot den 'Server Members Intent')."""
+    def load():
+        out, after = [], "0"
+        for _ in range(20):  # bis 20.000 Mitglieder
+            page = _discord("GET", f"/guilds/{DISCORD_GUILD_ID}/members", params={"limit": 1000, "after": after}) or []
+            out += page
+            if len(page) < 1000:
+                break
+            after = page[-1]["user"]["id"]
+        return [{"id": str(m["user"]["id"]), "name": str(m.get("nick") or m["user"].get("global_name") or m["user"].get("username") or "")[:64],
+                 "roles": [str(x) for x in m.get("roles") or []]} for m in out if not m["user"].get("bot")]
+    return _cached("members", 60, load)
+
+
+@router.get("/roles")
+def roles(user: models.User = Depends(require_management)):
+    return _guild_roles()
+
+
+def _unsigned(ev: dict, role_id: str) -> list:
+    signed = {s["user_id"] for s in ev["signups"]}  # jede Reaktion zählt (auch Abwesend), wie bei Raid-Helper
+    return sorted((m for m in _guild_members() if role_id in m["roles"] and m["id"] not in signed), key=lambda m: m["name"].lower())
+
+
+def _find_event(event_id: str) -> dict:
+    ev = next((e for e in get_events().get("events", []) if e["id"] == event_id), None) if _ID.match(event_id) else None
+    if not ev:
+        raise HTTPException(status_code=404, detail="Not found")
+    return ev
+
+
+@router.get("/events/{event_id}/unsigned")
+def unsigned(event_id: str, role: str, user: models.User = Depends(require_management)):
+    if not _ID.match(role or ""):
+        raise HTTPException(status_code=400, detail="Please choose a role")
+    return [{"id": m["id"], "name": m["name"]} for m in _unsigned(_find_event(event_id), role)]
+
+
 class RemindIn(BaseModel):
+    role_id: str
     channel_id: Optional[str] = None
-    post: bool = True
-    role: str = ""
     text: str = ""
+    ping: bool = True
     dm: bool = False
 
 
 @router.post("/events/{event_id}/remind")
-def remind(event_id: str, payload: RemindIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
-    """Mitglieder erinnern, die sich noch nicht angemeldet haben: Post im Kanal (über Raid-Helper) und/oder DM (eigener Bot)."""
-    ev = next((e for e in get_events().get("events", []) if e["id"] == event_id), None) if _ID.match(event_id) else None
-    if not ev:
-        raise HTTPException(status_code=404, detail="Not found")
-    signed = {s["user_id"] for s in ev["signups"]}
-    missing = [u for u in db.query(models.User).filter(models.User.rank != "guest").all() if u.discord_id not in signed]
+def remind(event_id: str, payload: RemindIn, user: models.User = Depends(require_management)):
+    """Wie /unsigned bei Raid-Helper: alle mit der Rolle, die noch nicht reagiert haben, im Kanal pingen und/oder per DM erinnern."""
+    if not _ID.match(payload.role_id or ""):
+        raise HTTPException(status_code=400, detail="Please choose a role")
+    ev = _find_event(event_id)
+    missing = _unsigned(ev, payload.role_id)
     text = (payload.text or "").strip()[:800]
-    link = ev.get("url") or ""
-    if payload.post:
+    if payload.ping and missing:
         channel = payload.channel_id or ev.get("channel_id")
         if not channel or not _ID.match(channel):
             raise HTTPException(status_code=400, detail="Please choose a channel")
-        names = " ".join(f"<@{u.discord_id}>" for u in missing)[:3000]
-        body = {"title": {"text": f"⏰ {ev['title']}"[:240]},
-                "description": "\n\n".join(x for x in (text, names, link) if x)[:4000], "color": "#ff7a18"}
-        role = " ".join((payload.role or "").split())[:100]
-        if role:
-            body["mentions"] = role
-        _rh("POST", f"/servers/{SERVER_ID}/channels/{channel}/embed", body)
-    dms = 0
-    if payload.dm and DISCORD_BOT_TOKEN:
-        notify.dm([u.discord_id for u in missing], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
-        dms = len(missing)
-    return {"ok": True, "count": len(missing), "dms": dms}
+        head = "\n".join(x for x in (f"**{ev['title']}**" + (f" · {text}" if text else ""), ev.get("url") or "") if x)
+        # Erwähnungen auf mehrere Nachrichten verteilen (max. 2000 Zeichen)
+        chunks, cur = [], head + "\n"
+        for m in missing:
+            tag = f"<@{m['id']}> "
+            if len(cur) + len(tag) > 1900:
+                chunks.append(cur)
+                cur = ""
+            cur += tag
+        chunks.append(cur)
+        for c in chunks:
+            _discord("POST", f"/channels/{channel}/messages", json={
+                "content": c, "allowed_mentions": {"parse": [], "users": [m["id"] for m in missing if m["id"] in c][:100]}})
+    if payload.dm and missing:
+        notify.dm([m["id"] for m in missing], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
+    return {"ok": True, "count": len(missing)}

@@ -285,7 +285,7 @@ const en = {
   roster_img_copy: "Copy image",
   roster_img_copied: "Image copied, paste it in Discord",
   rh_unsigned: "Not signed up ({n})",
-  rh_unsigned_hint: "Members who logged in on the website but haven't signed up for this event yet.",
+  rh_unsigned_hint: "Everyone with this Discord role who hasn't reacted to the event yet, like /unsigned in Raid-Helper.",
   rh_remind: "Remind",
   rh_remind_t: "Send a reminder",
   rh_remind_post: "Post in a channel (via Raid-Helper)",
@@ -295,6 +295,14 @@ const en = {
   rh_remind_default: "Please sign up for {title}!",
   rh_reminded: "Reminder sent",
   ann_more: "More announcements",
+  rh_role: "Role",
+  rh_unsigned_none: "Everyone with this role has signed up.",
+  rh_remind_ping: "Ping them in the channel",
+  rh_reminded_n: "Reminded {n} members",
+  err_rh_role: "Please choose a role.",
+  err_bot_off: "The Discord bot isn't set up on the server.",
+  err_bot_access: "The Discord bot is missing permissions (Server Members Intent, or access to the channel).",
+  err_discord_down: "Discord can't be reached right now.",
 };
 
 export type ExtraDict = typeof en;
@@ -576,7 +584,7 @@ const de: Partial<ExtraDict> = {
   roster_img_copy: "Bild kopieren",
   roster_img_copied: "Bild kopiert, einfach in Discord einfügen",
   rh_unsigned: "Nicht angemeldet ({n})",
-  rh_unsigned_hint: "Mitglieder, die auf der Website angemeldet sind, aber sich für dieses Event noch nicht eingetragen haben.",
+  rh_unsigned_hint: "Alle mit dieser Discord-Rolle, die noch nicht auf das Event reagiert haben, wie /unsigned bei Raid-Helper.",
   rh_remind: "Erinnern",
   rh_remind_t: "Erinnerung senden",
   rh_remind_post: "Im Kanal posten (über Raid-Helper)",
@@ -586,6 +594,14 @@ const de: Partial<ExtraDict> = {
   rh_remind_default: "Bitte meldet euch für {title} an!",
   rh_reminded: "Erinnerung gesendet",
   ann_more: "Weitere Ankündigungen",
+  rh_role: "Rolle",
+  rh_unsigned_none: "Alle mit dieser Rolle sind angemeldet.",
+  rh_remind_ping: "Im Kanal pingen",
+  rh_reminded_n: "{n} Mitglieder erinnert",
+  err_rh_role: "Bitte wähle eine Rolle.",
+  err_bot_off: "Der Discord-Bot ist auf dem Server nicht eingerichtet.",
+  err_bot_access: "Dem Discord-Bot fehlen Rechte (Server Members Intent oder Zugriff auf den Kanal).",
+  err_discord_down: "Discord ist gerade nicht erreichbar.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -858,7 +874,7 @@ const fr: Partial<ExtraDict> = {
   roster_img_copy: "Copier l'image",
   roster_img_copied: "Image copiée, colle-la sur Discord",
   rh_unsigned: "Pas inscrits ({n})",
-  rh_unsigned_hint: "Membres inscrits sur le site qui ne se sont pas encore inscrits à cet événement.",
+  rh_unsigned_hint: "Tous ceux qui ont ce rôle Discord et n'ont pas encore réagi, comme /unsigned sur Raid-Helper.",
   rh_remind: "Rappeler",
   rh_remind_t: "Envoyer un rappel",
   rh_remind_post: "Publier dans un salon (via Raid-Helper)",
@@ -868,6 +884,14 @@ const fr: Partial<ExtraDict> = {
   rh_remind_default: "Inscrivez-vous pour {title} !",
   rh_reminded: "Rappel envoyé",
   ann_more: "Autres annonces",
+  rh_role: "Rôle",
+  rh_unsigned_none: "Tout le monde avec ce rôle est inscrit.",
+  rh_remind_ping: "Les mentionner dans le salon",
+  rh_reminded_n: "{n} membres rappelés",
+  err_rh_role: "Choisis un rôle.",
+  err_bot_off: "Le bot Discord n'est pas configuré.",
+  err_bot_access: "Il manque des droits au bot Discord (Server Members Intent ou accès au salon).",
+  err_discord_down: "Discord est injoignable pour l'instant.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1140,7 +1164,7 @@ const es: Partial<ExtraDict> = {
   roster_img_copy: "Copiar imagen",
   roster_img_copied: "Imagen copiada, pégala en Discord",
   rh_unsigned: "Sin apuntarse ({n})",
-  rh_unsigned_hint: "Miembros registrados en la web que aún no se apuntaron a este evento.",
+  rh_unsigned_hint: "Todos con este rol de Discord que aún no reaccionaron, como /unsigned en Raid-Helper.",
   rh_remind: "Recordar",
   rh_remind_t: "Enviar recordatorio",
   rh_remind_post: "Publicar en un canal (vía Raid-Helper)",
@@ -1150,6 +1174,14 @@ const es: Partial<ExtraDict> = {
   rh_remind_default: "¡Apuntaos a {title}!",
   rh_reminded: "Recordatorio enviado",
   ann_more: "Más anuncios",
+  rh_role: "Rol",
+  rh_unsigned_none: "Todos con este rol están apuntados.",
+  rh_remind_ping: "Mencionarlos en el canal",
+  rh_reminded_n: "{n} miembros avisados",
+  err_rh_role: "Elige un rol.",
+  err_bot_off: "El bot de Discord no está configurado.",
+  err_bot_access: "Al bot de Discord le faltan permisos (Server Members Intent o acceso al canal).",
+  err_discord_down: "Discord no responde ahora.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1422,7 +1454,7 @@ const pt: Partial<ExtraDict> = {
   roster_img_copy: "Copiar imagem",
   roster_img_copied: "Imagem copiada, cole no Discord",
   rh_unsigned: "Não inscritos ({n})",
-  rh_unsigned_hint: "Membros cadastrados no site que ainda não se inscreveram neste evento.",
+  rh_unsigned_hint: "Todos com este cargo no Discord que ainda não reagiram, como /unsigned no Raid-Helper.",
   rh_remind: "Lembrar",
   rh_remind_t: "Enviar lembrete",
   rh_remind_post: "Publicar num canal (via Raid-Helper)",
@@ -1432,6 +1464,14 @@ const pt: Partial<ExtraDict> = {
   rh_remind_default: "Inscrevam-se para {title}!",
   rh_reminded: "Lembrete enviado",
   ann_more: "Mais avisos",
+  rh_role: "Cargo",
+  rh_unsigned_none: "Todos com este cargo estão inscritos.",
+  rh_remind_ping: "Marcar no canal",
+  rh_reminded_n: "{n} membros lembrados",
+  err_rh_role: "Escolha um cargo.",
+  err_bot_off: "O bot do Discord não está configurado.",
+  err_bot_access: "Faltam permissões ao bot do Discord (Server Members Intent ou acesso ao canal).",
+  err_discord_down: "O Discord não está acessível agora.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1704,7 +1744,7 @@ const ru: Partial<ExtraDict> = {
   roster_img_copy: "Копировать картинку",
   roster_img_copied: "Картинка скопирована, вставь в Discord",
   rh_unsigned: "Не записались ({n})",
-  rh_unsigned_hint: "Участники сайта, которые ещё не записались на это событие.",
+  rh_unsigned_hint: "Все с этой ролью Discord, кто ещё не отреагировал, как /unsigned в Raid-Helper.",
   rh_remind: "Напомнить",
   rh_remind_t: "Отправить напоминание",
   rh_remind_post: "Опубликовать в канале (через Raid-Helper)",
@@ -1714,6 +1754,14 @@ const ru: Partial<ExtraDict> = {
   rh_remind_default: "Запишитесь на {title}!",
   rh_reminded: "Напоминание отправлено",
   ann_more: "Другие объявления",
+  rh_role: "Роль",
+  rh_unsigned_none: "Все с этой ролью записались.",
+  rh_remind_ping: "Упомянуть в канале",
+  rh_reminded_n: "Напомнили {n} участникам",
+  err_rh_role: "Выбери роль.",
+  err_bot_off: "Бот Discord не настроен.",
+  err_bot_access: "У бота Discord нет прав (Server Members Intent или доступ к каналу).",
+  err_discord_down: "Discord сейчас недоступен.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -1986,7 +2034,7 @@ const tr: Partial<ExtraDict> = {
   roster_img_copy: "Görseli kopyala",
   roster_img_copied: "Görsel kopyalandı, Discord'a yapıştır",
   rh_unsigned: "Kayıt olmayan ({n})",
-  rh_unsigned_hint: "Sitede hesabı olup bu etkinliğe henüz kaydolmayan üyeler.",
+  rh_unsigned_hint: "Bu Discord rolüne sahip ve henüz tepki vermemiş herkes, Raid-Helper'daki /unsigned gibi.",
   rh_remind: "Hatırlat",
   rh_remind_t: "Hatırlatma gönder",
   rh_remind_post: "Kanalda paylaş (Raid-Helper ile)",
@@ -1996,6 +2044,14 @@ const tr: Partial<ExtraDict> = {
   rh_remind_default: "Lütfen {title} için kaydolun!",
   rh_reminded: "Hatırlatma gönderildi",
   ann_more: "Diğer duyurular",
+  rh_role: "Rol",
+  rh_unsigned_none: "Bu roldeki herkes kayıtlı.",
+  rh_remind_ping: "Kanalda etiketle",
+  rh_reminded_n: "{n} üyeye hatırlatıldı",
+  err_rh_role: "Lütfen bir rol seç.",
+  err_bot_off: "Discord botu kurulu değil.",
+  err_bot_access: "Discord botunun izinleri eksik (Server Members Intent veya kanal erişimi).",
+  err_discord_down: "Discord'a şu an ulaşılamıyor.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2268,7 +2324,7 @@ const pl: Partial<ExtraDict> = {
   roster_img_copy: "Kopiuj obraz",
   roster_img_copied: "Obraz skopiowany, wklej go na Discordzie",
   rh_unsigned: "Niezapisani ({n})",
-  rh_unsigned_hint: "Członkowie zalogowani na stronie, którzy nie zapisali się jeszcze na to wydarzenie.",
+  rh_unsigned_hint: "Wszyscy z tą rolą na Discordzie, którzy jeszcze nie zareagowali, jak /unsigned w Raid-Helper.",
   rh_remind: "Przypomnij",
   rh_remind_t: "Wyślij przypomnienie",
   rh_remind_post: "Opublikuj na kanale (przez Raid-Helper)",
@@ -2278,6 +2334,14 @@ const pl: Partial<ExtraDict> = {
   rh_remind_default: "Zapiszcie się na {title}!",
   rh_reminded: "Przypomnienie wysłane",
   ann_more: "Więcej ogłoszeń",
+  rh_role: "Rola",
+  rh_unsigned_none: "Wszyscy z tą rolą są zapisani.",
+  rh_remind_ping: "Oznacz na kanale",
+  rh_reminded_n: "Przypomniano {n} członkom",
+  err_rh_role: "Wybierz rolę.",
+  err_bot_off: "Bot Discord nie jest skonfigurowany.",
+  err_bot_access: "Botowi Discord brakuje uprawnień (Server Members Intent lub dostęp do kanału).",
+  err_discord_down: "Discord jest teraz niedostępny.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
