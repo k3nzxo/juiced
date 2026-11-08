@@ -7,13 +7,20 @@ RANKS = ("guest", "member", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
 COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe, eigener Coach
 MAIN_ROLES = ("healer", "tank", "dps")
-# DPS-Waffen (Kampfstile) aus Where Winds Meet; weitere per Freitext (weapon_other)
-WEAPONS = ("nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella")
+# Waffen (Kampfstile) aus Where Winds Meet, je Hauptrolle; weitere per Freitext (weapon_other)
+WEAPONS_BY_ROLE = {
+    "dps": ("nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"),
+    "tank": ("stormbreaker_spear", "thundercry_blade"),
+    "healer": ("panacea_fan", "soulshade_umbrella", "ribbon_drum"),
+}
+WEAPONS = tuple(w for ws in WEAPONS_BY_ROLE.values() for w in ws)
 OLD_WEAPONS = {"nameless": "nameless_sword", "twinblades": "infernal_twinblades"}
 
 
-def clean_weapons(items) -> str:
-    return ",".join(w for w in WEAPONS if w in (items or []))
+def clean_weapons(items, role=None) -> str:
+    """Nur bekannte Waffen; mit Rolle nur die Waffen dieser Rolle."""
+    allowed = WEAPONS_BY_ROLE.get(role, ()) if role else WEAPONS
+    return ",".join(w for w in allowed if w in (items or []))
 
 
 class User(Base):

@@ -15,7 +15,7 @@ type Me = {
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
 const ROLES = ["healer", "tank", "dps"];                       // Hauptrollen
-const WEAPONS = ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"];  // DPS-Waffen (dazu Freitext)
+const WEAPONS_BY_ROLE: Record<string, string[]> = { dps: ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"], tank: ["stormbreaker_spear", "thundercry_blade"], healer: ["panacea_fan", "soulshade_umbrella", "ribbon_drum"] };
 const COACH_ROLES = ["healer", "tank", "nameless", "twinblades"]; // Coaches sind auf Waffen spezialisiert
 const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
@@ -332,7 +332,7 @@ function viewProfile(view: HTMLElement) {
     <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div></div>
     <div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
     <div class="field"><span class="label">${esc(T("prof_role"))}</span><div class="chips">${ROLES.map((r) => `<button type="button" class="chip role-${r}" aria-pressed="${me!.main_role === r}" data-role="${r}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
-    <div class="field" data-weapons-field ${me!.main_role === "dps" ? "" : "hidden"}><span class="label">${esc(T("prof_weapons"))}</span><div class="chips">${WEAPONS.map((w) => `<button type="button" class="chip" aria-pressed="${(me!.weapons || []).includes(w)}" data-weapon="${w}">${esc(T("weapon_" + w))}</button>`).join("")}
+    <div class="field" data-weapons-field ${me!.main_role ? "" : "hidden"}><span class="label">${esc(T("prof_weapons"))}</span><div class="chips">${Object.entries(WEAPONS_BY_ROLE).map(([r, ws]) => ws.map((w) => `<button type="button" class="chip" aria-pressed="${(me!.weapons || []).includes(w)}" data-weapon="${w}" data-for="${r}" ${me!.main_role === r ? "" : "hidden"}>${esc(T("weapon_" + w))}</button>`).join("")).join("")}
       <input class="input weapon-other" id="p-wother" maxlength="40" placeholder="${esc(T("join_weapon_other"))}" value="${esc(me!.weapon_other || "")}"></div></div>
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
     <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>
@@ -347,7 +347,12 @@ function viewProfile(view: HTMLElement) {
   }));
   view.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.addEventListener("click", () => {
     role = role === b.dataset.role ? null : b.dataset.role!;
-    view.querySelector<HTMLElement>("[data-weapons-field]")!.hidden = role !== "dps";
+    view.querySelector<HTMLElement>("[data-weapons-field]")!.hidden = !role;
+    view.querySelectorAll<HTMLElement>("[data-weapon]").forEach((x) => {
+      const mine = x.dataset.for === role;
+      x.hidden = !mine;
+      if (!mine && weapons.delete(x.dataset.weapon!)) x.setAttribute("aria-pressed", "false");
+    });
     view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === role)));
   }));
   view.querySelector("form")!.addEventListener("submit", async (e) => {
@@ -355,8 +360,8 @@ function viewProfile(view: HTMLElement) {
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
-        main_role: role, weapons: role === "dps" ? [...weapons] : [],
-        weapon_other: role === "dps" ? (view.querySelector("#p-wother") as HTMLInputElement).value : "",
+        main_role: role, weapons: role ? [...weapons] : [],
+        weapon_other: role ? (view.querySelector("#p-wother") as HTMLInputElement).value : "",
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });

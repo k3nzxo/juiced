@@ -7,7 +7,7 @@ export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const roles = ["healer", "tank", "dps"] as const;
-const weapons = ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"] as const;
+const weaponsByRole = { dps: ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"], tank: ["stormbreaker_spear", "thundercry_blade"], healer: ["panacea_fan", "soulshade_umbrella", "ribbon_drum"] } as const;
 const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods"), weapon: t("join_err_weapon"), build: t("join_err_build"), inner: t("join_err_inner"), img: t("join_err_img"), remove: t("remove"), region: t("join_err_region"), gs: t("join_err_gs"), shots: t("join_err_shots") };
 ---
 <Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>
@@ -43,7 +43,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
         <div class="field weapons-field" data-weapons-field hidden>
           <span class="label">{t("join_weapons")} *</span>
           <div class="chips" data-weapon-chips>
-            {weapons.map((w) => <button type="button" class="chip" aria-pressed="false" data-weapon={w}>{t(`weapon_${w}`)}</button>)}
+            {Object.entries(weaponsByRole).flatMap(([r, ws]) => ws.map((w) => <button type="button" class="chip" aria-pressed="false" data-weapon={w} data-for={r} hidden>{t(`weapon_${w}` as any)}</button>))}
             <input class="input weapon-other" name="weapon_other" maxlength="40" placeholder={t("join_weapon_other")} autocomplete="off" />
           </div>
           <span class="hint">{t("join_weapons_hint")}</span>
@@ -133,9 +133,14 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   );
   form.querySelectorAll<HTMLButtonElement>("[data-role]").forEach((b) =>
     b.addEventListener("click", () => {
-      const show = b.dataset.role === "dps";
-      if (show && wField.hidden) { wField.hidden = false; wField.classList.remove("reveal-in"); void wField.offsetWidth; wField.classList.add("reveal-in"); }
-      if (!show) wField.hidden = true;
+      // Waffen der gewählten Rolle zeigen, Auswahl anderer Rollen verwerfen
+      const r = b.dataset.role || "";
+      form.querySelectorAll<HTMLButtonElement>("[data-weapon]").forEach((x) => {
+        const mine = x.dataset.for === r;
+        x.hidden = !mine;
+        if (!mine && weapons.delete(x.dataset.weapon!)) x.setAttribute("aria-pressed", "false");
+      });
+      if (wField.hidden) { wField.hidden = false; wField.classList.remove("reveal-in"); void wField.offsetWidth; wField.classList.add("reveal-in"); }
     }),
   );
   // Build-Screenshots: im Browser verkleinern (max. 1800 px, JPEG), dann als Teil der Bewerbung senden
@@ -215,14 +220,14 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"),
       experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
       platforms: [...platforms], vod_links: vodLinks,
-      weapons: role === "dps" ? [...weapons] : [], weapon_other: role === "dps" ? val("weapon_other") : "",
+      weapons: [...weapons], weapon_other: val("weapon_other"),
       build: val("build"), inner_ways: val("inner_ways"), build_images: shots.map((s) => s.data),
       region, gear_score: Number(val("gear_score")) || 0, arena_rank: val("arena_rank"),
     };
     if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.experience) {
       err.textContent = msgs.required; err.hidden = false; return;
     }
-    if (role === "dps" && !weapons.size && !payload.weapon_other) { err.textContent = msgs.weapon; err.hidden = false; return; }
+    if (!weapons.size && !payload.weapon_other) { err.textContent = msgs.weapon; err.hidden = false; return; }
     if (!platforms.size) { err.textContent = msgs.platform; err.hidden = false; return; }
     if (!region) { err.textContent = msgs.region; err.hidden = false; return; }
     if (!payload.gear_score || payload.gear_score < 1) { err.textContent = msgs.gs; err.hidden = false; form.querySelector<HTMLElement>("#f-gs")?.focus(); return; }

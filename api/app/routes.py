@@ -94,12 +94,10 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
                   experience=clean(payload.experience, 2000))
     platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
     links = clean_links(payload.vod_links)
-    weapons, weapon_other = models.clean_weapons(payload.weapons), clean(payload.weapon_other, 40)
-    if payload.main_role != "dps":  # Waffen nur bei DPS
-        weapons, weapon_other = "", None
+    weapons, weapon_other = models.clean_weapons(payload.weapons, payload.main_role), clean(payload.weapon_other, 40)
     if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms or not links:
         raise HTTPException(status_code=400, detail="Missing fields")
-    if payload.main_role == "dps" and not (weapons or weapon_other):
+    if not (weapons or weapon_other):  # Waffe ist bei jeder Rolle Pflicht
         raise HTTPException(status_code=400, detail="Missing weapon")
     build = clean(payload.build, 2000)
     build_link = (clean_links([payload.build_link]) or [None])[0] if payload.build_link else None
@@ -148,11 +146,13 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
     if "main_role" in data:
         user.main_role = data["main_role"] if data["main_role"] in models.MAIN_ROLES else None
     if "weapons" in data:
-        user.weapons = models.clean_weapons(data["weapons"]) or None
+        user.weapons = models.clean_weapons(data["weapons"], user.main_role) or None
     if "weapon_other" in data:
         user.weapon_other = clean(data["weapon_other"], 40)
-    if user.main_role != "dps":
+    if not user.main_role:
         user.weapons, user.weapon_other = None, None
+    elif user.weapons:  # nach Rollenwechsel nur passende Waffen behalten
+        user.weapons = models.clean_weapons(user.weapons.split(","), user.main_role) or None
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None
