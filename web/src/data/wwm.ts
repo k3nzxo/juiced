@@ -119,7 +119,7 @@ export const PRESETS: { name: string; weapons: [string, string]; role: "dps" | "
   { name: "Double Sword", weapons: ["nameless_sword", "strategic_sword"], role: "dps" },
   { name: "Nameless/HQ", weapons: ["nameless_sword", "heavenquaker_spear"], role: "dps" },
   { name: "Full Umbra", weapons: ["strategic_sword", "heavenquaker_spear"], role: "dps" },
-  { name: "Mo/TB", weapons: ["thundercry_blade", "infernal_twinblades"], role: "dps" },
+  { name: "Mo/TB", weapons: ["thundercry_blade", "infernal_twinblades"], role: "tank" },
   { name: "Rats TB", weapons: ["infernal_twinblades", "mortal_rope_dart"], role: "dps" },
   { name: "Fan/Fan", weapons: ["inkwell_fan", "panacea_fan"], role: "healer" },
   { name: "Drums", weapons: ["willowbend_fan", "museflow_drum"], role: "healer" },

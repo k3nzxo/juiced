@@ -898,7 +898,7 @@ const CAT_COLOR: Record<string, string> = { tank: "#eab308", healer: "#22c55e", 
 function buildCategory(id: string | null | undefined, role: string | null = null): string | null {
   const ws = buildWeapons(id).map((w) => w.id);
   let r: string | null = role;
-  if (!r && ws.length) r = ws.some((w) => ["museflow_drum", "panacea_fan", "soulshade_umbrella"].includes(w)) ? "healer" : ws.includes("stormbreaker_spear") ? "tank" : "dps";
+  if (!r && ws.length) r = ws.some((w) => ["museflow_drum", "panacea_fan", "soulshade_umbrella"].includes(w)) ? "healer" : ws.some((w) => ["stormbreaker_spear", "thundercry_blade"].includes(w)) ? "tank" : "dps";  // Mo-Klinge = Tank (z. B. Mo/TB)
   if (r === "dps" && ws.some((w) => w.endsWith("twinblades"))) return "tb";
   return r;
 }
