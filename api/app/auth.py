@@ -41,6 +41,7 @@ def user_out(u: models.User) -> dict:
         "show_on_team": u.show_on_team, "lang": u.lang, "in_guild": u.in_guild, "rank_manual": u.rank_manual,
         "can_manage": u.level >= models.RANK_LEVEL["vice"], "is_admin": u.level >= models.RANK_LEVEL["vice"],
         "is_member": u.level >= models.RANK_LEVEL["member"],
+        "can_view_all": u.level >= models.RANK_LEVEL["admin"],  # Admin: alles ansehen, nichts ändern
     }
 
 
@@ -56,7 +57,7 @@ def apply_discord_roles(u: models.User, role_ids: list[str] | None):
         return
     mapped = {ROLE_MAP[i] for i in role_ids if i in ROLE_MAP}
     rank = "guest"
-    for r in ("member", "vice", "leader"):  # aufsteigend -> höchster gewinnt
+    for r in ("member", "admin", "vice", "leader"):  # aufsteigend -> höchster gewinnt
         if r in mapped:
             rank = r
     coaches = [r for r in models.COACH_ROLES if f"coach_{r}" in mapped]

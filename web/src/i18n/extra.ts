@@ -358,6 +358,7 @@ const en = {
   att_count: "{a} events",
   vod_retry_in: "Connection interrupted – retrying in {n} s",
   vod_retry_offline: "You're offline – continues as soon as you're back online",
+  rank_admin: "Admin",
 };
 
 export type ExtraDict = typeof en;
@@ -712,6 +713,7 @@ const de: Partial<ExtraDict> = {
   att_count: "{a} Events",
   vod_retry_in: "Verbindung unterbrochen – neuer Versuch in {n} s",
   vod_retry_offline: "Du bist offline – geht weiter, sobald die Verbindung wieder da ist",
+  rank_admin: "Admin",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1058,6 +1060,7 @@ const fr: Partial<ExtraDict> = {
   att_count: "{a} événements",
   vod_retry_in: "Connexion interrompue – nouvel essai dans {n} s",
   vod_retry_offline: "Tu es hors ligne – reprend dès le retour de la connexion",
+  rank_admin: "Admin",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1404,6 +1407,7 @@ const es: Partial<ExtraDict> = {
   att_count: "{a} eventos",
   vod_retry_in: "Conexión interrumpida – reintento en {n} s",
   vod_retry_offline: "Sin conexión – sigue en cuanto vuelva la conexión",
+  rank_admin: "Admin",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1750,6 +1754,7 @@ const pt: Partial<ExtraDict> = {
   att_count: "{a} eventos",
   vod_retry_in: "Conexão interrompida – nova tentativa em {n} s",
   vod_retry_offline: "Você está offline – continua assim que a conexão voltar",
+  rank_admin: "Admin",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2096,6 +2101,7 @@ const ru: Partial<ExtraDict> = {
   att_count: "событий: {a}",
   vod_retry_in: "Соединение прервано — повтор через {n} с",
   vod_retry_offline: "Нет сети — продолжится, когда соединение вернётся",
+  rank_admin: "Admin",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2442,6 +2448,7 @@ const tr: Partial<ExtraDict> = {
   att_count: "{a} etkinlik",
   vod_retry_in: "Bağlantı kesildi – {n} sn sonra tekrar denenecek",
   vod_retry_offline: "Çevrimdışısın – bağlantı gelince devam eder",
+  rank_admin: "Admin",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2788,6 +2795,7 @@ const pl: Partial<ExtraDict> = {
   att_count: "{a} wydarzeń",
   vod_retry_in: "Połączenie przerwane – ponowna próba za {n} s",
   vod_retry_offline: "Jesteś offline – wznowi się po powrocie połączenia",
+  rank_admin: "Admin",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

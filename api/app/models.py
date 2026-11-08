@@ -3,7 +3,8 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Foreign
 from .db import Base
 
 # Ränge (aufsteigend). "Coach" ist kein eigener Rang, sondern ergibt sich aus coach_roles.
-RANKS = ("guest", "member", "vice", "leader", "developer")
+# "admin": sieht alles (Bewerbungen, Match-Anfragen, Wochenplan, Ränge, alle VODs), darf aber nichts ändern
+RANKS = ("guest", "member", "admin", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
 COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe, eigener Coach
 MAIN_ROLES = ("healer", "tank", "dps")
@@ -93,7 +94,7 @@ class User(Base):
 
     @property
     def public_rank(self) -> str:
-        if self.rank in ("developer", "leader", "vice"):
+        if self.rank in ("developer", "leader", "vice", "admin"):
             return self.rank
         if self.coach_list and self.level >= 1:
             return "coach"

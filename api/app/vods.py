@@ -174,8 +174,8 @@ def _media_url(name: str) -> str:
 
 class VodCtx:
     """Wer fragt an und was darf er (admin | coach | member)."""
-    def __init__(self, user: models.User, level: str, roles: set):
-        self.user, self.level, self.roles = user, level, roles
+    def __init__(self, user: models.User, level: str, roles: set, see_all: bool = False):
+        self.user, self.level, self.roles, self.see_all = user, level, roles, see_all
 
     @property
     def is_admin(self) -> bool:
@@ -193,7 +193,8 @@ def _ctx_for(db: Session, user: models.User) -> Optional[VodCtx]:
     if user.level < models.RANK_LEVEL["member"]:
         return None
     roles = set(user.coach_list)
-    return VodCtx(user, "coach" if roles else "member", roles)
+    # Admin-Rang: sieht alle VODs, reviewt aber nur in seinen eigenen Coach-Rollen
+    return VodCtx(user, "coach" if roles else "member", roles, see_all=user.level >= models.RANK_LEVEL["admin"])
 
 
 def vod_ctx(db: Session = Depends(get_db), user: models.User = Depends(require_user)) -> VodCtx:
@@ -204,7 +205,7 @@ def vod_ctx(db: Session = Depends(get_db), user: models.User = Depends(require_u
 
 
 def _can_view(v: Vod, ctx: VodCtx) -> bool:
-    return bool(ctx.is_admin or v.uploader_id == ctx.user.id or v.role == "team" or v.role in ctx.roles)
+    return bool(ctx.is_admin or ctx.see_all or v.uploader_id == ctx.user.id or v.role == "team" or v.role in ctx.roles)
 
 
 def _can_edit(v: Vod, ctx: VodCtx) -> bool:

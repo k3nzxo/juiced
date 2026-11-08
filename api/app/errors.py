@@ -37,6 +37,7 @@ _RULES = [
     (r"^Not signed in$", "not_signed_in", "Please sign in first."),
     (r"^Members only$", "members_only", "Members only."),
     (r"^Leader / Vice only$", "admin_only", "Only Leader and Vice can do that."),
+    (r"^Staff only$", "admin_only", "Only Leader and Vice can do that."),
     (r"^Not allowed$", "no_permission", "You don't have permission for that."),
     (r"^You can't demote yourself$", "self_demote", "You can't demote yourself."),
     (r"^Bad rank$", "no_permission", "You don't have permission for that."),

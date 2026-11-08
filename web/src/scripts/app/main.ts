@@ -10,14 +10,14 @@ type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
   weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[];
-  show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; rank_manual: boolean;
+  show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; can_view_all: boolean; rank_manual: boolean;
 };
 
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
 const ROLES = ["healer", "tank", "dps"];                       // Hauptrollen
 const COACH_ROLES = ["healer", "tank", "nameless", "twinblades"]; // Coaches sind auf Waffen spezialisiert
-const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
+const RANK_KEYS: Record<string, string> = { admin: "rank_admin", developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
 function avatar(u: { avatar_url: string | null; display_name: string }, size = 32) {
   return u.avatar_url
@@ -118,10 +118,10 @@ function navItems() {
     { id: "signups", label: T("rh_nav"), ico: icon.signups },
     { id: "roster", label: T("app_nav_members"), ico: icon.users },
   ];
-  if (me!.is_admin) items.push({ id: "schedule", label: T("app_nav_schedule"), ico: icon.calendar });
-  if (me!.is_admin) items.push({ id: "matches", label: T("app_nav_matches"), ico: icon.swords });
-  if (me!.can_manage) items.push({ id: "applications", label: T("app_nav_apps"), ico: icon.inbox });
-  if (me!.is_admin) items.push({ id: "admin", label: T("app_nav_admin"), ico: icon.shield });
+  if (me!.can_view_all) items.push({ id: "schedule", label: T("app_nav_schedule"), ico: icon.calendar });
+  if (me!.can_view_all) items.push({ id: "matches", label: T("app_nav_matches"), ico: icon.swords });
+  if (me!.can_view_all) items.push({ id: "applications", label: T("app_nav_apps"), ico: icon.inbox });
+  if (me!.can_view_all) items.push({ id: "admin", label: T("app_nav_admin"), ico: icon.shield });
   items.push({ id: "profile", label: T("app_nav_profile"), ico: icon.settings });
   return items;
 }
@@ -190,10 +190,10 @@ function route() {
       return id ? viewMember(view, id) : viewRoster(view);
     }
     case "signups": return viewSignups(view);
-    case "applications": return me.can_manage ? viewApplications(view) : viewDashboard(view);
-    case "schedule": return me.is_admin ? viewSchedule(view) : viewDashboard(view);
-    case "matches": return me.is_admin ? viewMatches(view) : viewDashboard(view);
-    case "admin": return me.is_admin ? viewAdmin(view) : viewDashboard(view);
+    case "applications": return me.can_view_all ? viewApplications(view) : viewDashboard(view);
+    case "schedule": return me.can_view_all ? viewSchedule(view) : viewDashboard(view);
+    case "matches": return me.can_view_all ? viewMatches(view) : viewDashboard(view);
+    case "admin": return me.can_view_all ? viewAdmin(view) : viewDashboard(view);
     case "profile": return viewProfile(view);
     default: return viewDashboard(view);
   }

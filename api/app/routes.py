@@ -16,11 +16,11 @@ from fastapi.responses import FileResponse
 from . import appimages, models, notify, wwm
 from .auth import user_out
 from .db import get_db
-from .security import client_ip, current_user_optional, limiter, require_admin, require_management, require_member, require_user
+from .security import client_ip, current_user_optional, limiter, require_admin, require_management, require_member, require_staff, require_user
 
 router = APIRouter(prefix="/api", tags=["site"])
 LANGS = {"en", "de", "fr", "es", "pt", "ru", "tr", "pl", "ar", "fi"}
-RANK_ORDER = {"developer": 0, "leader": 1, "vice": 2, "coach": 3, "member": 4}
+RANK_ORDER = {"developer": 0, "leader": 1, "vice": 2, "admin": 3, "coach": 4, "member": 5}
 
 
 def clean_links(links) -> list:
@@ -362,14 +362,14 @@ def _cleanup_applications(db: DbSession):
 
 
 @router.get("/applications/images/{name}")
-def application_image(name: str, user: models.User = Depends(require_management)):
+def application_image(name: str, user: models.User = Depends(require_staff)):
     """Build-Screenshots nur für Leader/Vice."""
     return FileResponse(appimages.image_path(name), media_type="image/jpeg",
                         headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"})
 
 
 @router.get("/applications")
-def list_applications(db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+def list_applications(db: DbSession = Depends(get_db), user: models.User = Depends(require_staff)):
     _cleanup_applications(db)
     apps = db.query(models.Application).order_by(models.Application.created_at.desc()).limit(200).all()
     return [{"id": a.id, "discord": a.discord, "ingame": a.ingame, "main_role": a.main_role,
@@ -411,7 +411,7 @@ def delete_application(aid: int, db: DbSession = Depends(get_db), user: models.U
 # ------------------------------------------------------------------ Ränge & Rollen (Leader / Vice)
 
 @router.get("/admin/users")
-def admin_users(db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+def admin_users(db: DbSession = Depends(get_db), user: models.User = Depends(require_staff)):
     users = db.query(models.User).order_by(func.lower(models.User.username)).all()
     return [{"id": u.id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
              "rank": u.rank, "coach_roles": u.coach_list, "rank_manual": u.rank_manual, "in_guild": u.in_guild,
@@ -614,7 +614,7 @@ def scrim_status(token: str, request: Request, db: DbSession = Depends(get_db)):
 
 
 @router.get("/scrims")
-def list_scrims(db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+def list_scrims(db: DbSession = Depends(get_db), user: models.User = Depends(require_staff)):
     cutoff = datetime.now(timezone.utc) - timedelta(days=60)
     db.query(models.ScrimRequest).filter(models.ScrimRequest.status != "pending", models.ScrimRequest.decided_at < cutoff).delete()
     db.commit()
@@ -659,7 +659,7 @@ def notifications(db: DbSession = Depends(get_db), user: Optional[models.User] =
     out = {"applications": 0, "matches": 0, "vods": 0}
     if not user or user.level < models.RANK_LEVEL["member"]:
         return {**out, "total": 0}
-    if user.level >= models.RANK_LEVEL["vice"]:
+    if user.level >= models.RANK_LEVEL["admin"]:
         out["applications"] = db.query(models.Application).filter(models.Application.status == "pending").count()
         out["matches"] = db.query(models.ScrimRequest).filter(models.ScrimRequest.status == "pending").count()
     roles = list(models.COACH_ROLES) if user.level >= models.RANK_LEVEL["vice"] else user.coach_list

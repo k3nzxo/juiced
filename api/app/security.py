@@ -92,6 +92,13 @@ def require_management(user: models.User = Depends(require_user)) -> models.User
     return user
 
 
+def require_staff(user: models.User = Depends(require_user)) -> models.User:
+    """Nur ansehen: Admin, Vice, Leader, Developer."""
+    if user.level < models.RANK_LEVEL["admin"]:
+        raise HTTPException(status_code=403, detail="Staff only")
+    return user
+
+
 def require_admin(user: models.User = Depends(require_user)) -> models.User:
     if user.level < models.RANK_LEVEL["vice"]:
         raise HTTPException(status_code=403, detail="Leader / Vice only")

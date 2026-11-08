@@ -274,3 +274,4 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22
   .btn { height: 46px; }
   .chip { min-height: 38px; }
 }
+.badge-admin { background: color-mix(in srgb, var(--c-cyan) 14%, transparent); color: var(--c-cyan); border-color: color-mix(in srgb, var(--c-cyan) 32%, transparent); }
