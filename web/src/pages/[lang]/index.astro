@@ -97,15 +97,16 @@ const tiles = [
   if (ng) {
     const now = new Date();
     const loc = ng.dataset.lang === "pt" ? "pt-BR" : ng.dataset.lang || "en";
-    const day = new Intl.DateTimeFormat(loc, { weekday: "long", day: "numeric", month: "short" });
+    const wd = new Intl.DateTimeFormat(loc, { weekday: "short" });
+    const day = new Intl.DateTimeFormat(loc, { day: "numeric", month: "short" });
     const time = new Intl.DateTimeFormat(loc, { hour: "2-digit", minute: "2-digit" });
     fetchEvents(now, addDays(now, 14)).then((ev) => {
       const list = ev.filter((e) => e.kind === "gvg" && new Date(e.starts_at) > now).slice(0, 3);
       if (!list.length) return;
-      ng.innerHTML = `<div class="ng-label">${ng.dataset.label}</div>` + list.map((e, i) => {
+      ng.innerHTML = `<div class="ng-label">${ng.dataset.label}</div><div class="ng-list">` + list.map((e, i) => {
         const d = new Date(e.starts_at);
-        return `<div class="ng-row" style="--i:${i}"><strong>${day.format(d)}</strong><span>${time.format(d)}</span></div>`;
-      }).join("");
+        return `<div class="ng-day" style="--i:${i}"><span class="ng-wd">${wd.format(d).replace(".", "")}</span><strong>${day.format(d)}</strong><span class="ng-t">${time.format(d)}</span></div>`;
+      }).join("") + `</div>`;
       ng.hidden = false;
     }).catch(() => {});
   }
@@ -130,17 +131,20 @@ const tiles = [
   .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s, transform 0.3s var(--ease); }
   .tile:hover { border-color: var(--border-strong); transform: translateY(-2px); }
   .tile.kind-discord { --k: #5865f2; }
-  .next-gvg { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .next-gvg { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 12px; }
   :global(.ng-label) { font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  :global(.ng-row) { display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border-radius: 8px; background: var(--surface-2); font-size: 13.5px; animation: ng-in 0.5s var(--ease) both; animation-delay: calc(var(--i) * 80ms); }
-  :global(.ng-row strong) { font-weight: 600; text-transform: capitalize; }
-  :global(.ng-row span) { color: var(--muted); font-variant-numeric: tabular-nums; }
+  :global(.ng-list) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  :global(.ng-day) { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); line-height: 1.25; animation: ng-in 0.5s var(--ease) both; animation-delay: calc(var(--i) * 80ms); }
+  :global(.ng-day:first-child) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+  :global(.ng-wd) { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  :global(.ng-day strong) { font-size: 14px; font-weight: 600; white-space: nowrap; }
+  :global(.ng-t) { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
   @keyframes ng-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .tile-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--k); background: color-mix(in srgb, var(--k) 12%, transparent); margin-bottom: 8px; }
   .tile.kind-other .tile-ico { color: var(--text-2); background: var(--surface-2); }
   .tile h3 { font-size: 19px; }
   .tile p { color: var(--muted); font-size: 15px; max-width: 46ch; }
-  .tile-link { margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
+  .tile-link { margin-top: auto; padding-top: 6px; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
   .tile-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
   .lead-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
