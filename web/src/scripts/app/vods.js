@@ -17,7 +17,7 @@ function vt(key, vars) {
 }
 
 const VOD_CATS = ["good", "mistake", "info", "question"];
-const VOD_COACH_ROLES = ["healer", "tank", "nameless"];
+const VOD_COACH_ROLES = ["healer", "tank", "nameless", "twinblades"];
 const vodState = { list: null, filter: "", uploads: {}, pollTimer: null, keyHandler: null, catFilter: "all", roleFilter: "all", me: null };
 
 function vodIsCoach() { return vodState.me && (vodState.me.level === "coach" || vodState.me.level === "admin"); }

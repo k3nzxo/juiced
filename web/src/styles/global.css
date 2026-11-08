@@ -180,6 +180,7 @@ p { margin: 0; }
 .role-healer { --role: #16a34a; }
 .role-tank { --role: #ca8a04; }
 .role-nameless { --role: #2563eb; }
+.role-twinblades { --role: #8b3fd9; }
 .role-team { --role: #d97706; }
 .role-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-2); }
 .role-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--role, var(--faint)); }

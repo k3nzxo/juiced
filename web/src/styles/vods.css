@@ -42,6 +42,8 @@
 .vod-role-healer { background: rgba(62,207,142,0.16); color: #3ecf8e; }
 .vod-role-tank { background: rgba(202,138,4,0.16); color: #ca8a04; }
 .vod-role-nameless { background: rgba(37,99,235,0.16); color: #2563eb; }
+.vod-role-twinblades { background: rgba(139,63,217,0.16); color: #8b3fd9; }
+:root[data-theme="dark"] .vod-role-twinblades { color: #b48af5; }
 .vod-role-team { background: rgba(245,196,81,0.18); color: var(--gold); }
 .vod-mem-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; padding: 0.6rem 0; border-bottom: 1px solid var(--glass-border); }
 .vod-mem-row .cat-tab { padding: 0.3rem 0.65rem; font-size: 0.72rem; }

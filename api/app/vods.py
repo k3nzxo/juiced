@@ -46,9 +46,9 @@ MEDIA_URL_TTL = 12 * 3600
 ALLOWED_EXT = {".mp4", ".mkv", ".mov", ".webm", ".flv", ".ts", ".m4v"}
 VALID_RESULTS = ("win", "loss")
 VALID_CATEGORIES = ("good", "mistake", "info", "question")
-COACH_ROLES = ("healer", "tank", "nameless")
+COACH_ROLES = ("healer", "tank", "nameless", "twinblades")
 VOD_ROLES = COACH_ROLES  # (alte Team-VODs bleiben lesbar, neue gibt es nicht mehr)
-ROLE_LABELS = {"healer": "Healer", "tank": "Tank", "nameless": "Nameless", "team": "Team"}
+ROLE_LABELS = {"healer": "Healer", "tank": "Tank", "nameless": "Nameless", "twinblades": "Twinblades", "team": "Team"}
 
 
 # ---------------------------------------------------------------- Models

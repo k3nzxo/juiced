@@ -13,6 +13,7 @@ type Me = {
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
 const ROLES = ["healer", "tank", "nameless"];
+const COACH_ROLES = [...ROLES, "twinblades"];
 const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
 function avatar(u: { avatar_url: string | null; display_name: string }, size = 32) {
@@ -276,7 +277,7 @@ async function viewAdmin(view: HTMLElement) {
         <div class="tr-main"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)} · ${esc(u.rank_manual ? T("admin_manual") : T("admin_from_discord"))}</span></div>
         <div class="tr-ctrl">
           <select class="select" data-rank aria-label="${esc(T("admin_rank"))}">${ranks.map((r) => `<option value="${r}" ${u.rank === r ? "selected" : ""}>${esc(T(RANK_KEYS[r]))}</option>`).join("")}</select>
-          <div class="chips">${ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" title="${esc(T("admin_coach_for"))}">${esc(T("role_" + r))}</button>`).join("")}</div>
+          <div class="chips">${COACH_ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" title="${esc(T("admin_coach_for"))}">${esc(T("role_" + r))}</button>`).join("")}</div>
           ${u.rank_manual ? `<button class="btn btn-ghost btn-sm" data-sync title="${esc(T("admin_use_discord"))}">${icon.refresh}</button>` : ""}
         </div></div>`).join("")}</div>`;
     view.querySelectorAll<HTMLElement>(".tr-admin").forEach((row) => {

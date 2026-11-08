@@ -5,7 +5,7 @@ from .db import Base
 # Ränge (aufsteigend). "Coach" ist kein eigener Rang, sondern ergibt sich aus coach_roles.
 RANKS = ("guest", "member", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
-COACH_ROLES = ("healer", "tank", "nameless")
+COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe, eigener Coach
 MAIN_ROLES = ("healer", "tank", "nameless")
 
 
