@@ -11,12 +11,12 @@ const en = {
   m_gvg: "Guild vs Guild", m_custom: "Custom games", m_events: "In-game events", m_friday: "Friday Nights", m_reviews: "VOD reviews", m_community: "Community", m_euw: "EUW",
   b_eyebrow: "What we do", b_title: "What we do",
   b_sub: "Where Winds Meet is home, but JUICED is about the people. Here's what a normal week looks like.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Our main thing. 30v30 on Saturdays and Sundays.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Our main focus. 30v30 with a fixed roster.",
   b_custom_t: "Custom games", b_custom_b: "Matches against other guilds, mostly on weekends.", b_custom_cta: "Request a match",
   b_events_t: "In-game events", b_events_b: "Guild events and whatever else is going on in the game.",
-  b_friday_t: "Other games", b_friday_b: "We don't only play WWM. What we play next is decided in Discord.",
+  b_friday_t: "Other games", b_friday_b: "Besides WWM we play lots of other games together.",
   b_friday_chips: "Shooters|Party games|Co-op|Survival|Anything goes",
-  b_review_t: "VOD reviews", b_review_b: "Upload your POV and your role coach leaves notes on the timeline.",
+  b_review_t: "VOD reviews", b_review_b: "Upload your match and your coach gives you feedback with timestamps.",
   s_members: "members", s_events: "events this week", s_langs: "languages",
   week_eyebrow: "This week", week_title: "What's coming up", week_cta: "Full schedule", week_empty: "Nothing planned yet: check back soon.",
   kind_gvg: "GvG", kind_scrim: "Custom game", kind_ingame: "In-game event", kind_friday: "Event", kind_other: "Other",
@@ -43,6 +43,7 @@ const en = {
   mt_pending: "Open", mt_accepted: "Accepted", mt_declined: "Declined",
   apps_platforms: "Platform", apps_vods: "VODs",
   join_lang_note: "Our guild language is English, in voice and on Discord.",
+  b_gvg_next: "Next GvG",
 };
 
 export type ExtraDict = typeof en;
@@ -58,12 +59,12 @@ const de: Partial<ExtraDict> = {
   m_gvg: "Guild vs Guild", m_custom: "Custom Games", m_events: "Ingame-Events", m_friday: "Friday Nights", m_reviews: "VOD-Reviews", m_community: "Community",
   b_eyebrow: "Was wir machen", b_title: "Was wir machen",
   b_sub: "Where Winds Meet ist unser Zuhause, aber bei JUICED geht es um die Leute. So sieht eine normale Woche aus.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Unser Hauptding. 30v30, samstags und sonntags.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Unser Schwerpunkt. 30v30 mit festem Roster.",
   b_custom_t: "Custom Games", b_custom_b: "Matches gegen andere Gilden, meistens am Wochenende.", b_custom_cta: "Match anfragen",
   b_events_t: "Ingame-Events", b_events_b: "Gildenevents und alles, was sonst im Spiel ansteht.",
-  b_friday_t: "Andere Games", b_friday_b: "Wir spielen nicht nur WWM. Was als Nächstes dran ist, entscheiden wir im Discord.",
+  b_friday_t: "Andere Games", b_friday_b: "Neben WWM zocken wir auch viele andere Games zusammen.",
   b_friday_chips: "Shooter|Partyspiele|Koop|Survival|Alles Mögliche",
-  b_review_t: "VOD-Reviews", b_review_b: "POV hochladen, dein Rollen-Coach setzt Notizen auf die Timeline.",
+  b_review_t: "VOD-Reviews", b_review_b: "Lade dein Match hoch und dein Coach gibt dir Feedback mit Zeitstempeln.",
   s_members: "Mitglieder", s_events: "Termine diese Woche", s_langs: "Sprachen",
   week_eyebrow: "Diese Woche", week_title: "Was ansteht", week_cta: "Ganzer Wochenplan", week_empty: "Noch nichts geplant: schau bald wieder vorbei.",
   kind_scrim: "Custom Game", kind_ingame: "Ingame-Event", kind_other: "Sonstiges",
@@ -91,6 +92,7 @@ const de: Partial<ExtraDict> = {
   apps_platforms: "Plattform", apps_vods: "VODs",
   kind_friday: "Event",
   join_lang_note: "Unsere Gildensprache ist Englisch, im Voice und auf Discord.",
+  b_gvg_next: "Nächste GvG",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -102,12 +104,12 @@ const fr: Partial<ExtraDict> = {
   m_custom: "Parties personnalisées", m_events: "Événements en jeu", m_reviews: "Reviews VOD", m_community: "Communauté",
   b_eyebrow: "Ce que nous faisons", b_title: "Ce qu'on fait",
   b_sub: "Where Winds Meet est notre maison, mais JUICED, ce sont avant tout les gens. Voici une semaine normale.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Notre activité principale. 30v30 le samedi et le dimanche.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Notre priorité. Du 30v30 avec un roster fixe.",
   b_custom_t: "Parties personnalisées", b_custom_b: "Des matchs contre d'autres guildes, surtout le week-end.", b_custom_cta: "Demander un match",
   b_events_t: "Événements en jeu", b_events_b: "Les événements de guilde et tout ce qui se passe dans le jeu.",
-  b_friday_t: "Autres jeux", b_friday_b: "On ne joue pas qu'à WWM. Ce qu'on joue ensuite se décide sur Discord.",
+  b_friday_t: "Autres jeux", b_friday_b: "En plus de WWM, on joue à plein d'autres jeux ensemble.",
   b_friday_chips: "Shooters|Jeux d'ambiance|Coop|Survie|Tout ce qui passe",
-  b_review_t: "Reviews VOD", b_review_b: "Envoie ton POV, ton coach de rôle laisse des notes sur la timeline.",
+  b_review_t: "Reviews VOD", b_review_b: "Envoie ton match et ton coach te fait un retour avec des timecodes.",
   s_members: "membres", s_events: "événements cette semaine", s_langs: "langues",
   week_eyebrow: "Cette semaine", week_title: "Au programme", week_cta: "Planning complet", week_empty: "Rien de prévu pour l'instant: repasse bientôt.",
   kind_scrim: "Partie perso", kind_ingame: "Événement en jeu", kind_other: "Autre",
@@ -130,6 +132,7 @@ const fr: Partial<ExtraDict> = {
   mt_pending: "Ouverte", mt_accepted: "Acceptée", mt_declined: "Refusée", apps_platforms: "Plateforme",
   kind_friday: "Événement",
   join_lang_note: "La langue de la guilde est l'anglais, en vocal et sur Discord.",
+  b_gvg_next: "Prochains GvG",
 };
 
 const es: Partial<ExtraDict> = {
@@ -141,12 +144,12 @@ const es: Partial<ExtraDict> = {
   m_custom: "Partidas personalizadas", m_events: "Eventos del juego", m_reviews: "Revisiones de VOD", m_community: "Comunidad",
   b_eyebrow: "Lo que hacemos", b_title: "Lo que hacemos",
   b_sub: "Where Winds Meet es nuestra casa, pero JUICED va de la gente. Así es una semana normal.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Lo principal. 30v30 los sábados y domingos.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Nuestro foco. 30v30 con un roster fijo.",
   b_custom_t: "Partidas personalizadas", b_custom_b: "Partidas contra otros gremios, sobre todo los fines de semana.", b_custom_cta: "Solicitar partida",
   b_events_t: "Eventos del juego", b_events_b: "Eventos del gremio y todo lo que pase en el juego.",
-  b_friday_t: "Otros juegos", b_friday_b: "No solo jugamos a WWM. Lo que jugamos después se decide en Discord.",
+  b_friday_t: "Otros juegos", b_friday_b: "Además de WWM jugamos juntos a muchos otros juegos.",
   b_friday_chips: "Shooters|Juegos de fiesta|Cooperativo|Supervivencia|Lo que sea",
-  b_review_t: "Revisiones de VOD", b_review_b: "Sube tu POV y tu coach de rol deja notas en la línea de tiempo.",
+  b_review_t: "Revisiones de VOD", b_review_b: "Sube tu partida y tu coach te da feedback con marcas de tiempo.",
   s_members: "miembros", s_events: "eventos esta semana", s_langs: "idiomas",
   week_eyebrow: "Esta semana", week_title: "Lo que viene", week_cta: "Calendario completo", week_empty: "Aún no hay nada planeado: vuelve pronto.",
   kind_scrim: "Partida personalizada", kind_ingame: "Evento del juego", kind_other: "Otro",
@@ -169,6 +172,7 @@ const es: Partial<ExtraDict> = {
   mt_pending: "Abierta", mt_accepted: "Aceptada", mt_declined: "Rechazada", apps_platforms: "Plataforma",
   kind_friday: "Evento",
   join_lang_note: "El idioma del gremio es el inglés, en voz y en Discord.",
+  b_gvg_next: "Próximos GvG",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -180,12 +184,12 @@ const pt: Partial<ExtraDict> = {
   m_custom: "Partidas personalizadas", m_events: "Eventos do jogo", m_reviews: "Revisões de VOD", m_community: "Comunidade",
   b_eyebrow: "O que fazemos", b_title: "O que fazemos",
   b_sub: "Where Winds Meet é nossa casa, mas a JUICED é sobre as pessoas. Veja como é uma semana normal.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Nosso foco principal. 30v30 aos sábados e domingos.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Nosso foco. 30v30 com roster fixo.",
   b_custom_t: "Partidas personalizadas", b_custom_b: "Partidas contra outras guildas, principalmente nos fins de semana.", b_custom_cta: "Pedir partida",
   b_events_t: "Eventos do jogo", b_events_b: "Eventos da guilda e tudo o que rola no jogo.",
-  b_friday_t: "Outros jogos", b_friday_b: "Não jogamos só WWM. O que vamos jogar depois é decidido no Discord.",
+  b_friday_t: "Outros jogos", b_friday_b: "Além de WWM, jogamos vários outros jogos juntos.",
   b_friday_chips: "Tiro|Party games|Co-op|Sobrevivência|O que der",
-  b_review_t: "Revisões de VOD", b_review_b: "Envie seu POV e seu coach de função deixa notas na linha do tempo.",
+  b_review_t: "Revisões de VOD", b_review_b: "Envie sua partida e seu coach te dá feedback com marcações de tempo.",
   s_members: "membros", s_events: "eventos nesta semana", s_langs: "idiomas",
   week_eyebrow: "Esta semana", week_title: "O que vem por aí", week_cta: "Agenda completa", week_empty: "Nada planejado ainda: volte em breve.",
   kind_scrim: "Partida personalizada", kind_ingame: "Evento do jogo", kind_other: "Outro",
@@ -208,6 +212,7 @@ const pt: Partial<ExtraDict> = {
   mt_pending: "Aberto", mt_accepted: "Aceito", mt_declined: "Recusado", apps_platforms: "Plataforma",
   kind_friday: "Evento",
   join_lang_note: "O idioma da guilda é o inglês, no voice e no Discord.",
+  b_gvg_next: "Próximos GvG",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -219,12 +224,12 @@ const ru: Partial<ExtraDict> = {
   m_custom: "Кастомные матчи", m_events: "Игровые события", m_reviews: "Разборы VOD", m_community: "Сообщество",
   b_eyebrow: "Чем мы заняты", b_title: "Чем мы заняты",
   b_sub: "Where Winds Meet: наш дом, но JUICED: это прежде всего люди. Вот как выглядит обычная неделя.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Главное для нас. 30 на 30 по субботам и воскресеньям.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Наш главный фокус. 30 на 30 с постоянным составом.",
   b_custom_t: "Кастомные матчи", b_custom_b: "Матчи против других гильдий, в основном по выходным.", b_custom_cta: "Предложить матч",
   b_events_t: "Игровые события", b_events_b: "Гильдейские события и всё, что происходит в игре.",
-  b_friday_t: "Другие игры", b_friday_b: "Мы играем не только в WWM. Во что играть дальше, решаем в Discord.",
+  b_friday_t: "Другие игры", b_friday_b: "Кроме WWM мы вместе играем во много других игр.",
   b_friday_chips: "Шутеры|Пати-игры|Кооп|Выживание|Что угодно",
-  b_review_t: "Разборы VOD", b_review_b: "Загрузи свой POV, и коуч твоей роли оставит заметки на таймлайне.",
+  b_review_t: "Разборы VOD", b_review_b: "Загрузи свой матч, и коуч даст обратную связь с таймкодами.",
   s_members: "участников", s_events: "событий на неделе", s_langs: "языков",
   week_eyebrow: "На этой неделе", week_title: "Что впереди", week_cta: "Всё расписание", week_empty: "Пока ничего не запланировано: загляни позже.",
   kind_scrim: "Кастомный матч", kind_ingame: "Игровое событие", kind_other: "Другое",
@@ -247,6 +252,7 @@ const ru: Partial<ExtraDict> = {
   mt_pending: "Открыта", mt_accepted: "Принята", mt_declined: "Отклонена", apps_platforms: "Платформа",
   kind_friday: "Ивент",
   join_lang_note: "Язык гильдии: английский: в голосе и в Discord.",
+  b_gvg_next: "Ближайшие GvG",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -258,12 +264,12 @@ const tr: Partial<ExtraDict> = {
   m_custom: "Özel maçlar", m_events: "Oyun içi etkinlikler", m_reviews: "VOD analizleri", m_community: "Topluluk",
   b_eyebrow: "Ne yapıyoruz", b_title: "Ne yapıyoruz",
   b_sub: "Where Winds Meet evimiz, ama JUICED'in özü insanlar. İşte normal bir hafta.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Ana işimiz. Cumartesi ve pazar 30v30.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Ana odağımız. Sabit kadroyla 30v30.",
   b_custom_t: "Özel maçlar", b_custom_b: "Diğer loncalara karşı maçlar, çoğunlukla hafta sonları.", b_custom_cta: "Maç iste",
   b_events_t: "Oyun içi etkinlikler", b_events_b: "Lonca etkinlikleri ve oyunda olan her şey.",
-  b_friday_t: "Başka oyunlar", b_friday_b: "Sadece WWM oynamıyoruz. Sırada ne oynanacağına Discord'da karar veriyoruz.",
+  b_friday_t: "Başka oyunlar", b_friday_b: "WWM dışında birlikte birçok başka oyun da oynuyoruz.",
   b_friday_chips: "Nişancı|Parti oyunları|Co-op|Hayatta kalma|Ne olursa",
-  b_review_t: "VOD analizleri", b_review_b: "POV'unu yükle, rol koçun zaman çizelgesine notlar bıraksın.",
+  b_review_t: "VOD analizleri", b_review_b: "Maçını yükle, koçun zaman damgalı geri bildirim versin.",
   s_members: "üye", s_events: "bu haftaki etkinlik", s_langs: "dil",
   week_eyebrow: "Bu hafta", week_title: "Yaklaşanlar", week_cta: "Tüm program", week_empty: "Henüz plan yok: yakında tekrar bak.",
   kind_scrim: "Özel maç", kind_ingame: "Oyun içi etkinlik", kind_other: "Diğer",
@@ -286,6 +292,7 @@ const tr: Partial<ExtraDict> = {
   mt_pending: "Açık", mt_accepted: "Kabul edildi", mt_declined: "Reddedildi", apps_platforms: "Platform",
   kind_friday: "Etkinlik",
   join_lang_note: "Lonca dilimiz İngilizce, seste ve Discord'da.",
+  b_gvg_next: "Sıradaki GvG",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -297,12 +304,12 @@ const pl: Partial<ExtraDict> = {
   m_custom: "Mecze customowe", m_events: "Eventy w grze", m_reviews: "Analizy VOD", m_community: "Społeczność",
   b_eyebrow: "Co robimy", b_title: "Co robimy",
   b_sub: "Where Winds Meet to nasz dom, ale JUICED to przede wszystkim ludzie. Tak wygląda zwykły tydzień.",
-  b_gvg_t: "Guild vs Guild", b_gvg_b: "Nasza główna rzecz. 30v30 w soboty i niedziele.",
+  b_gvg_t: "Guild vs Guild", b_gvg_b: "Nasz priorytet. 30v30 ze stałym składem.",
   b_custom_t: "Mecze customowe", b_custom_b: "Mecze z innymi gildiami, głównie w weekendy.", b_custom_cta: "Poproś o mecz",
   b_events_t: "Eventy w grze", b_events_b: "Eventy gildii i wszystko, co dzieje się w grze.",
-  b_friday_t: "Inne gry", b_friday_b: "Nie gramy tylko w WWM. W co gramy dalej, decydujemy na Discordzie.",
+  b_friday_t: "Inne gry", b_friday_b: "Poza WWM gramy razem w wiele innych gier.",
   b_friday_chips: "Strzelanki|Gry imprezowe|Co-op|Survival|Cokolwiek",
-  b_review_t: "Analizy VOD", b_review_b: "Wrzuć swój POV, a trener twojej roli zostawi notatki na osi czasu.",
+  b_review_t: "Analizy VOD", b_review_b: "Wrzuć swój mecz, a trener da ci feedback z oznaczeniami czasu.",
   s_members: "członków", s_events: "wydarzeń w tym tygodniu", s_langs: "języków",
   week_eyebrow: "W tym tygodniu", week_title: "Co nas czeka", week_cta: "Cały plan", week_empty: "Jeszcze nic nie zaplanowano: zajrzyj wkrótce.",
   kind_scrim: "Mecz customowy", kind_ingame: "Event w grze", kind_other: "Inne",
@@ -325,6 +332,7 @@ const pl: Partial<ExtraDict> = {
   mt_pending: "Otwarta", mt_accepted: "Przyjęta", mt_declined: "Odrzucona", apps_platforms: "Platforma",
   kind_friday: "Event",
   join_lang_note: "Językiem gildii jest angielski, na głosowym i na Discordzie.",
+  b_gvg_next: "Najbliższe GvG",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

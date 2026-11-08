@@ -40,8 +40,8 @@
 
 .vod-role { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.15rem 0.45rem; border-radius: 5px; }
 .vod-role-healer { background: rgba(62,207,142,0.16); color: #3ecf8e; }
-.vod-role-tank { background: rgba(108,140,255,0.18); color: var(--accent); }
-.vod-role-nameless { background: rgba(185,139,245,0.18); color: #b98bf5; }
+.vod-role-tank { background: rgba(202,138,4,0.16); color: #ca8a04; }
+.vod-role-nameless { background: rgba(37,99,235,0.16); color: #2563eb; }
 .vod-role-team { background: rgba(245,196,81,0.18); color: var(--gold); }
 .vod-mem-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; padding: 0.6rem 0; border-bottom: 1px solid var(--glass-border); }
 .vod-mem-row .cat-tab { padding: 0.3rem 0.65rem; font-size: 0.72rem; }

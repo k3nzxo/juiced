@@ -30,10 +30,13 @@ const tiles = [
       <div class="tiles">
         {tiles.map((x, i) => (
           <article class:list={["tile", "reveal", `kind-${x.k}`, { wide: x.wide }]} style={`--d:${i * 70}ms`}>
-            <span class="tile-ico"><Icon name={x.icon} size={18} /></span>
-            <h3>{x.title}</h3>
-            <p>{x.body}</p>
-            {x.link && <a class="tile-link" href={x.link.href}>{x.link.label} <Icon name="arrow" size={14} /></a>}
+            <div class="tile-main">
+              <span class="tile-ico"><Icon name={x.icon} size={18} /></span>
+              <h3>{x.title}</h3>
+              <p>{x.body}</p>
+              {x.link && <a class="tile-link" href={x.link.href}>{x.link.label} <Icon name="arrow" size={14} /></a>}
+            </div>
+            {x.wide && <div class="next-gvg" data-next-gvg data-label={t("b_gvg_next")} data-lang={lang} hidden></div>}
           </article>
         ))}
       </div>
@@ -90,6 +93,24 @@ const tiles = [
   const grid = document.querySelector<HTMLElement>("[data-lead-grid]");
   if (grid) renderLeadership(grid);
 
+  // Nächste GvG-Termine in der GvG-Kachel
+  const ng = document.querySelector<HTMLElement>("[data-next-gvg]");
+  if (ng) {
+    const now = new Date();
+    const loc = ng.dataset.lang === "pt" ? "pt-BR" : ng.dataset.lang || "en";
+    const day = new Intl.DateTimeFormat(loc, { weekday: "long", day: "numeric", month: "short" });
+    const time = new Intl.DateTimeFormat(loc, { hour: "2-digit", minute: "2-digit" });
+    fetchEvents(now, addDays(now, 14)).then((ev) => {
+      const list = ev.filter((e) => e.kind === "gvg" && new Date(e.starts_at) > now).slice(0, 4);
+      if (!list.length) return;
+      ng.innerHTML = `<div class="ng-label">${ng.dataset.label}</div>` + list.map((e, i) => {
+        const d = new Date(e.starts_at);
+        return `<div class="ng-row" style="--i:${i}"><strong>${day.format(d)}</strong><span>${time.format(d)}</span></div>`;
+      }).join("");
+      ng.hidden = false;
+    }).catch(() => {});
+  }
+
   const week = document.querySelector<HTMLElement>("[data-home-week]");
   if (week) {
     const monday = startOfWeek();
@@ -109,7 +130,14 @@ const tiles = [
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s, transform 0.3s var(--ease); }
   .tile:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-  .tile.wide { grid-column: span 2; }
+  .tile.wide { grid-column: span 2; flex-direction: row; align-items: stretch; gap: 24px; }
+  .tile-main { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .next-gvg { flex: 1; display: flex; flex-direction: column; gap: 8px; border-left: 1px solid var(--border); padding-left: 24px; justify-content: center; }
+  :global(.ng-label) { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  :global(.ng-row) { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; animation: ng-in 0.5s var(--ease) both; animation-delay: calc(var(--i) * 80ms); }
+  :global(.ng-row strong) { font-weight: 600; text-transform: capitalize; }
+  :global(.ng-row span) { color: var(--muted); font-variant-numeric: tabular-nums; }
+  @keyframes ng-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
   .tile-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--k); background: color-mix(in srgb, var(--k) 12%, transparent); margin-bottom: 8px; }
   .tile.kind-other .tile-ico { color: var(--text-2); background: var(--surface-2); }
   .tile h3 { font-size: 19px; }
@@ -142,7 +170,8 @@ const tiles = [
   @media (max-width: 600px) {
     .section { padding-top: 64px; }
     .tiles { grid-template-columns: 1fr; }
-    .tile.wide { grid-column: span 1; }
+    .tile.wide { grid-column: span 1; flex-direction: column; }
+    .next-gvg { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 14px; }
     .lead-grid { grid-template-columns: 1fr; }
     .cta-card { padding: 26px; }
   }
