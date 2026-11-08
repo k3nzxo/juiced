@@ -16,7 +16,9 @@ def _add_missing_columns():
     """Neue Spalten in bestehenden Tabellen ergänzen (create_all macht das nicht)."""
     from sqlalchemy import inspect, text
     wanted = {
-        "applications": {"platforms": "VARCHAR(40)", "vod_links": "TEXT"},
+        "applications": {"platforms": "VARCHAR(40)", "vod_links": "TEXT", "weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)",
+                         "build": "TEXT", "build_link": "VARCHAR(300)"},
+        "users": {"weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)"},
         "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false", "repeat_days": "VARCHAR(7)"},
         "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
     }
@@ -28,6 +30,13 @@ def _add_missing_columns():
                 with engine.begin() as conn:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {typ}"))
                 print(f"[db] {table}.{col} angelegt")
+    # Früher waren Nameless/Twinblades Hauptrollen, jetzt: Rolle DPS + Waffe
+    with engine.begin() as conn:
+        for table in ("users", "applications"):
+            n = conn.execute(text(f"UPDATE {table} SET weapons = main_role, main_role = 'dps' "
+                                  f"WHERE main_role IN ('nameless', 'twinblades')")).rowcount
+            if n:
+                print(f"[db] {table}: {n} Einträge auf DPS + Waffe umgestellt")
 
 
 _add_missing_columns()

@@ -6,6 +6,7 @@ export type PublicMember = {
   rank: "developer" | "leader" | "vice" | "coach" | "member";
   coach_roles: string[];
   main_role: string | null;
+  weapons?: string[]; weapon_other?: string | null;
   country: string | null;
 };
 
@@ -36,6 +37,7 @@ export async function fetchTeam(): Promise<PublicMember[]> {
 
 export function personCard(m: PublicMember, labels: Record<string, string>): string {
   const roleLabel = m.main_role ? labels["role_" + m.main_role] || m.main_role : "";
+  const wt = [...(m.weapons || []).map((w) => labels["weapon_" + w] || w), ...(m.weapon_other ? [m.weapon_other] : [])].join(", ");
   return `<article class="person">
     ${avatar(m)}
     <div>
@@ -43,6 +45,7 @@ export function personCard(m: PublicMember, labels: Record<string, string>): str
       <div class="p-sub">
         <span class="badge badge-${esc(m.rank)}">${esc(labels[m.rank] || m.rank)}</span>
         ${roleLabel ? `<span class="role-tag role-${esc(m.main_role)}">${esc(roleLabel)}</span>` : ""}
+        ${wt ? `<span class="weapons">${esc(wt)}</span>` : ""}
         ${m.country ? flag(m.country) : ""}
       </div>
     </div>

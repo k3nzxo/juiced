@@ -54,7 +54,8 @@ def team(db: DbSession = Depends(get_db)):
     users.sort(key=lambda u: (RANK_ORDER.get(u.public_rank, 9), u.display_name.lower()))
     return {"members": [{
         "display_name": u.display_name, "avatar_url": u.avatar_url, "rank": u.public_rank,
-        "coach_roles": u.coach_list, "main_role": u.main_role, "country": u.country,
+        "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list, "weapon_other": u.weapon_other,
+        "country": u.country,
     } for u in users]}
 
 
@@ -62,6 +63,10 @@ class ApplicationIn(BaseModel):
     discord: str
     ingame: str
     main_role: str
+    weapons: list[str] = []
+    weapon_other: Optional[str] = None
+    build: Optional[str] = None
+    build_link: Optional[str] = None
     country: str
     times: Optional[str] = None
     experience: str
@@ -82,9 +87,17 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
                   experience=clean(payload.experience, 2000))
     platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
     links = clean_links(payload.vod_links)
+    weapons, weapon_other = models.clean_weapons(payload.weapons), clean(payload.weapon_other, 40)
     if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms or not links:
         raise HTTPException(status_code=400, detail="Missing fields")
-    a = models.Application(**fields, times=clean(payload.times, 120) or "", main_role=payload.main_role, why=clean(payload.why, 2000),
+    if payload.main_role == "dps" and not (weapons or weapon_other):
+        raise HTTPException(status_code=400, detail="Missing weapon")
+    build = clean(payload.build, 2000)
+    build_link = (clean_links([payload.build_link]) or [None])[0] if payload.build_link else None
+    if not build:
+        raise HTTPException(status_code=400, detail="Missing build")
+    a = models.Application(**fields, times=clean(payload.times, 120) or "", main_role=payload.main_role, weapons=weapons or None, weapon_other=weapon_other,
+                           build=build, build_link=build_link, why=clean(payload.why, 2000),
                            lang=payload.lang if payload.lang in LANGS else None,
                            platforms=",".join(platforms), vod_links=json.dumps(links))
     db.add(a)
@@ -98,6 +111,8 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
 class ProfileIn(BaseModel):
     ingame_name: Optional[str] = None
     main_role: Optional[str] = None
+    weapons: Optional[list[str]] = None
+    weapon_other: Optional[str] = None
     country: Optional[str] = None
     show_on_team: Optional[bool] = None
     lang: Optional[str] = None
@@ -110,6 +125,10 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.ingame_name = clean(data["ingame_name"], 40)
     if "main_role" in data:
         user.main_role = data["main_role"] if data["main_role"] in models.MAIN_ROLES else None
+    if "weapons" in data:
+        user.weapons = models.clean_weapons(data["weapons"]) or None
+    if "weapon_other" in data:
+        user.weapon_other = clean(data["weapon_other"], 40)
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None
@@ -126,8 +145,8 @@ def members(db: DbSession = Depends(get_db), user: models.User = Depends(require
     users = db.query(models.User).filter(models.User.rank != "guest").all()
     users.sort(key=lambda u: (RANK_ORDER.get(u.public_rank, 9), u.display_name.lower()))
     return [{"id": u.id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
-             "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "country": u.country,
-             "last_login_at": iso(u.last_login_at)} for u in users]
+             "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list,
+             "weapon_other": u.weapon_other, "country": u.country, "last_login_at": iso(u.last_login_at)} for u in users]
 
 
 # ------------------------------------------------------------------ Ankündigungen
@@ -198,7 +217,9 @@ def _cleanup_applications(db: DbSession):
 def list_applications(db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
     _cleanup_applications(db)
     apps = db.query(models.Application).order_by(models.Application.created_at.desc()).limit(200).all()
-    return [{"id": a.id, "discord": a.discord, "ingame": a.ingame, "main_role": a.main_role, "country": a.country,
+    return [{"id": a.id, "discord": a.discord, "ingame": a.ingame, "main_role": a.main_role,
+             "weapons": [w for w in (a.weapons or "").split(",") if w], "weapon_other": a.weapon_other,
+             "build": a.build, "build_link": a.build_link, "country": a.country,
              "times": a.times, "experience": a.experience, "why": a.why, "lang": a.lang, "status": a.status,
              "platforms": [p for p in (a.platforms or "").split(",") if p], "vod_links": json.loads(a.vod_links or "[]"),
              "created_at": iso(a.created_at)} for a in apps]

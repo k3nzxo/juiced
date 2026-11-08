@@ -8,13 +8,15 @@ import { timeRange, timeShort } from "../schedule";
 type Me = {
   id: number; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
+  weapons: string[]; weapon_other: string | null;
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; rank_manual: boolean;
 };
 
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
-const ROLES = ["healer", "tank", "nameless", "twinblades"];
-const COACH_ROLES = ROLES;
+const ROLES = ["healer", "tank", "dps"];                       // Hauptrollen
+const WEAPONS = ["nameless", "twinblades"];                    // Waffen-Auswahl (dazu Freitext)
+const COACH_ROLES = ["healer", "tank", "nameless", "twinblades"]; // Coaches sind auf Waffen spezialisiert
 const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
 function avatar(u: { avatar_url: string | null; display_name: string }, size = 32) {
@@ -24,6 +26,12 @@ function avatar(u: { avatar_url: string | null; display_name: string }, size = 3
 }
 const rankBadge = (r: string) => `<span class="badge badge-${esc(r)}">${esc(T(RANK_KEYS[r] || r))}</span>`;
 const roleTag = (r: string | null) => (r ? `<span class="role-tag role-${esc(r)}">${esc(T("role_" + r))}</span>` : "");
+// Rolle + Waffen kompakt: "DPS · Nameless, Twinblades"
+const weaponText = (w: string[] = [], other: string | null = null) => [...w.map((x) => T("weapon_" + x)), ...(other ? [other] : [])].join(", ");
+const roleWeapons = (r: string | null, w: string[] = [], other: string | null = null) => {
+  const wt = weaponText(w, other);
+  return roleTag(r) + (wt ? `<span class="muted weapons-tag">${r ? "· " : ""}${esc(wt)}</span>` : "");
+};
 const flag = (cc: string | null) => (cc && /^[A-Z]{2}$/i.test(cc) ? `<img class="flag" src="/flags/${cc.toLowerCase()}.svg" alt="${cc.toUpperCase()}" width="20" height="15" loading="lazy">` : "");
 
 // ------------------------------------------------------------------ Start
@@ -226,7 +234,7 @@ async function viewRoster(view: HTMLElement) {
     const items = list.filter((u) => !q || `${u.display_name} ${u.username}`.toLowerCase().includes(q));
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="table card">${items.map((u) => `
       <div class="tr">${avatar(u, 34)}<div class="tr-main"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)}</span></div>
-      <div class="tr-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")} ${roleTag(u.main_role)} <span>${flag(u.country)}</span></div></div>`).join("")}</div>`
+      <div class="tr-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")} ${roleWeapons(u.main_role, u.weapons, u.weapon_other)} <span>${flag(u.country)}</span></div></div>`).join("")}</div>`
       : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   };
   view.querySelector("[data-q]")!.addEventListener("input", draw);
@@ -245,8 +253,9 @@ async function viewApplications(view: HTMLElement) {
     el.innerHTML = list.map((a) => `<article class="app-card card" data-id="${a.id}" data-status="${a.status}">
       <div class="app-top"><div><h3>${esc(a.ingame)}</h3><span class="muted">${esc(a.discord)} · ${esc(a.country)} · ${esc(timeAgo(a.created_at))}</span></div>
         <span class="status status-${a.status}">${esc(st[a.status])}</span></div>
-      <div class="app-tags">${roleTag(a.main_role)}${a.times ? `<span class="muted">${esc(a.times)}</span>` : ""}${a.lang ? `<span class="badge">${esc(a.lang)}</span>` : ""}</div>
+      <div class="app-tags">${roleWeapons(a.main_role, a.weapons, a.weapon_other)}${a.times ? `<span class="muted">${esc(a.times)}</span>` : ""}${a.lang ? `<span class="badge">${esc(a.lang)}</span>` : ""}</div>
       ${a.platforms && a.platforms.length ? `<div class="app-tags"><span class="muted">${esc(T("apps_platforms"))}:</span>${a.platforms.map((p: string) => `<span class="badge">${esc(T("plat_" + p))}</span>`).join("")}</div>` : ""}
+      ${a.build ? `<div class="app-build"><span class="muted">${esc(T("apps_build"))}</span><p class="app-text">${esc(a.build)}</p>${a.build_link ? `<a href="${esc(a.build_link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(a.build_link))}</a>` : ""}</div>` : ""}
       <p class="app-text">${esc(a.experience)}</p>${a.why ? `<p class="app-text muted">${esc(a.why)}</p>` : ""}
       ${a.vod_links && a.vod_links.length ? `<div class="vod-links"><span class="muted">${esc(T("apps_vods"))}:</span>${a.vod_links.map((u: string) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(u))}</a>`).join("")}</div>` : ""}
       <div class="row-gap">
@@ -284,7 +293,7 @@ async function viewAdmin(view: HTMLElement) {
         <div class="tr-main"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)} · ${esc(u.rank_manual ? T("admin_manual") : T("admin_from_discord"))}</span></div>
         <div class="tr-ctrl">
           <select class="select" data-rank aria-label="${esc(T("admin_rank"))}">${ranks.map((r) => `<option value="${r}" ${u.rank === r ? "selected" : ""}>${esc(T(RANK_KEYS[r]))}</option>`).join("")}</select>
-          <div class="chips">${COACH_ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" title="${esc(T("admin_coach_for"))}">${esc(T("role_" + r))}</button>`).join("")}</div>
+          <div class="coach-pick"><span class="coach-label">${esc(T("admin_coach_for"))}:</span><div class="chips">${COACH_ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" aria-pressed="${u.coach_roles.includes(r)}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
           ${u.rank_manual ? `<button class="btn btn-ghost btn-sm" data-sync title="${esc(T("admin_use_discord"))}">${icon.refresh}</button>` : ""}
         </div></div>`).join("")}</div>`;
     view.querySelectorAll<HTMLElement>(".tr-admin").forEach((row) => {
@@ -317,11 +326,19 @@ function viewProfile(view: HTMLElement) {
     <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div></div>
     <div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
     <div class="field"><span class="label">${esc(T("prof_role"))}</span><div class="chips">${ROLES.map((r) => `<button type="button" class="chip role-${r}" aria-pressed="${me!.main_role === r}" data-role="${r}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
+    <div class="field"><span class="label">${esc(T("prof_weapons"))}</span><div class="chips">${WEAPONS.map((w) => `<button type="button" class="chip role-${w}" aria-pressed="${(me!.weapons || []).includes(w)}" data-weapon="${w}">${esc(T("weapon_" + w))}</button>`).join("")}
+      <input class="input weapon-other" id="p-wother" maxlength="40" placeholder="${esc(T("join_weapon_other"))}" value="${esc(me!.weapon_other || "")}"></div></div>
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
     <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>
     <button class="btn btn-primary" type="submit">${esc(T("save"))}</button>
   </form>`;
   let role = me!.main_role;
+  const weapons = new Set<string>(me!.weapons || []);
+  view.querySelectorAll<HTMLElement>("[data-weapon]").forEach((b) => b.addEventListener("click", () => {
+    const w = b.dataset.weapon!;
+    weapons.has(w) ? weapons.delete(w) : weapons.add(w);
+    b.setAttribute("aria-pressed", String(weapons.has(w)));
+  }));
   view.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.addEventListener("click", () => {
     role = role === b.dataset.role ? null : b.dataset.role!;
     view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === role)));
@@ -331,7 +348,8 @@ function viewProfile(view: HTMLElement) {
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
-        main_role: role, country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
+        main_role: role, weapons: [...weapons], weapon_other: (view.querySelector("#p-wother") as HTMLInputElement).value,
+        country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });
       me = r.user;

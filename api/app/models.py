@@ -6,7 +6,12 @@ from .db import Base
 RANKS = ("guest", "member", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
 COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe, eigener Coach
-MAIN_ROLES = ("healer", "tank", "nameless", "twinblades")
+MAIN_ROLES = ("healer", "tank", "dps")
+WEAPONS = ("nameless", "twinblades")  # Auswahl; weitere Waffen per Freitext (weapon_other)
+
+
+def clean_weapons(items) -> str:
+    return ",".join(w for w in WEAPONS if w in (items or []))
 
 
 class User(Base):
@@ -22,11 +27,17 @@ class User(Base):
     in_guild = Column(Boolean, nullable=False, default=False)
     ingame_name = Column(String, nullable=True)
     main_role = Column(String, nullable=True)
+    weapons = Column(String(80), nullable=True)        # "nameless,twinblades"
+    weapon_other = Column(String(40), nullable=True)   # freie Angabe
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
     lang = Column(String(5), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_login_at = Column(DateTime(timezone=True), nullable=True)
+
+    @property
+    def weapon_list(self) -> list[str]:
+        return [w for w in (self.weapons or "").split(",") if w]
 
     @property
     def coach_list(self) -> list[str]:
@@ -81,6 +92,8 @@ class Application(Base):
     discord = Column(String(64), nullable=False)
     ingame = Column(String(64), nullable=False)
     main_role = Column(String(16), nullable=False)
+    weapons = Column(String(80), nullable=True)
+    weapon_other = Column(String(40), nullable=True)
     country = Column(String(64), nullable=False)
     times = Column(String(120), nullable=False)
     experience = Column(Text, nullable=False)
@@ -88,6 +101,8 @@ class Application(Base):
     lang = Column(String(5), nullable=True)
     platforms = Column(String(40), nullable=True)   # "pc,ps,mobile"
     vod_links = Column(Text, nullable=True)         # JSON-Liste mit URLs
+    build = Column(Text, nullable=True)             # was man spielt / wie weit man ist
+    build_link = Column(String(300), nullable=True) # optional: Screenshot oder Build-Planer
     status = Column(String(12), nullable=False, default="pending")  # pending | accepted | rejected
     decided_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decided_at = Column(DateTime(timezone=True), nullable=True)

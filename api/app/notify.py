@@ -65,8 +65,10 @@ def application_webhook(a) -> None:
     fields = [
         {"name": "Discord", "value": a.discord[:100], "inline": True},
         {"name": "In-game", "value": a.ingame[:100], "inline": True},
-        {"name": "Role", "value": a.main_role, "inline": True},
+        {"name": "Role", "value": a.main_role + (f" ({', '.join(filter(None, [*(a.weapons or '').split(','), a.weapon_other or '']))})"
+                                                  if (a.weapons or a.weapon_other) else ""), "inline": True},
         {"name": "Country", "value": a.country[:100], "inline": True},
+        {"name": "Build", "value": ((a.build or "—")[:900] + (f"\n{a.build_link}" if a.build_link else ""))[:1000]},
         {"name": "Experience", "value": a.experience[:1000] or "—"},
     ]
     if a.why:
