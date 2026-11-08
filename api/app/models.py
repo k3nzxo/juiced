@@ -94,7 +94,7 @@ class Application(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-EVENT_KINDS = ("gvg", "scrim", "ingame", "friday", "other")
+EVENT_KINDS = ("gvg", "raid", "scrim", "ingame", "friday", "other")
 PLATFORMS = ("pc", "ps", "mobile")
 
 

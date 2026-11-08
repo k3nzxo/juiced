@@ -341,7 +341,7 @@ function shortUrl(u: string) {
   try { const x = new URL(u); return (x.hostname.replace(/^www\./, "") + x.pathname).slice(0, 48); } catch { return u.slice(0, 48); }
 }
 
-const KINDS = ["gvg", "scrim", "ingame", "friday", "other"];
+const KINDS = ["gvg", "raid", "scrim", "ingame", "friday", "other"];
 const loc = () => (lang() === "pt" ? "pt-BR" : lang());
 const fmtWhen = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 // Wochentage Mo=0 ... So=6 (wie im Backend)

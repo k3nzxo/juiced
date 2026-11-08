@@ -13,6 +13,7 @@
   --c-pink: var(--accent);
   --c-violet: #3d63d6;
   --c-cyan: #0f9b93;
+  --c-purple: #8b3fd9;
   --c-lime: #4d7c0f;
 
   --grad-brand: linear-gradient(var(--accent), var(--accent));
@@ -51,6 +52,7 @@
   --accent-soft: rgba(238, 106, 36, 0.12);
   --c-violet: #6b8cf0;
   --c-cyan: #2bb8ae;
+  --c-purple: #b48af5;
   --c-lime: #84b82a;
   --bg: #0c0c0d;
   --bg-tint: #111113;

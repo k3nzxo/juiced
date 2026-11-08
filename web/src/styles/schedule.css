@@ -1,5 +1,6 @@
 /* Wochenplan (öffentlich + Startseite) */
 .kind-gvg { --k: var(--c-pink); }
+.kind-raid { --k: var(--c-purple); }
 .kind-scrim { --k: var(--c-violet); }
 .kind-ingame { --k: var(--c-cyan); }
 .kind-friday { --k: var(--c-lime); }

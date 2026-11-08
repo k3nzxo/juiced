@@ -84,6 +84,7 @@ const en = {
   ev_rep_daily: "Every day",
   ev_rep_none: "Once",
   ev_daily: "daily",
+  kind_raid: "Raid",
 };
 
 export type ExtraDict = typeof en;
@@ -173,6 +174,7 @@ const de: Partial<ExtraDict> = {
   ev_rep_daily: "Täglich",
   ev_rep_none: "Einmalig",
   ev_daily: "täglich",
+  kind_raid: "Raid",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -253,6 +255,7 @@ const fr: Partial<ExtraDict> = {
   ev_rep_daily: "Tous les jours",
   ev_rep_none: "Une fois",
   ev_daily: "tous les jours",
+  kind_raid: "Raid",
 };
 
 const es: Partial<ExtraDict> = {
@@ -333,6 +336,7 @@ const es: Partial<ExtraDict> = {
   ev_rep_daily: "Cada día",
   ev_rep_none: "Una vez",
   ev_daily: "a diario",
+  kind_raid: "Raid",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -413,6 +417,7 @@ const pt: Partial<ExtraDict> = {
   ev_rep_daily: "Todo dia",
   ev_rep_none: "Uma vez",
   ev_daily: "diário",
+  kind_raid: "Raid",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -493,6 +498,7 @@ const ru: Partial<ExtraDict> = {
   ev_rep_daily: "Каждый день",
   ev_rep_none: "Один раз",
   ev_daily: "ежедневно",
+  kind_raid: "Рейд",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -573,6 +579,7 @@ const tr: Partial<ExtraDict> = {
   ev_rep_daily: "Her gün",
   ev_rep_none: "Bir kez",
   ev_daily: "her gün",
+  kind_raid: "Raid",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -653,6 +660,7 @@ const pl: Partial<ExtraDict> = {
   ev_rep_daily: "Codziennie",
   ev_rep_none: "Jednorazowo",
   ev_daily: "codziennie",
+  kind_raid: "Rajd",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

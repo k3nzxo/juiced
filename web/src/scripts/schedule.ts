@@ -6,7 +6,7 @@ export type Ev = {
   opponent: string | null; description: string | null; repeat_weekly: boolean; repeat_days?: string; open_end?: boolean; is_public: boolean; can_edit: boolean;
 };
 
-export const KINDS = ["gvg", "scrim", "ingame", "friday", "other"] as const;
+export const KINDS = ["gvg", "raid", "scrim", "ingame", "friday", "other"] as const;
 
 export function startOfWeek(d = new Date()): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());

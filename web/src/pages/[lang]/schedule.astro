@@ -9,7 +9,7 @@ const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const d = dict(lang);
 const L = Object.fromEntries(Object.entries(d).filter(([k]) => k.startsWith("kind_") || k.startsWith("sched_")));
-const kinds = ["gvg", "scrim", "ingame", "friday", "other"] as const;
+const kinds = ["gvg", "raid", "scrim", "ingame", "friday", "other"] as const;
 ---
 <Base lang={lang} page="schedule" title={t("sched_title")} description={t("sched_sub")}>
   <section class="container page-head">
