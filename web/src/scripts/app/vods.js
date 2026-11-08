@@ -1,6 +1,6 @@
 // VOD-Reviews: Liste, Upload in Stücken, Player mit Zeitstempel-Notizen.
 // Wird vom Router im Mitgliederbereich aufgerufen: renderVods(container, me)
-import { api, toast, esc as escapeHtml, icon, fmtDate as formatDate, timeAgo, closeModal, T } from "./core";
+import { api, toast, esc as escapeHtml, icon, fmtDate as formatDate, timeAgo, closeModal, T, errMsg } from "./core";
 import { enhancePicker, closePicker } from "./picker";
 
 let $app = null;
@@ -363,7 +363,7 @@ function vodPutChunk(up, index, blob) {
       let data = null;
       try { data = JSON.parse(xhr.responseText); } catch (e) {}
       if (xhr.status >= 200 && xhr.status < 300) return resolve(data);
-      const err = new Error((data && data.detail) || `HTTP ${xhr.status}`);
+      const err = new Error(data ? errMsg(data) : `HTTP ${xhr.status}`);
       err.status = xhr.status;
       reject(err);
     };

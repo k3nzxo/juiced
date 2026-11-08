@@ -1,7 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import Icon from "../../components/Icon.astro";
-import { useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
+import { useT, dict, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
 
 export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
@@ -9,6 +9,7 @@ const t = useT(lang);
 const roles = ["healer", "tank", "dps"] as const;
 const weaponsByRole = { dps: ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"], tank: ["stormbreaker_spear", "thundercry_blade"], healer: ["panacea_fan", "soulshade_umbrella", "ribbon_drum"] } as const;
 const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods"), weapon: t("join_err_weapon"), build: t("join_err_build"), inner: t("join_err_inner"), img: t("join_err_img"), remove: t("remove"), region: t("join_err_region"), gs: t("join_err_gs"), shots: t("join_err_shots") };
+const errs = Object.fromEntries(Object.entries(dict(lang)).filter(([k]) => k.startsWith("err_")));
 ---
 <Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>
   <section class="container join">
@@ -34,7 +35,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
     </div>
 
     <div class="form-wrap card reveal" style="--d:120ms">
-      <form id="apply" novalidate data-msgs={JSON.stringify(msgs)} data-lang={lang}>
+      <form id="apply" novalidate data-msgs={JSON.stringify(msgs)} data-errs={JSON.stringify(errs)} data-lang={lang}>
         <div class="row2">
           <div class="field"><label for="f-discord">{t("join_discord")} *</label><input class="input" id="f-discord" name="discord" required maxlength="64" placeholder={t("join_discord_ph")} autocomplete="off" /></div>
           <div class="field"><label for="f-ingame">{t("join_ingame")} *</label><input class="input" id="f-ingame" name="ingame" required maxlength="64" autocomplete="off" /></div>
@@ -111,6 +112,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
 </Base>
 
 <script>
+  import { errorText } from "../../scripts/errors";
   const form = document.getElementById("apply") as HTMLFormElement;
   const msgs = JSON.parse(form.dataset.msgs || "{}");
   const err = form.querySelector<HTMLElement>(".err")!;
@@ -233,7 +235,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!r.ok) {
         const d = await r.json().catch(() => null);
-        throw new Error(d?.detail || msgs.generic);
+        throw new Error(errorText(d, JSON.parse(form.dataset.errs || "{}"), msgs.generic));
       }
       form.hidden = true;
       (document.querySelector(".done") as HTMLElement).hidden = false;

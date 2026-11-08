@@ -58,6 +58,12 @@ app = FastAPI(
     openapi_url=None if IS_PROD else "/api/openapi.json",
 )
 app.add_middleware(OriginCheckMiddleware)
+# Fehler als Code + englischer Text, die Website übersetzt den Code
+from fastapi.exceptions import HTTPException as _HTTPException  # noqa: E402
+from starlette.exceptions import HTTPException as _StarletteHTTPException  # noqa: E402
+from .errors import http_exception_handler  # noqa: E402
+app.add_exception_handler(_HTTPException, http_exception_handler)
+app.add_exception_handler(_StarletteHTTPException, http_exception_handler)
 app.include_router(auth_router)
 app.include_router(site_router)
 app.include_router(vods_router)

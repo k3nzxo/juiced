@@ -1,12 +1,13 @@
 ---
 import Base from "../../layouts/Base.astro";
 import Icon from "../../components/Icon.astro";
-import { useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
+import { useT, dict, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
 
 export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const msgs = { required: t("join_err_required"), generic: t("join_err_generic"), copied: t("match_copied") };
+const errs = Object.fromEntries(Object.entries(dict(lang)).filter(([k]) => k.startsWith("err_")));
 ---
 <Base lang={lang} page="matches" title={t("match_title")} description={t("match_sub")}>
   <section class="container req">
@@ -31,7 +32,7 @@ const msgs = { required: t("join_err_required"), generic: t("join_err_generic"),
     </div>
 
     <div class="form-wrap card reveal" style="--d:120ms">
-      <form id="match" novalidate data-msgs={JSON.stringify(msgs)}>
+      <form id="match" novalidate data-msgs={JSON.stringify(msgs)} data-errs={JSON.stringify(errs)}>
         <div class="row2">
           <div class="field"><label for="m-guild">{t("match_guild")} *</label><input class="input" id="m-guild" name="guild_name" maxlength="80" required /></div>
           <div class="field"><label for="m-contact">{t("match_contact")} *</label><input class="input" id="m-contact" name="contact" maxlength="64" required placeholder={t("match_contact_ph")} /></div>
@@ -62,6 +63,7 @@ const msgs = { required: t("join_err_required"), generic: t("join_err_generic"),
 </Base>
 
 <script>
+  import { errorText } from "../../scripts/errors";
   import { toast } from "../../scripts/chrome";
   const form = document.getElementById("match") as HTMLFormElement;
   const msgs = JSON.parse(form.dataset.msgs || "{}");
@@ -79,7 +81,7 @@ const msgs = { required: t("join_err_required"), generic: t("join_err_generic"),
     try {
       const r = await fetch("/api/scrims", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const d = await r.json().catch(() => null);
-      if (!r.ok) throw new Error(d?.detail || msgs.generic);
+      if (!r.ok) throw new Error(errorText(d, JSON.parse(form.dataset.errs || "{}"), msgs.generic));
       const url = `${location.origin}/${document.body.dataset.lang || "en"}/request/#${d.token}`;
       const inp = document.querySelector<HTMLInputElement>("[data-status-url]")!;
       inp.value = url;

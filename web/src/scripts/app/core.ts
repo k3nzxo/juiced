@@ -1,5 +1,6 @@
 // Gemeinsame Helfer für den Mitgliederbereich.
 import { toast as baseToast } from "../chrome";
+import { errorText } from "../errors";
 
 let DICT: Record<string, string> = {};
 let LANG = "en";
@@ -16,6 +17,7 @@ export function T(key: string, vars?: Record<string, string | number>): string {
 }
 
 export const lang = () => LANG;
+export const errMsg = (data: any) => errorText(data, DICT, T("error"));
 export const toast = baseToast;
 
 export function esc(s: unknown): string {
@@ -42,7 +44,7 @@ export async function api<T = any>(path: string, opts: RequestInit & { json?: un
   try { data = await res.json(); } catch { /* kein Body */ }
   if (!res.ok) {
     if (res.status === 401) window.dispatchEvent(new Event("juiced:unauthorized"));
-    throw new ApiError((data && data.detail && typeof data.detail === "string" ? data.detail : null) || T("error"), res.status);
+    throw new ApiError(errMsg(data), res.status);
   }
   return data as T;
 }
