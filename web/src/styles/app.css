@@ -485,7 +485,7 @@ main.vod-main, .vod-main { max-width: none; }
 /* Mitgliederkarte: ruhige Zusatzzeile statt Mini-Icons */
 .mc-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--muted); }
 /* Mitgliederkarten: immer gleicher Aufbau, gleiche Höhe, kein Leerraum */
-.mem-grid { align-items: start; }
+.mem-grid { align-items: stretch; }
 .mcard { gap: 10px; }
 .mc-meta { min-height: calc(2 * 1.5em); line-height: 1.5; }
 .mc-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
