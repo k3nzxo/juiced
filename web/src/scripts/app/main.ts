@@ -6,7 +6,7 @@ import { enhancePicker, closePicker } from "./picker";
 import { timeRange, timeShort } from "../schedule";
 
 type Me = {
-  id: number; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
+  id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
   weapons: string[]; weapon_other: string | null;
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; rank_manual: boolean;
@@ -92,6 +92,7 @@ function navItems() {
   const items = [
     { id: "", label: T("app_nav_dashboard"), ico: icon.grid },
     { id: "vods", label: T("app_nav_vods"), ico: icon.video },
+    { id: "signups", label: T("rh_nav"), ico: icon.signups },
     { id: "roster", label: T("app_nav_members"), ico: icon.users },
   ];
   if (me!.is_admin) items.push({ id: "schedule", label: T("app_nav_schedule"), ico: icon.calendar });
@@ -153,6 +154,7 @@ function route() {
   switch (seg) {
     case "vods": return renderVods(view, me);
     case "roster": return viewRoster(view);
+    case "signups": return viewSignups(view);
     case "applications": return me.can_manage ? viewApplications(view) : viewDashboard(view);
     case "schedule": return me.is_admin ? viewSchedule(view) : viewDashboard(view);
     case "matches": return me.is_admin ? viewMatches(view) : viewDashboard(view);
@@ -222,6 +224,47 @@ function editAnnouncement(a: any | null, done: () => void) {
       m.close(); done();
     } catch (e) { toast((e as Error).message); }
   });
+}
+
+// ------------------------------------------------------------------ Anmeldungen aus Raid-Helper
+
+const RH_CLASS_COLORS: Record<string, string> = { tank: "#ca8a04", healer: "#16a34a", dps: "#dc2626", melee: "#dc2626", ranged: "#ea580c", support: "#0891b2" };
+async function viewSignups(view: HTMLElement) {
+  view.innerHTML = head(T("rh_title"), T("rh_sub")) + `<div id="rh">${loading}</div>`;
+  const el = view.querySelector<HTMLElement>("#rh")!;
+  let data: any;
+  try { data = await api<any>("/raidhelper/events"); }
+  catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; return; }
+  if (!data.configured) { el.innerHTML = `<p class="empty">${esc(T("rh_off"))}</p>`; return; }
+  if (data.error) { el.innerHTML = `<p class="empty">${esc(T("rh_error"))}</p>`; return; }
+  if (!data.events.length) { el.innerHTML = `<p class="empty">${esc(T("rh_empty"))}</p>`; return; }
+  const when = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const person = (s: any) => `<span class="rh-p ${s.user_id === me!.discord_id ? "is-me" : ""}">${esc(s.name)}${s.spec && s.spec.toLowerCase() !== s.class.toLowerCase() ? `<small>${esc(s.spec)}</small>` : ""}</span>`;
+  el.innerHTML = `${data.stale ? `<p class="hint rh-stale">${esc(T("rh_error"))}</p>` : ""}<div class="rh-list">${data.events.map((e: any) => {
+    const groups = new Map<string, any[]>();
+    for (const s of e.signups.filter((x: any) => x.playing)) {
+      const k = s.class || "—";
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(s);
+    }
+    const out = e.signups.filter((x: any) => !x.playing);
+    return `<article class="card rh-ev">
+      <header class="rh-head">
+        <div><h3>${esc(e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
+        <div class="rh-side">
+          <span class="rh-count"><b>${e.count}</b> ${esc(T("rh_signed"))}</span>
+          ${e.me ? `<span class="rh-me ok">${icon.check} ${esc(T("rh_you", { cls: e.me.class || "" }))}</span>` : `<span class="rh-me">${esc(T("rh_not_you"))}</span>`}
+          ${e.url ? `<a class="btn btn-ghost btn-sm" href="${esc(e.url)}" target="_blank" rel="noopener">${icon.external} ${esc(T("rh_open"))}</a>` : ""}
+        </div>
+      </header>
+      ${groups.size ? `<div class="rh-groups">${[...groups.entries()].map(([cls, list]) => `
+        <div class="rh-group" style="--c:${RH_CLASS_COLORS[cls.toLowerCase()] || "var(--accent)"}">
+          <div class="rh-gh"><i></i>${esc(cls)}<span>${list.length}</span></div>
+          <div class="rh-people">${list.map(person).join("")}</div>
+        </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
+      ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p">${esc(s.name)}<small>${esc(s.status !== "primary" ? s.status : s.class)}</small></span>`).join("")}</div>` : ""}
+    </article>`;
+  }).join("")}</div>`;
 }
 
 // ------------------------------------------------------------------ Roster (intern)

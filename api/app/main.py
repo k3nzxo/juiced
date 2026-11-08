@@ -67,6 +67,8 @@ app.add_exception_handler(_StarletteHTTPException, http_exception_handler)
 app.include_router(auth_router)
 app.include_router(site_router)
 app.include_router(vods_router)
+from .raidhelper import router as raidhelper_router  # noqa: E402
+app.include_router(raidhelper_router)
 
 
 @app.get("/api/health")

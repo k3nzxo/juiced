@@ -199,6 +199,18 @@ const en = {
   err_image_too_large: "An image is too large.",
   err_invalid_link: "Please check your links: they need to start with https://",
   err_too_many: "Too many requests. Please wait a moment.",
+  rh_nav: "Sign-ups",
+  rh_title: "Sign-ups",
+  rh_sub: "Live from Raid-Helper on our Discord.",
+  rh_off: "Raid-Helper isn't connected yet.",
+  rh_error: "Raid-Helper can't be reached right now.",
+  rh_empty: "No upcoming Raid-Helper events.",
+  rh_signed: "signed up",
+  rh_you: "You're in ({cls})",
+  rh_not_you: "Not signed up yet",
+  rh_open: "Open in Discord",
+  rh_other: "Not playing / queue",
+  rh_nobody: "Nobody has signed up yet.",
 };
 
 export type ExtraDict = typeof en;
@@ -403,6 +415,18 @@ const de: Partial<ExtraDict> = {
   err_image_too_large: "Ein Bild ist zu groß.",
   err_invalid_link: "Bitte prüf deine Links: sie müssen mit https:// anfangen.",
   err_too_many: "Zu viele Anfragen. Bitte kurz warten.",
+  rh_nav: "Anmeldungen",
+  rh_title: "Anmeldungen",
+  rh_sub: "Live aus Raid-Helper auf unserem Discord.",
+  rh_off: "Raid-Helper ist noch nicht verbunden.",
+  rh_error: "Raid-Helper ist gerade nicht erreichbar.",
+  rh_empty: "Keine kommenden Raid-Helper-Events.",
+  rh_signed: "angemeldet",
+  rh_you: "Du bist dabei ({cls})",
+  rh_not_you: "Noch nicht angemeldet",
+  rh_open: "In Discord öffnen",
+  rh_other: "Nicht dabei / Warteliste",
+  rh_nobody: "Noch niemand angemeldet.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -598,6 +622,18 @@ const fr: Partial<ExtraDict> = {
   err_image_too_large: "Une image est trop lourde.",
   err_invalid_link: "Vérifie tes liens : ils doivent commencer par https://",
   err_too_many: "Trop de requêtes. Attends un instant.",
+  rh_nav: "Inscriptions",
+  rh_title: "Inscriptions",
+  rh_sub: "En direct de Raid-Helper sur notre Discord.",
+  rh_off: "Raid-Helper n'est pas encore connecté.",
+  rh_error: "Raid-Helper est injoignable pour le moment.",
+  rh_empty: "Aucun event Raid-Helper à venir.",
+  rh_signed: "inscrits",
+  rh_you: "Tu es inscrit ({cls})",
+  rh_not_you: "Pas encore inscrit",
+  rh_open: "Ouvrir dans Discord",
+  rh_other: "Absents / file d'attente",
+  rh_nobody: "Personne n'est encore inscrit.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -793,6 +829,18 @@ const es: Partial<ExtraDict> = {
   err_image_too_large: "Una imagen es demasiado grande.",
   err_invalid_link: "Revisa tus enlaces: deben empezar por https://",
   err_too_many: "Demasiadas solicitudes. Espera un momento.",
+  rh_nav: "Inscripciones",
+  rh_title: "Inscripciones",
+  rh_sub: "En directo desde Raid-Helper en nuestro Discord.",
+  rh_off: "Raid-Helper aún no está conectado.",
+  rh_error: "Raid-Helper no está disponible ahora.",
+  rh_empty: "No hay eventos de Raid-Helper próximos.",
+  rh_signed: "inscritos",
+  rh_you: "Estás apuntado ({cls})",
+  rh_not_you: "Aún no te has apuntado",
+  rh_open: "Abrir en Discord",
+  rh_other: "No juegan / en cola",
+  rh_nobody: "Todavía no se ha apuntado nadie.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -988,6 +1036,18 @@ const pt: Partial<ExtraDict> = {
   err_image_too_large: "Uma imagem é grande demais.",
   err_invalid_link: "Confira os links: precisam começar com https://",
   err_too_many: "Muitas solicitações. Aguarde um pouco.",
+  rh_nav: "Inscrições",
+  rh_title: "Inscrições",
+  rh_sub: "Ao vivo do Raid-Helper no nosso Discord.",
+  rh_off: "O Raid-Helper ainda não está conectado.",
+  rh_error: "O Raid-Helper está indisponível agora.",
+  rh_empty: "Nenhum evento do Raid-Helper por vir.",
+  rh_signed: "inscritos",
+  rh_you: "Você está dentro ({cls})",
+  rh_not_you: "Ainda não inscrito",
+  rh_open: "Abrir no Discord",
+  rh_other: "Fora / na fila",
+  rh_nobody: "Ninguém se inscreveu ainda.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1183,6 +1243,18 @@ const ru: Partial<ExtraDict> = {
   err_image_too_large: "Изображение слишком большое.",
   err_invalid_link: "Проверь ссылки: они должны начинаться с https://",
   err_too_many: "Слишком много запросов. Подожди немного.",
+  rh_nav: "Записи",
+  rh_title: "Записи",
+  rh_sub: "Прямо из Raid-Helper на нашем Discord.",
+  rh_off: "Raid-Helper ещё не подключён.",
+  rh_error: "Raid-Helper сейчас недоступен.",
+  rh_empty: "Нет предстоящих событий Raid-Helper.",
+  rh_signed: "записались",
+  rh_you: "Ты записан ({cls})",
+  rh_not_you: "Ещё не записан",
+  rh_open: "Открыть в Discord",
+  rh_other: "Не играют / очередь",
+  rh_nobody: "Пока никто не записался.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -1378,6 +1450,18 @@ const tr: Partial<ExtraDict> = {
   err_image_too_large: "Bir görsel çok büyük.",
   err_invalid_link: "Bağlantılarını kontrol et: https:// ile başlamalı",
   err_too_many: "Çok fazla istek. Lütfen biraz bekle.",
+  rh_nav: "Kayıtlar",
+  rh_title: "Kayıtlar",
+  rh_sub: "Discord'umuzdaki Raid-Helper'dan canlı.",
+  rh_off: "Raid-Helper henüz bağlı değil.",
+  rh_error: "Raid-Helper'a şu an ulaşılamıyor.",
+  rh_empty: "Yaklaşan Raid-Helper etkinliği yok.",
+  rh_signed: "kayıtlı",
+  rh_you: "Kayıtlısın ({cls})",
+  rh_not_you: "Henüz kayıtlı değilsin",
+  rh_open: "Discord'da aç",
+  rh_other: "Katılmıyor / sırada",
+  rh_nobody: "Henüz kimse kaydolmadı.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -1573,6 +1657,18 @@ const pl: Partial<ExtraDict> = {
   err_image_too_large: "Jeden z obrazów jest za duży.",
   err_invalid_link: "Sprawdź linki: muszą zaczynać się od https://",
   err_too_many: "Za dużo żądań. Poczekaj chwilę.",
+  rh_nav: "Zapisy",
+  rh_title: "Zapisy",
+  rh_sub: "Na żywo z Raid-Helpera na naszym Discordzie.",
+  rh_off: "Raid-Helper nie jest jeszcze połączony.",
+  rh_error: "Raid-Helper jest teraz niedostępny.",
+  rh_empty: "Brak nadchodzących eventów Raid-Helper.",
+  rh_signed: "zapisanych",
+  rh_you: "Jesteś zapisany ({cls})",
+  rh_not_you: "Jeszcze nie zapisany",
+  rh_open: "Otwórz w Discordzie",
+  rh_other: "Nie grają / kolejka",
+  rh_nobody: "Nikt się jeszcze nie zapisał.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
