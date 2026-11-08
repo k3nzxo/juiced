@@ -43,6 +43,11 @@ def _ts(v) -> Optional[str]:
     return datetime.fromtimestamp(n, tz=timezone.utc).isoformat()
 
 
+def _emote_id(v) -> str:
+    v = str(v or "").strip()
+    return v if v.isdigit() and len(v) <= 25 else ""
+
+
 def _signup(s: dict) -> dict:
     cls = str(s.get("className") or s.get("roleName") or "").strip()
     return {
@@ -50,6 +55,8 @@ def _signup(s: dict) -> dict:
         "user_id": str(s.get("userId") or ""),
         "class": cls[:40],
         "spec": str(s.get("specName") or "").strip()[:40],
+        "class_emote": _emote_id(s.get("classEmoteId")),
+        "spec_emote": _emote_id(s.get("specEmoteId")),
         "role": str(s.get("roleName") or "").strip()[:40],
         "status": str(s.get("status") or "primary").lower(),
         "playing": cls.lower() not in NOT_PLAYING and str(s.get("status") or "primary").lower() == "primary",
@@ -129,6 +136,16 @@ def _fetch() -> dict:
         if end >= now - 3600:  # laufende und kommende Events
             out.append((start, ev))
     out.sort(key=lambda x: x[0])
+    emotes = {}
+    for e in events:
+        for su in e.get("signUps") or []:
+            if not isinstance(su, dict):
+                continue
+            for name_key, id_key in (("className", "classEmoteId"), ("specName", "specEmoteId")):
+                n, i = str(su.get(name_key) or "").strip().lower()[:60], _emote_id(su.get(id_key))
+                if n and i:
+                    emotes[n] = i
+    _save_emotes(emotes)
     return {"configured": True, "events": [ev for _, ev in out[:20]],
             "channels": [{"id": k, "name": v} for k, v in channels.items()],
             "template_id": max(templates, key=templates.get) if templates else ""}
@@ -670,3 +687,32 @@ def profile_partnerships(db: DbSession = Depends(get_db), user: models.User = De
     names.update({u.discord_id: u.display_name for u in users})
     return [{"owner": names.get(u.discord_id, u.display_name), "partners": [names.get(pid, pid) for pid in u.partner_list]}
             for u in users if u.partner_list]
+
+
+
+# ------------------------------------------------------------------ Icons (Raid-Helper-Emotes)
+
+def _save_emotes(emotes: dict):
+    if not emotes:
+        return
+    from .db import SessionLocal
+    db = SessionLocal()
+    try:
+        have = {e.name: e for e in db.query(models.Emote).all()}
+        for n, i in emotes.items():
+            if n in have:
+                have[n].emote_id = i
+            else:
+                db.add(models.Emote(name=n, emote_id=i))
+        db.commit()
+    except Exception as ex:  # Icons sind nur Deko
+        print(f"[raidhelper] Emotes nicht gespeichert: {type(ex).__name__}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+@router.get("/emotes")
+def emotes(db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
+    """Name (klein) -> Discord-Emote-ID, z. B. {"bellstrike": "123", "bamboocut_wind": "456"}."""
+    return {e.name: e.emote_id for e in db.query(models.Emote).all()}

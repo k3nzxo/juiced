@@ -36,6 +36,21 @@ const flag = (cc: string | null) => (cc && /^[A-Z]{2}$/i.test(cc) ? `<img class=
 
 // ------------------------------------------------------------------ Start
 
+// Icons: Discord-Emotes, die Raid-Helper für Klassen ("bellstrike") und Pfade ("bamboocut_wind") nutzt
+let EMOTES: Record<string, string> = {};
+const emoteUrl = (id: string) => `https://cdn.discordapp.com/emojis/${id}.png?size=48`;
+const emoteImg = (id: string | undefined | null, cls = "emo") => (id ? `<img class="${cls}" src="${emoteUrl(id)}" alt="" width="18" height="18" loading="lazy" decoding="async">` : "");
+const schoolEmote = (school: string) => EMOTES[school.toLowerCase()] || "";
+// kaputte Icons still entfernen
+document.addEventListener("error", (ev) => {
+  const t = ev.target as HTMLElement;
+  if (!t || t.tagName !== "IMG" || !t.classList.contains("emo")) return;
+  t.parentElement?.classList.remove("has-emo");  // Chip zeigt wieder seinen Farbpunkt
+  const dot = document.createElement("i");
+  dot.className = "emo-dot";
+  t.replaceWith(dot);
+}, true);
+
 export async function start() {
   const data = JSON.parse(root.dataset.dict || "{}");
   initI18n(data, root.dataset.lang || "en");
@@ -46,6 +61,7 @@ export async function start() {
     me = r.user;
     if (!me) return renderLogin(r.login_configured);
     if (!me.is_member) return renderNoAccess();
+    try { EMOTES = await api<Record<string, string>>("/raidhelper/emotes"); } catch { /* ohne Icons */ }
     renderShell();
     route();
   } catch {
@@ -278,7 +294,7 @@ const ROLE_ORDER: Record<string, number> = { tank: 0, healer: 1, dps: 2 };
 const rhLabel = (s: string) => pathFromText(s)?.name || String(s || "").replace(/_/g, " ");
 const rhColor = (cls: string) => { const p = pathFromText(cls); return RH_CLASS_COLORS[(p?.role || cls).toLowerCase()] || "var(--accent)"; };
 
-type RhPlayer = { uid: string; name: string; path: string; role: string; playing: boolean; color?: string };
+type RhPlayer = { uid: string; name: string; path: string; role: string; playing: boolean; color?: string; emote?: string };
 function rhPlayers(e: any, profiles: Record<string, any>): Map<string, RhPlayer> {
   const m = new Map<string, RhPlayer>();
   for (const s of e.signups) {
@@ -287,11 +303,12 @@ function rhPlayers(e: any, profiles: Record<string, any>): Map<string, RhPlayer>
     const prof = profiles[s.user_id];
     const role = p?.role || (ROLE_ORDER[s.class.toLowerCase()] !== undefined ? s.class.toLowerCase() : profiles[s.user_id]?.main_role || "dps");
     m.set(s.user_id, { uid: s.user_id, name: profiles[s.user_id]?.name || s.name, path: p?.name || (s.spec && s.spec.toLowerCase() !== s.class.toLowerCase() ? s.spec.replace(/_/g, " ") : "") || buildLabel(prof?.main_build), role, playing: s.playing,
-      color: p ? schoolColor(p.group) : buildWeapons(prof?.main_build)[0] ? schoolColor(buildWeapons(prof?.main_build)[0].school) : "" });
+      color: p ? schoolColor(p.group) : buildWeapons(prof?.main_build)[0] ? schoolColor(buildWeapons(prof?.main_build)[0].school) : "",
+      emote: s.spec_emote || s.class_emote || (p ? EMOTES[p.id] || schoolEmote(p.group) : "") });
   }
   return m;
 }
-const rhChip = (p: RhPlayer, extra = "") => `<span ${p.color ? `style="--role:${p.color}"` : ""} class="rh-p role-${esc(p.role)} ${p.uid === me!.discord_id ? "is-me" : ""} ${extra}" title="${esc(p.name)}${p.path ? ` · ${esc(p.path)}` : ""}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</span>`;
+const rhChip = (p: RhPlayer, extra = "") => `<span ${p.color ? `style="--role:${p.color}"` : ""} class="rh-p role-${esc(p.role)} ${p.emote ? "has-emo" : ""} ${p.uid === me!.discord_id ? "is-me" : ""} ${extra}" title="${esc(p.name)}${p.path ? ` · ${esc(p.path)}` : ""}">${emoteImg(p.emote)}<b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</span>`;
 
 async function viewSignups(view: HTMLElement) {
   view.innerHTML = head(T("rh_title"), T("rh_sub")) + `<div id="rh">${loading}</div>`;
@@ -363,7 +380,7 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
       <summary>${esc(T("rh_nav"))} <span class="muted">${e.count}</span></summary>
       ${groups.size ? `<div class="rh-groups">${[...groups.entries()].map(([cls, list]) => `
         <div class="rh-group" style="--c:${rhColor(cls)}">
-          <div class="rh-gh"><i></i><span class="rh-gname">${esc(rhLabel(cls))}</span><span>${list.length}</span></div>
+          <div class="rh-gh">${list[0]?.class_emote ? emoteImg(list[0].class_emote, "emo emo-h") : "<i></i>"}<span class="rh-gname">${esc(rhLabel(cls))}</span><span>${list.length}</span></div>
           <div class="rh-people">${list.map(chipFor).join("")}</div>
         </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
       ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p"><b>${esc(s.name)}</b><small>${esc(s.status !== "primary" ? s.status : rhLabel(s.class))}</small></span>`).join("")}</div>` : ""}
@@ -525,7 +542,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     const mine = groups.findIndex((g) => g.members.includes(p.uid));
     const split = mine >= 0 && mates.some((u) => { const o = groups.findIndex((g) => g.members.includes(u)); return o >= 0 && o !== mine; });
     const tip = mates.length ? ` · ${T("pt_with", { names: mates.map((u) => info(u).name).join(", ") })}` : "";
-    return `<button type="button" ${p.color ? `style="--role:${p.color}"` : ""} class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${split ? "is-split" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc((p.playing ? p.name : T("roster_left")) + tip)}"><b>${esc(p.name)}</b>${mates.length ? `<i class="ro-link">${icon.link}</i>` : ""}${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
+    return `<button type="button" ${p.color ? `style="--role:${p.color}"` : ""} class="rh-p ro-p role-${esc(p.role)} ${p.emote ? "has-emo" : ""} ${p.playing ? "" : "is-left"} ${split ? "is-split" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc((p.playing ? p.name : T("roster_left")) + tip)}">${emoteImg(p.emote)}<b>${esc(p.name)}</b>${mates.length ? `<i class="ro-link">${icon.link}</i>` : ""}${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
   };
   const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return `<span class="rc role-${r} ${n ? "" : "is-zero"}" title="${esc(T("role_" + r))}"><i></i>${n}</span>`; }).join("");
   const nextOpen = (from: number) => {
@@ -715,9 +732,18 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
 
 // Aufstellung als Bild (wie der Screenshot im Raid-Helper-Comp-Tool)
 const ROLE_HEX: Record<string, string> = { tank: "#eab308", healer: "#22c55e", dps: "#3b82f6" };
-async function rosterImage(e: any, data: any): Promise<Blob> {
+const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
+  const im = new Image(); im.crossOrigin = "anonymous";
+  im.onload = () => res(im); im.onerror = () => res(null); im.src = src;
+});
+async function rosterImage(e: any, data: any, withIcons = true): Promise<Blob> {
   const players = rhPlayers(e, data.profiles || {});
   const groups: any[] = e.roster.groups;
+  const icons = new Map<string, HTMLImageElement>();
+  if (withIcons) {
+    const ids = [...new Set(groups.flatMap((g) => g.members.map((u: string) => players.get(u)?.emote).filter(Boolean)))] as string[];
+    await Promise.all(ids.map(async (id) => { const im = await loadImg(emoteUrl(id)); if (im) icons.set(id, im); }));
+  }
   const cols = Math.min(groups.length, groups.length > 4 ? 3 : groups.length <= 2 ? groups.length : 2) || 1;
   const W = 1200, pad = 36, gap = 18, colW = (W - pad * 2 - gap * (cols - 1)) / cols, rowH = 34, headH = 44;
   const rowsPer = (g: any) => Math.max(g.members.length, 1);
@@ -749,14 +775,18 @@ async function rosterImage(e: any, data: any): Promise<Blob> {
         const p = players.get(uid) || { name: data.profiles?.[uid]?.name || "?", path: "", role: data.profiles?.[uid]?.main_role || "" } as any;
         const ry = y + headH + k * rowH;
         rr(gx + 10, ry, colW - 20, rowH - 5, 7); x.fillStyle = "#211f27"; x.fill();
-        x.fillStyle = ROLE_HEX[p.role] || "#6b6875"; rr(gx + 10, ry, 4, rowH - 5, 2); x.fill();
-        x.fillStyle = "#f4f2ee"; x.font = font(600, 14); x.fillText(fit(p.name, colW * 0.55), gx + 24, ry + 19);
+        x.fillStyle = p.color || ROLE_HEX[p.role] || "#6b6875"; rr(gx + 10, ry, 4, rowH - 5, 2); x.fill();
+        const ic = p.emote && icons.get(p.emote);
+        if (ic) x.drawImage(ic, gx + 22, ry + 5, 19, 19);
+        x.fillStyle = "#f4f2ee"; x.font = font(600, 14); x.fillText(fit(p.name, colW * 0.5), gx + (ic ? 48 : 24), ry + 19);
         if (p.path) { x.textAlign = "right"; x.fillStyle = "#9b98a3"; x.font = font(500, 12); x.fillText(fit(p.path, colW * 0.38), gx + colW - 20, ry + 19); x.textAlign = "left"; }
       });
     });
     y += headH + n * rowH + 16 + gap;
   });
   x.fillStyle = "#6b6875"; x.font = font(500, 12); x.fillText("juiced.team", pad, H - pad + 14);
+  // gibt Discord die Icons nicht frei, ist das Bild "gesperrt" -> ohne Icons neu zeichnen
+  try { c.getContext("2d")!.getImageData(0, 0, 1, 1); } catch { return rosterImage(e, data, false); }
   return new Promise((res) => c.toBlob((b) => res(b!), "image/png"));
 }
 
@@ -849,7 +879,8 @@ const iwTile = (id: string, small = false) => {
 };
 const hasBuild = (u: any) => !!(u.main_build || (u.alt_builds || []).length || (u.inner_ways || []).length);
 // Farbpunkte je Schule (Hybride = zwei Farben)
-const buildDots = (id: string | null | undefined) => [...new Set(buildWeapons(id).map((w) => w.school))].map((sc) => `<i style="background:${schoolColor(sc)}"></i>`).join("");
+const buildDots = (id: string | null | undefined) => [...new Set(buildWeapons(id).map((w) => w.school))]
+  .map((sc) => schoolEmote(sc) ? emoteImg(schoolEmote(sc), "emo emo-s") : `<i style="background:${schoolColor(sc)}"></i>`).join("");
 const buildTag = (id: string | null | undefined, main = false) => {
   const ws = buildWeapons(id);
   return ws.length ? `<span class="path-tag build-tag ${main ? "is-main" : ""}" title="${esc(ws.map((w) => w.name).join(" + "))}">${buildDots(id)}${esc(buildLabel(id))}</span>` : "";
@@ -1088,13 +1119,13 @@ function viewProfile(view: HTMLElement) {
     <div class="field"><span class="label">${esc(T("prof_role"))}</span>
       <div class="seg-tabs path-roles" role="group">${ROLES3.map((r) => `<button type="button" data-prole="${r}" aria-pressed="${role === r}"><span class="role-tag role-${r}">${esc(T("role_" + r))}</span></button>`).join("")}</div></div>
     <div class="field"><span class="label">${esc(T("prof_main_build"))}</span><p class="hint">${esc(T("prof_main_build_hint"))}</p>
-      <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h"><i></i>${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-w="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div>
+      <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h">${schoolEmote(sc.id) ? emoteImg(schoolEmote(sc.id), "emo emo-s") : "<i></i>"}${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-w="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div>
       <div class="bp-current" data-bcur></div></div>
     <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span><p class="hint">${esc(T("prof_alt_hint"))}</p>
       <div class="pp-partners" data-alts></div>
       <button type="button" class="btn btn-outline btn-sm alt-open" data-alt-open>${icon.plus} ${esc(T("prof_alt_add"))}</button>
       <div class="alt-pick" data-alt-pick hidden><p class="hint">${esc(T("prof_alt_pick_hint"))}</p>
-        <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h"><i></i>${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-aw="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div></div>
+        <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h">${schoolEmote(sc.id) ? emoteImg(schoolEmote(sc.id), "emo emo-s") : "<i></i>"}${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-aw="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div></div>
 </div>
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>

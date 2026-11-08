@@ -598,3 +598,12 @@ a.pp-chip:hover { border-color: var(--accent); }
 .alt-open { margin-top: 2px; }
 .alt-pick { margin-top: 10px; padding: 10px; border-radius: 12px; border: 1px dashed var(--border); }
 .alt-pick .hint { margin-bottom: 8px; }
+/* Icons (Raid-Helper-Emotes) */
+.emo { flex: none; width: 16px; height: 16px; object-fit: contain; align-self: center; }
+.rh-p.has-emo::before { display: none; }
+.rh-p.has-emo { padding-left: 6px; }
+.emo-h { width: 18px; height: 18px; }
+.emo-s { width: 15px; height: 15px; margin-right: 1px; }
+.build-main strong .emo-s { width: 18px; height: 18px; }
+.emo-dot { flex: none; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--role, var(--sc, var(--muted))); }
+.rh-p > .emo-dot { display: none; }

@@ -203,3 +203,10 @@ class Partnership(Base):
     id = Column(Integer, primary_key=True)
     members = Column(Text, nullable=False)              # JSON: [{"id": discord_id, "name": Anzeigename}]
     position = Column(Integer, nullable=False, default=0)
+
+
+class Emote(Base):
+    """Discord-Emotes, die Raid-Helper für Klassen/Pfade nutzt (Name -> Emote-ID), für Icons auf der Website."""
+    __tablename__ = "emotes"
+    name = Column(String(60), primary_key=True)   # klein geschrieben, z. B. "bellstrike" oder "bellstrike_splendor"
+    emote_id = Column(String(25), nullable=False)
