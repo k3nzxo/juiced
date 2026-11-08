@@ -149,9 +149,9 @@ p { margin: 0; }
 .input::placeholder, .textarea::placeholder { color: var(--faint); }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--text-2); }
 /* Eigene Checkbox: abgerundet, orange mit Haken, sauber in hell und dunkel */
-.check { cursor: pointer; }
+.check { cursor: pointer; line-height: 20px; }
 .check input[type="checkbox"] {
-  appearance: none; -webkit-appearance: none; flex: none; margin: 1px 0 0; width: 20px; height: 20px; border-radius: 6px;
+  appearance: none; -webkit-appearance: none; flex: none; margin: 0; width: 20px; height: 20px; border-radius: 6px;
   border: 1.5px solid var(--border-strong); background: var(--surface); cursor: pointer; display: grid; place-items: center;
   transition: background-color .15s, border-color .15s, box-shadow .15s;
 }
@@ -163,7 +163,7 @@ p { margin: 0; }
 .check input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
 .check input[type="checkbox"]:checked::after { transform: rotate(-45deg) scale(1); }
 .check input[type="checkbox"]:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
-.check span { padding-top: 1px; }
+.check span { padding: 0; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13.5px; font-weight: 500; color: var(--text-2); transition: all 0.15s; }
