@@ -14,13 +14,15 @@
 
 .app-wrap { padding-top: 32px; min-height: 70vh; }
 .app-center { min-height: 60vh; display: grid; place-items: center; }
-.login-card { max-width: 440px; width: 100%; padding: 40px 32px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; animation: rise 0.6s var(--ease); }
+.login-card { max-width: 440px; width: 100%; padding: 40px 32px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+/* Lade-Spinner nur zeigen, wenn es wirklich dauert (sonst kurzes Aufblitzen) */
+.app-center .loader { animation: fade 0.2s ease 0.35s both; }
 .login-card h1 { font-size: 28px; }
 .login-card p { color: var(--muted); }
 .login-ico { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: var(--grad-brand); }
 .login-ico svg { width: 24px; height: 24px; }
-.discord-btn { background: #5865f2; box-shadow: 0 6px 18px -6px rgba(88, 101, 242, 0.6); margin-top: 8px; }
-.discord-btn:hover { box-shadow: 0 10px 26px -8px rgba(88, 101, 242, 0.7); }
+.discord-btn { margin-top: 8px; }
+.discord-btn:hover { box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--accent) 75%, transparent); }
 .discord-btn.disabled { opacity: 0.5; pointer-events: none; }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
