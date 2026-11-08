@@ -195,3 +195,8 @@ main.vod-main { max-width: 1500px; }
 .vod-card { display: flex; flex-direction: column; }
 .vod-card-body { flex: 1; display: flex; flex-direction: column; }
 .vod-card-foot { margin-top: auto; padding-top: 0.55rem; }
+/* Review läuft (blau, pulsierender Punkt) */
+.vod-review-progress { color: #3b82f6; background: color-mix(in srgb, #3b82f6 14%, transparent); }
+.vod-thumb .vod-review-progress { color: #93c5fd; }
+.vod-review-pulse { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: currentColor; animation: vodPulse 1.6s ease-in-out infinite; }
+@keyframes vodPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }

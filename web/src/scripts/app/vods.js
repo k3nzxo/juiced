@@ -56,12 +56,16 @@ function vodExpiryLabel(v) {
   return `<span class="vod-expiry">${days <= 0 ? vt("expires_today") : vt("expires_in", { n: days })}</span>`;
 }
 
-// Review-Status: offen (orange) oder abgeschlossen (grün)
+// Review-Status: offen (orange), läuft (blau) oder abgeschlossen (grün)
 function vodReviewBadge(v, detail = false) {
   if (v.status !== "ready") return "";
   if (v.reviewed) {
     const by = detail && v.reviewed_by_name ? ` · ${escapeHtml(v.reviewed_by_name)}` : "";
     return `<span class="vod-review vod-review-done">${icon.check} ${vt("review_done")}${by}</span>`;
+  }
+  if (v.in_review) {
+    const by = detail && v.review_started_by_name ? ` · ${escapeHtml(v.review_started_by_name)}` : "";
+    return `<span class="vod-review vod-review-progress"><i class="vod-review-pulse"></i>${vt("review_progress")}${by}</span>`;
   }
   return `<span class="vod-review vod-review-open">${vt("review_open")}</span>`;
 }
@@ -120,7 +124,7 @@ async function renderVodList() {
             ${["all", ...VOD_COACH_ROLES].map(r => `<button class="cat-tab ${vodState.roleFilter === r ? "active" : ""}" data-rf="${r}">${vt("role_" + r)}</button>`).join("")}
           </div>
           <div class="vod-seg vod-review-filter" role="tablist">
-            ${["all", "open", "done"].map(r => `<button type="button" class="${vodState.reviewFilter === r ? "active" : ""}" data-revf="${r}">${vt("review_f_" + r)}</button>`).join("")}
+            ${["all", "open", "progress", "done"].map(r => `<button type="button" class="${vodState.reviewFilter === r ? "active" : ""}" data-revf="${r}">${vt("review_f_" + r)}</button>`).join("")}
           </div>
         </div>
         <div id="vod-list"><div class="loader"><span class="spinner"></span></div></div>
@@ -174,7 +178,8 @@ function drawVodList() {
   }
   const q = vodState.filter.trim().toLowerCase();
   const items = vodState.list.filter(v => (vodState.roleFilter === "all" || v.role === vodState.roleFilter)
-    && (vodState.reviewFilter === "all" || (v.status === "ready" && (vodState.reviewFilter === "done") === !!v.reviewed))
+    && (vodState.reviewFilter === "all" || (v.status === "ready" && (vodState.reviewFilter === "done" ? !!v.reviewed
+        : vodState.reviewFilter === "progress" ? !!v.in_review : !v.reviewed && !v.in_review)))
     && (!q || [v.title, v.opponent, v.uploader_name, v.description].some(x => (x || "").toLowerCase().includes(q))));
   if (!items.length) {
     el.innerHTML = `<div class="empty-state"><div class="display">${vt("empty")}</div><p>${vt("empty_hint")}</p></div>`;
@@ -531,6 +536,7 @@ async function renderVodDetail(vodId) {
         </div>
       </div>
       <div class="vod-head-actions">
+        ${vod.can_review && !vod.reviewed ? `<button class="btn btn-sm btn-ghost" id="vod-reviewing-btn">${vod.in_review ? `${icon.x} ${vt("review_stop")}` : `${icon.video} ${vt("review_start")}`}</button>` : ""}
         ${vod.can_review ? `<button class="btn btn-sm ${vod.reviewed ? "btn-ghost" : "btn-primary"}" id="vod-review-btn">${vod.reviewed ? `${icon.refresh} ${vt("review_reopen")}` : `${icon.check} ${vt("review_mark")}`}</button>` : ""}
         <a class="btn btn-sm btn-ghost" href="#/vods">${icon.arrowLeft} ${vt("back")}</a>
         ${vod.can_edit ? `<button class="btn btn-sm btn-ghost ${vod.pinned ? "vod-pin-active" : ""}" id="vod-pin-btn">${vodPinIcon} ${vt(vod.pinned ? "unpin" : "pin")}</button>` : ""}
@@ -630,6 +636,15 @@ async function renderVodDetail(vodId) {
       toast(vt(r.reviewed ? "review_done_toast" : "review_open_toast"));
       renderVods();
     } catch (err) { toast(err.message); reviewBtn.disabled = false; }
+  });
+  const reviewingBtn = main.querySelector("#vod-reviewing-btn");
+  if (reviewingBtn) reviewingBtn.addEventListener("click", async () => {
+    reviewingBtn.disabled = true;
+    try {
+      const r = await api(`/vods/${vod.id}/reviewing`, { method: "PUT", body: JSON.stringify({ reviewing: !vod.in_review }) });
+      toast(vt(r.in_review ? "review_started_toast" : "review_open_toast"));
+      renderVods();
+    } catch (err) { toast(err.message); reviewingBtn.disabled = false; }
   });
   const pinBtn = main.querySelector("#vod-pin-btn");
   if (pinBtn) pinBtn.addEventListener("click", async () => {

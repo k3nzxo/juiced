@@ -345,6 +345,19 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
     groups.get(k)!.push(s);
   }
   const chipFor = (s: any) => players.get(s.user_id) ? rhChip(players.get(s.user_id)!) : rhChip({ uid: "", name: s.name, path: "", role: "", playing: s.playing });
+  // innerhalb einer Gruppe (z. B. DPS) nach Schule unterteilen: Bellstrike blau, Bamboocut lila …
+  const bySchool = (list: any[], chip: (s: any) => string) => {
+    const schoolOf = (x: any) => (pathFromText(x.spec) || pathFromText(x.class))?.group || "";
+    const order = SCHOOLS.map((sc) => sc.id as string);
+    const parts = new Map<string, any[]>();
+    for (const x of list) { const k = schoolOf(x); if (!parts.has(k)) parts.set(k, []); parts.get(k)!.push(x); }
+    if (parts.size <= 1) return `<div class="rh-people">${list.map(chip).join("")}</div>`;
+    return [...parts.entries()].sort((a, b) => (order.indexOf(a[0]) + 1 || 99) - (order.indexOf(b[0]) + 1 || 99)).map(([k, xs]) => {
+      const sc = SCHOOLS.find((x) => x.id === k);
+      return `<div class="rh-sub" style="--sc:${sc?.color || "var(--muted)"}"><span class="rh-sub-h">${sc && schoolEmote(sc.id) ? emoteImg(schoolEmote(sc.id), "emo emo-s", sc.color) : "<i></i>"}${esc(sc?.name || "—")}<b>${xs.length}</b></span>
+        <div class="rh-people">${xs.map(chip).join("")}</div></div>`;
+    }).join("");
+  };
   const out = e.signups.filter((x: any) => !x.playing);
   const roster = e.roster;
   const myGroup = roster?.groups.find((g: any) => g.members.includes(me!.discord_id));
@@ -388,7 +401,7 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
       ${groups.size ? `<div class="rh-groups">${[...groups.entries()].map(([cls, list]) => `
         <div class="rh-group" style="--c:${rhColor(cls)}">
           <div class="rh-gh">${list[0]?.class_emote ? emoteImg(list[0].class_emote, "emo emo-h") : "<i></i>"}<span class="rh-gname">${esc(rhLabel(cls))}</span><span>${list.length}</span></div>
-          <div class="rh-people">${list.map(chipFor).join("")}</div>
+          ${bySchool(list, chipFor)}
         </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
       ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p"><b>${esc(s.name)}</b><small>${esc(s.status !== "primary" ? s.status : rhLabel(s.class))}</small></span>`).join("")}</div>` : ""}
     </details>`;

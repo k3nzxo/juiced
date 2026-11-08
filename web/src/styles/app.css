@@ -617,3 +617,9 @@ a.pp-chip:hover { border-color: var(--accent); }
 .mc-bname i { flex: none; width: 7px; height: 7px; border-radius: 50%; }
 .emo-dot { background: var(--sc, var(--role, var(--muted))); }
 .mc-also { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); } .mc-also .path-tag { font-size: 12px; }
+/* Anmeldungen: Unterteilung nach Schule innerhalb einer Gruppe */
+.rh-sub { padding: 6px 0 6px 10px; border-left: 3px solid var(--sc); margin-top: 6px; }
+.rh-sub:first-of-type { margin-top: 0; }
+.rh-sub-h { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--sc); margin-bottom: 6px; }
+.rh-sub-h i { width: 7px; height: 7px; border-radius: 50%; background: var(--sc); }
+.rh-sub-h b { color: var(--muted); font-weight: 600; margin-left: 2px; }

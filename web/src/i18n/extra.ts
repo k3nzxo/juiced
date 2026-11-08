@@ -345,6 +345,11 @@ const en = {
   prof_alt_pick_hint: "Click two weapons – the combo is added. Then pick the next one.",
   prof_edit_other: "Build of {name}",
   mem_also: "Can also:",
+  vod_review_progress: "In review",
+  vod_review_f_progress: "In review",
+  vod_review_start: "Start review",
+  vod_review_stop: "Stop review",
+  vod_review_started_toast: "Review started – the uploader gets a message",
 };
 
 export type ExtraDict = typeof en;
@@ -686,6 +691,11 @@ const de: Partial<ExtraDict> = {
   prof_alt_pick_hint: "Zwei Waffen anklicken – die Kombi wird hinzugefügt. Danach direkt die nächste wählen.",
   prof_edit_other: "Build von {name}",
   mem_also: "Kann auch:",
+  vod_review_progress: "In Review",
+  vod_review_f_progress: "In Review",
+  vod_review_start: "Review starten",
+  vod_review_stop: "Review stoppen",
+  vod_review_started_toast: "Review gestartet – der Uploader bekommt eine Nachricht",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1018,6 +1028,11 @@ const fr: Partial<ExtraDict> = {
   prof_alt_pick_hint: "Clique deux armes – le combo est ajouté. Puis choisis le suivant.",
   prof_edit_other: "Build de {name}",
   mem_also: "Joue aussi :",
+  vod_review_progress: "En cours",
+  vod_review_f_progress: "En cours",
+  vod_review_start: "Commencer",
+  vod_review_stop: "Arrêter",
+  vod_review_started_toast: "Revue commencée – l'auteur est prévenu",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1350,6 +1365,11 @@ const es: Partial<ExtraDict> = {
   prof_alt_pick_hint: "Haz clic en dos armas: se añade el combo. Luego elige el siguiente.",
   prof_edit_other: "Build de {name}",
   mem_also: "También:",
+  vod_review_progress: "En revisión",
+  vod_review_f_progress: "En revisión",
+  vod_review_start: "Empezar revisión",
+  vod_review_stop: "Parar revisión",
+  vod_review_started_toast: "Revisión iniciada – el autor recibe un aviso",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1682,6 +1702,11 @@ const pt: Partial<ExtraDict> = {
   prof_alt_pick_hint: "Clique em duas armas – o combo é adicionado. Depois escolha o próximo.",
   prof_edit_other: "Build de {name}",
   mem_also: "Também:",
+  vod_review_progress: "Em revisão",
+  vod_review_f_progress: "Em revisão",
+  vod_review_start: "Iniciar revisão",
+  vod_review_stop: "Parar revisão",
+  vod_review_started_toast: "Revisão iniciada – quem enviou recebe um aviso",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2014,6 +2039,11 @@ const ru: Partial<ExtraDict> = {
   prof_alt_pick_hint: "Нажми два оружия — комбо добавится. Потом выбери следующее.",
   prof_edit_other: "Билд: {name}",
   mem_also: "Также:",
+  vod_review_progress: "На разборе",
+  vod_review_f_progress: "На разборе",
+  vod_review_start: "Начать разбор",
+  vod_review_stop: "Остановить",
+  vod_review_started_toast: "Разбор начат — автор получит сообщение",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2346,6 +2376,11 @@ const tr: Partial<ExtraDict> = {
   prof_alt_pick_hint: "İki silaha tıkla – kombo eklenir. Sonra sıradakini seç.",
   prof_edit_other: "{name} build'i",
   mem_also: "Ayrıca:",
+  vod_review_progress: "İnceleniyor",
+  vod_review_f_progress: "İnceleniyor",
+  vod_review_start: "İncelemeye başla",
+  vod_review_stop: "İncelemeyi durdur",
+  vod_review_started_toast: "İnceleme başladı – yükleyen bilgilendirildi",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2678,6 +2713,11 @@ const pl: Partial<ExtraDict> = {
   prof_alt_pick_hint: "Kliknij dwie bronie – kombinacja zostanie dodana. Potem wybierz następną.",
   prof_edit_other: "Build: {name}",
   mem_also: "Gra też:",
+  vod_review_progress: "W trakcie",
+  vod_review_f_progress: "W trakcie",
+  vod_review_start: "Rozpocznij",
+  vod_review_stop: "Zatrzymaj",
+  vod_review_started_toast: "Rozpoczęto – autor dostanie wiadomość",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

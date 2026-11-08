@@ -40,7 +40,7 @@ GB = 1024 ** 3
 MAX_FILE_BYTES = int(float(os.environ.get("VOD_MAX_FILE_GB", "8")) * GB)
 MAX_TOTAL_BYTES = int(float(os.environ.get("VOD_MAX_TOTAL_GB", "25")) * GB)
 MIN_FREE_BYTES = int(float(os.environ.get("VOD_MIN_FREE_GB", "5")) * GB)  # nie die Platte vollschreiben
-RETENTION_DAYS = float(os.environ.get("VOD_RETENTION_DAYS", "7"))       # 0 = nie automatisch löschen
+RETENTION_DAYS = float(os.environ.get("VOD_RETENTION_DAYS", "14"))       # 0 = nie automatisch löschen
 MAX_PER_USER = int(os.environ.get("VOD_MAX_PER_USER", "0"))  # 0 = kein Limit             # gleichzeitige (nicht behaltene) VODs pro Person, Admins ausgenommen
 # Liegt VOD_DIR auf der Storage Box, muss dort diese Datei existieren -- fehlt sie, ist die Box nicht eingehängt
 # und es wird NICHT auf die Server-Platte geschrieben.
@@ -79,6 +79,8 @@ class Vod(Base):
     pinned = Column(Boolean, nullable=False, default=False, server_default="false")  # "Behalten": nie automatisch löschen
     role = Column(String, nullable=False, default="team", server_default="team")  # healer | tank | nameless | team
     reviewed_at = Column(DateTime(timezone=True), nullable=True)   # Review vom Coach abgeschlossen
+    review_started_at = Column(DateTime(timezone=True), nullable=True)  # Review läuft (Coach hat angefangen)
+    review_started_by = Column(Integer, nullable=True)
     reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -105,6 +107,8 @@ _MIGRATIONS = {
     "role": "ALTER TABLE vods ADD COLUMN role VARCHAR NOT NULL DEFAULT 'team'",
     "reviewed_at": "ALTER TABLE vods ADD COLUMN reviewed_at TIMESTAMP WITH TIME ZONE",
     "reviewed_by": "ALTER TABLE vods ADD COLUMN reviewed_by INTEGER",
+    "review_started_at": "ALTER TABLE vods ADD COLUMN review_started_at TIMESTAMP WITH TIME ZONE",
+    "review_started_by": "ALTER TABLE vods ADD COLUMN review_started_by INTEGER",
 }
 try:
     _cols = {c["name"] for c in inspect(engine).get_columns("vods")}
@@ -450,6 +454,8 @@ def _vod_out(v: Vod, users: dict, note_count: int, ctx: VodCtx) -> dict:
         "reviewed": bool(v.reviewed_at),
         "reviewed_at": v.reviewed_at.isoformat() if v.reviewed_at else None,
         "reviewed_by_name": users.get(v.reviewed_by),
+        "in_review": bool(v.review_started_at and not v.reviewed_at),
+        "review_started_by_name": users.get(v.review_started_by),
         "can_review": _can_review(v, ctx),
         "expires_at": (lambda e: e.isoformat() if e else None)(_expires_at(v)),
         "created_at": v.created_at.isoformat() if v.created_at else None,
@@ -725,11 +731,40 @@ def set_reviewed(vod_id: int, payload: ReviewedIn, db: Session = Depends(get_db)
         v.reviewed_at, v.reviewed_by = v.reviewed_at or datetime.now(timezone.utc), v.reviewed_by or ctx.user.id
     else:
         v.reviewed_at, v.reviewed_by = None, None
+        v.review_started_at, v.review_started_by = None, None
     db.commit()
     if payload.reviewed and not was and v.uploader_id and v.uploader_id != ctx.user.id:
         _notify(db, [v.uploader_id], "Your VOD has been reviewed",
                 f"{ctx.user.display_name} finished the review of \"{v.title}\".", v.id)
     return _vod_out(v, _users_map(db), 0, ctx)
+
+
+class ReviewingIn(BaseModel):
+    reviewing: bool
+
+
+@router.put("/{vod_id}/reviewing")
+def set_reviewing(vod_id: int, payload: ReviewingIn, db: Session = Depends(get_db), ctx: VodCtx = Depends(vod_ctx)):
+    """Review starten (Status "In Review") oder wieder auf "Offen" setzen."""
+    v = _get_visible_vod(db, vod_id, ctx)
+    if not _can_review(v, ctx):
+        raise HTTPException(status_code=403, detail="Only coaches of this role can do that")
+    started = _start_review(v, ctx) if payload.reviewing else False
+    if not payload.reviewing:
+        v.review_started_at, v.review_started_by = None, None
+    db.commit()
+    if started and v.uploader_id and v.uploader_id != ctx.user.id:
+        _notify(db, [v.uploader_id], "Your VOD is being reviewed",
+                f"{ctx.user.display_name} started the review of \"{v.title}\".", v.id)
+    return _vod_out(v, _users_map(db), 0, ctx)
+
+
+def _start_review(v, ctx) -> bool:
+    """Setzt "In Review", falls noch nicht begonnen/abgeschlossen. True = gerade gestartet."""
+    if v.review_started_at or v.reviewed_at:
+        return False
+    v.review_started_at, v.review_started_by = datetime.now(timezone.utc), ctx.user.id
+    return True
 
 
 @router.delete("/{vod_id}")
@@ -770,6 +805,8 @@ def add_note(vod_id: int, payload: NoteIn, db: Session = Depends(get_db), ctx: V
         text=text_,
     )
     db.add(n)
+    if v.uploader_id != ctx.user.id and _can_review(v, ctx):
+        _start_review(v, ctx)
     db.commit()
     db.refresh(n)
     if first_from_user:
