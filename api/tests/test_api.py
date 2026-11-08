@@ -149,3 +149,28 @@ def test_error_codes():
     assert d["code"] == "file_too_large" and d["params"] == {"max": "20"}
     assert describe("Not found")["code"] == "not_found"
     assert "code" not in describe("something unknown")
+
+
+# ---------------------------------------------------------------- Benachrichtigungen abstellen
+
+def test_dm_off_saved_and_filtered(client_for):
+    c = client_for("nora", "member")
+    u = c.put("/api/me", json={"dm_off": ["new_vod", "bell_uploads", "bogus"]}, headers=ORIGIN).json()["user"]
+    assert u["dm_off"] == ["new_vod", "bell_uploads"]
+
+
+def test_vod_dm_respects_settings(client_for, monkeypatch):
+    from app import models, notify, vods
+    from app.db import SessionLocal
+    sent = []
+    monkeypatch.setattr(notify, "dm", lambda ids, *a, **k: sent.extend(ids))
+    c = client_for("otto", "member")
+    c.put("/api/me", json={"dm_off": ["vod_comments"]}, headers=ORIGIN)
+    db = SessionLocal()
+    try:
+        u = db.query(models.User).filter(models.User.username == "otto").first()
+        vods._notify(db, [u.id], "t", "b", 1, kind="vod_comments")   # abgestellt -> nichts
+        vods._notify(db, [u.id], "t", "b", 1, kind="vod_review")     # an -> gesendet
+    finally:
+        db.close()
+    assert sent == [u.discord_id]

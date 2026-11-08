@@ -634,3 +634,7 @@ a.pp-chip:hover { border-color: var(--accent); }
 .att-mid { color: #eab308; background: color-mix(in srgb, #eab308 14%, transparent); }
 .att-low { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .mh-att { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+/* Profil: Benachrichtigungen */
+.notif-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.notif-group { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-tint); }
+.notif-all { font-weight: 700; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }

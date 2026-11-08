@@ -662,6 +662,18 @@ const fi: Partial<Dict & ExtraDict> = {
   vod_retry_in: "Yhteys katkesi – uusi yritys {n} s päästä",
   vod_retry_offline: "Olet offline-tilassa – jatkuu, kun yhteys palaa",
   rank_admin: "Ylläpitäjä",
+  prof_dm: "Botin Discord-viestit",
+  prof_notif: "Ilmoitukset",
+  prof_bell: "Sivuston kello",
+  prof_dm_hint: "Valitse, mistä haluat ilmoituksen. Valitsemattomia ei lähetetä eikä lasketa.",
+  prof_n_new_vod: "Uudet arvioitavat VODit",
+  prof_n_vod_comments: "Joku kommentoi VODiani",
+  prof_n_vod_review: "VODini arviointi alkoi tai valmistui",
+  prof_n_reminder: "Muistutukset ilmoittautua tapahtumiin",
+  prof_n_bell_apps: "Avoimet hakemukset",
+  prof_n_bell_matches: "Avoimet ottelupyynnöt",
+  prof_n_bell_vods: "Arvioimattomat VODit",
+  prof_n_bell_uploads: "Käynnissä olevat VOD-lataukset",
 };
 
 export default fi;

@@ -359,6 +359,18 @@ const en = {
   vod_retry_in: "Connection interrupted – retrying in {n} s",
   vod_retry_offline: "You're offline – continues as soon as you're back online",
   rank_admin: "Admin",
+  prof_dm: "Discord messages from the bot",
+  prof_dm_hint: "Choose what you want to be notified about. Unticked things are simply not sent or counted.",
+  prof_notif: "Notifications",
+  prof_bell: "Bell on the website",
+  prof_n_new_vod: "New VODs to review",
+  prof_n_vod_comments: "Someone comments on my VOD",
+  prof_n_vod_review: "Review of my VOD started or done",
+  prof_n_reminder: "Reminders to sign up for events",
+  prof_n_bell_apps: "Open applications",
+  prof_n_bell_matches: "Open match requests",
+  prof_n_bell_vods: "VODs waiting for review",
+  prof_n_bell_uploads: "VOD uploads in progress",
 };
 
 export type ExtraDict = typeof en;
@@ -714,6 +726,18 @@ const de: Partial<ExtraDict> = {
   vod_retry_in: "Verbindung unterbrochen – neuer Versuch in {n} s",
   vod_retry_offline: "Du bist offline – geht weiter, sobald die Verbindung wieder da ist",
   rank_admin: "Admin",
+  prof_dm: "Discord-Nachrichten vom Bot",
+  prof_dm_hint: "Wähle, worüber du benachrichtigt werden willst. Abgehaktes wird nicht mehr geschickt bzw. gezählt.",
+  prof_notif: "Benachrichtigungen",
+  prof_bell: "Glocke auf der Website",
+  prof_n_new_vod: "Neue VODs zum Reviewen",
+  prof_n_vod_comments: "Jemand kommentiert mein VOD",
+  prof_n_vod_review: "Review meines VODs gestartet oder fertig",
+  prof_n_reminder: "Erinnerungen, mich für Events anzumelden",
+  prof_n_bell_apps: "Offene Bewerbungen",
+  prof_n_bell_matches: "Offene Match-Anfragen",
+  prof_n_bell_vods: "VODs ohne Review",
+  prof_n_bell_uploads: "Laufende VOD-Uploads",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1061,6 +1085,18 @@ const fr: Partial<ExtraDict> = {
   vod_retry_in: "Connexion interrompue – nouvel essai dans {n} s",
   vod_retry_offline: "Tu es hors ligne – reprend dès le retour de la connexion",
   rank_admin: "Admin",
+  prof_dm: "Messages Discord du bot",
+  prof_dm_hint: "Choisis ce dont tu veux être notifié. Ce qui est décoché n'est plus envoyé ni compté.",
+  prof_notif: "Notifications",
+  prof_bell: "Cloche du site",
+  prof_n_new_vod: "Nouvelles VOD à revoir",
+  prof_n_vod_comments: "Quelqu'un commente ma VOD",
+  prof_n_vod_review: "Revue de ma VOD commencée ou terminée",
+  prof_n_reminder: "Rappels d'inscription aux événements",
+  prof_n_bell_apps: "Candidatures en attente",
+  prof_n_bell_matches: "Demandes de match en attente",
+  prof_n_bell_vods: "VOD en attente de revue",
+  prof_n_bell_uploads: "Envois de VOD en cours",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1408,6 +1444,18 @@ const es: Partial<ExtraDict> = {
   vod_retry_in: "Conexión interrumpida – reintento en {n} s",
   vod_retry_offline: "Sin conexión – sigue en cuanto vuelva la conexión",
   rank_admin: "Administrador",
+  prof_dm: "Mensajes de Discord del bot",
+  prof_dm_hint: "Elige de qué quieres recibir avisos. Lo desmarcado ya no se envía ni se cuenta.",
+  prof_notif: "Notificaciones",
+  prof_bell: "Campana de la web",
+  prof_n_new_vod: "Nuevos VODs para revisar",
+  prof_n_vod_comments: "Alguien comenta mi VOD",
+  prof_n_vod_review: "Revisión de mi VOD iniciada o lista",
+  prof_n_reminder: "Recordatorios para apuntarme a eventos",
+  prof_n_bell_apps: "Solicitudes pendientes",
+  prof_n_bell_matches: "Solicitudes de partida pendientes",
+  prof_n_bell_vods: "VODs sin revisar",
+  prof_n_bell_uploads: "Subidas de VOD en curso",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1755,6 +1803,18 @@ const pt: Partial<ExtraDict> = {
   vod_retry_in: "Conexão interrompida – nova tentativa em {n} s",
   vod_retry_offline: "Você está offline – continua assim que a conexão voltar",
   rank_admin: "Administrador",
+  prof_dm: "Mensagens do bot no Discord",
+  prof_dm_hint: "Escolha sobre o que quer ser avisado. O que estiver desmarcado não é enviado nem contado.",
+  prof_notif: "Notificações",
+  prof_bell: "Sino do site",
+  prof_n_new_vod: "Novos VODs para revisar",
+  prof_n_vod_comments: "Alguém comenta meu VOD",
+  prof_n_vod_review: "Revisão do meu VOD iniciada ou pronta",
+  prof_n_reminder: "Lembretes para me inscrever em eventos",
+  prof_n_bell_apps: "Candidaturas pendentes",
+  prof_n_bell_matches: "Pedidos de partida pendentes",
+  prof_n_bell_vods: "VODs sem revisão",
+  prof_n_bell_uploads: "Envios de VOD em andamento",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2102,6 +2162,18 @@ const ru: Partial<ExtraDict> = {
   vod_retry_in: "Соединение прервано — повтор через {n} с",
   vod_retry_offline: "Нет сети — продолжится, когда соединение вернётся",
   rank_admin: "Админ",
+  prof_dm: "Сообщения бота в Discord",
+  prof_dm_hint: "Выбери, о чём получать уведомления. Снятое больше не отправляется и не считается.",
+  prof_notif: "Уведомления",
+  prof_bell: "Колокольчик на сайте",
+  prof_n_new_vod: "Новые VOD на разбор",
+  prof_n_vod_comments: "Кто-то комментирует мой VOD",
+  prof_n_vod_review: "Разбор моего VOD начат или готов",
+  prof_n_reminder: "Напоминания записаться на события",
+  prof_n_bell_apps: "Открытые заявки",
+  prof_n_bell_matches: "Открытые запросы матчей",
+  prof_n_bell_vods: "VOD без разбора",
+  prof_n_bell_uploads: "Идущие загрузки VOD",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2449,6 +2521,18 @@ const tr: Partial<ExtraDict> = {
   vod_retry_in: "Bağlantı kesildi – {n} sn sonra tekrar denenecek",
   vod_retry_offline: "Çevrimdışısın – bağlantı gelince devam eder",
   rank_admin: "Yönetici",
+  prof_dm: "Bottan Discord mesajları",
+  prof_dm_hint: "Neler için bildirim almak istediğini seç. İşaretsizler gönderilmez ve sayılmaz.",
+  prof_notif: "Bildirimler",
+  prof_bell: "Sitedeki zil",
+  prof_n_new_vod: "İncelenecek yeni VOD'lar",
+  prof_n_vod_comments: "Biri VOD'uma yorum yapıyor",
+  prof_n_vod_review: "VOD'umun incelemesi başladı veya bitti",
+  prof_n_reminder: "Etkinliklere kayıt hatırlatmaları",
+  prof_n_bell_apps: "Bekleyen başvurular",
+  prof_n_bell_matches: "Bekleyen maç istekleri",
+  prof_n_bell_vods: "İncelenmemiş VOD'lar",
+  prof_n_bell_uploads: "Devam eden VOD yüklemeleri",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2796,6 +2880,18 @@ const pl: Partial<ExtraDict> = {
   vod_retry_in: "Połączenie przerwane – ponowna próba za {n} s",
   vod_retry_offline: "Jesteś offline – wznowi się po powrocie połączenia",
   rank_admin: "Administrator",
+  prof_dm: "Wiadomości od bota na Discordzie",
+  prof_dm_hint: "Wybierz, o czym chcesz dostawać powiadomienia. Odznaczone nie będą wysyłane ani liczone.",
+  prof_notif: "Powiadomienia",
+  prof_bell: "Dzwonek na stronie",
+  prof_n_new_vod: "Nowe VOD-y do recenzji",
+  prof_n_vod_comments: "Ktoś komentuje mój VOD",
+  prof_n_vod_review: "Recenzja mojego VOD rozpoczęta lub gotowa",
+  prof_n_reminder: "Przypomnienia o zapisach na wydarzenia",
+  prof_n_bell_apps: "Otwarte zgłoszenia",
+  prof_n_bell_matches: "Otwarte prośby o mecz",
+  prof_n_bell_vods: "VOD-y bez recenzji",
+  prof_n_bell_uploads: "Trwające wysyłki VOD",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

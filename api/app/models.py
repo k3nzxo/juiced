@@ -20,6 +20,12 @@ WEAPONS = tuple(w for ws in WEAPONS_BY_ROLE.values() for w in ws)
 OLD_WEAPONS = {"nameless": "nameless_sword", "twinblades": "infernal_twinblades"}
 
 
+# Benachrichtigungen, die man im Profil einzeln abstellen kann:
+#   Discord-DMs vom Bot und die Zähler der Glocke auf der Website
+DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder",
+            "bell_apps", "bell_matches", "bell_vods", "bell_uploads")
+
+
 def clean_weapons(items, role=None) -> str:
     """Nur bekannte Waffen; mit Rolle nur die Waffen dieser Rolle."""
     allowed = WEAPONS_BY_ROLE.get(role, ()) if role else WEAPONS
@@ -46,6 +52,7 @@ class User(Base):
     inner_ways = Column(String(900), nullable=True)    # gewählte Inner Ways, kommagetrennt
     partners = Column(String(400), nullable=True)      # Ingame-Partner (Discord-IDs), kommagetrennt
     main_build = Column(String(80), nullable=True)     # Haupt-Build: zwei Waffen "a+b" (auch Hybride)
+    dm_off = Column(String(200), nullable=True)        # abgestellte Benachrichtigungen (DM_KINDS), kommagetrennt
     alt_builds = Column(String(400), nullable=True)    # weitere Builds, kommagetrennt
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
@@ -64,6 +71,13 @@ class User(Base):
     @property
     def alt_build_list(self) -> list[str]:
         return [b for b in (self.alt_builds or "").split(",") if b]
+
+    @property
+    def dm_off_list(self) -> list[str]:
+        return [k for k in (self.dm_off or "").split(",") if k in DM_KINDS]
+
+    def wants_dm(self, kind: str) -> bool:
+        return kind not in self.dm_off_list
 
     @property
     def partner_list(self) -> list[str]:

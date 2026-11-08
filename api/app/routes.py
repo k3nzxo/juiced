@@ -141,6 +141,7 @@ class ProfileIn(BaseModel):
     alt_builds: Optional[list[str]] = None
     inner_ways: Optional[list[str]] = None
     partners: Optional[list[str]] = None
+    dm_off: Optional[list[str]] = None
     country: Optional[str] = None
     show_on_team: Optional[bool] = None
     lang: Optional[str] = None
@@ -209,6 +210,8 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.weapons = None  # Freitext (weapon_other) bleibt: "kann auch spielen", z. B. Mo/TB
     elif user.weapons:  # nach Rollenwechsel nur passende Waffen behalten
         user.weapons = models.clean_weapons(user.weapons.split(","), user.main_role) or None
+    if "dm_off" in data:
+        user.dm_off = ",".join(k for k in models.DM_KINDS if k in (data["dm_off"] or [])) or None
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None
@@ -673,4 +676,9 @@ def notifications(db: DbSession = Depends(get_db), user: Optional[models.User] =
     ctx = _ctx_for(db, user)
     uploading = sum(1 for v in db.query(_Vod).filter(_Vod.status == "uploading", _Vod.updated_at >= since).all()
                     if ctx and _can_view(v, ctx))
+    for key, kind in (("applications", "bell_apps"), ("matches", "bell_matches"), ("vods", "bell_vods")):
+        if not user.wants_dm(kind):
+            out[key] = 0
+    if not user.wants_dm("bell_uploads"):
+        uploading = 0
     return {**out, "total": sum(out.values()), "uploading": uploading}

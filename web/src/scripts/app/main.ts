@@ -9,7 +9,7 @@ import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText, W
 type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
-  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[];
+  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[]; dm_off: string[];
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; can_view_all: boolean; rank_manual: boolean;
 };
 
@@ -1172,6 +1172,30 @@ async function viewAdmin(view: HTMLElement) {
 const COUNTRIES = ["AE", "AL", "AM", "AR", "AT", "AU", "AZ", "BA", "BE", "BG", "BR", "BY", "CA", "CH", "CL", "CN", "CO", "CY", "CZ", "DE", "DK", "DZ", "EE", "EG", "ES", "FI", "FR", "GB", "GE", "GR", "HR", "HU", "ID", "IE", "IL", "IN", "IS", "IT", "JP", "KR", "KZ", "LT", "LU", "LV", "MA", "MD", "ME", "MK", "MT", "MX", "MY", "NG", "NL", "NO", "NZ", "PE", "PH", "PK", "PL", "PT", "RO", "RS", "RU", "SA", "SE", "SG", "SI", "SK", "TH", "TN", "TR", "TW", "UA", "US", "VE", "VN", "XK", "ZA"];
 
 // target: Mitglied, dessen Build ein Leader/Vice bearbeitet (sonst das eigene Profil)
+// Benachrichtigungen: Discord-DMs und Glocke, je mit Hauptschalter "alle"; nur relevante Punkte zeigen
+function notifGroups() {
+  const off = new Set(me!.dm_off || []);
+  const coach = me!.is_admin || (me!.coach_roles || []).length > 0;
+  const groups = [
+    { id: "dm", title: T("prof_dm"), kinds: [...(coach ? ["new_vod"] : []), "vod_comments", "vod_review", "reminder"] },
+    { id: "bell", title: T("prof_bell"), kinds: [...(me!.can_view_all ? ["bell_apps", "bell_matches"] : []), ...(coach ? ["bell_vods"] : []), "bell_uploads"] },
+  ];
+  return `<div class="field"><span class="label">${esc(T("prof_notif"))}</span><p class="hint">${esc(T("prof_dm_hint"))}</p>
+    <div class="notif-groups">${groups.map((g) => `<div class="notif-group" data-ngroup="${g.id}">
+      <label class="check notif-all"><input type="checkbox" data-nall="${g.id}" ${g.kinds.some((k) => !off.has(k)) ? "checked" : ""}> <span>${esc(g.title)}</span></label>
+      ${g.kinds.map((k) => `<label class="check check-sm"><input type="checkbox" data-dm="${k}" data-ng="${g.id}" ${off.has(k) ? "" : "checked"}> <span>${esc(T("prof_n_" + k))}</span></label>`).join("")}
+    </div>`).join("")}</div></div>`;
+}
+function bindNotifGroups(root: HTMLElement) {
+  root.querySelectorAll<HTMLInputElement>("[data-nall]").forEach((all) => all.addEventListener("change", () => {
+    root.querySelectorAll<HTMLInputElement>(`[data-ng="${all.dataset.nall}"]`).forEach((x) => (x.checked = all.checked));
+  }));
+  root.querySelectorAll<HTMLInputElement>("[data-ng]").forEach((x) => x.addEventListener("change", () => {
+    const all = root.querySelector<HTMLInputElement>(`[data-nall="${x.dataset.ng}"]`)!;
+    all.checked = [...root.querySelectorAll<HTMLInputElement>(`[data-ng="${x.dataset.ng}"]`)].some((y) => y.checked);
+  }));
+}
+
 function viewProfile(view: HTMLElement, target: any = null) {
   const own = !target || target.id === me!.id;
   const u: any = own ? me! : target;
@@ -1211,10 +1235,12 @@ function viewProfile(view: HTMLElement, target: any = null) {
     <div class="field"><span class="label">${esc(T("prof_partners"))}</span><p class="hint">${esc(T("prof_partners_hint"))}</p>
       <div class="pp-partners" data-partners></div>
       <div class="pp-search"><input class="input" id="p-psearch" autocomplete="off" placeholder="${esc(T("prof_partners_ph"))}"><div class="pp-sugg" data-sugg hidden></div></div></div>
-    ${own ? `<label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>` : ""}
+    ${own ? notifGroups() : ""}
+    ${own ? `    <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>` : ""}
     <button class="btn btn-primary" type="submit">${esc(T("save"))}</button>
   </form>`;
 
+  if (own) bindNotifGroups(view);
   // Inner Ways: nach Pfad gruppiert; ohne "Alle zeigen" nur eigene Pfade + allgemeine (+ schon gewählte)
   const drawWays = () => {
     const mainPaths = buildPaths(curMain());
@@ -1323,6 +1349,8 @@ function viewProfile(view: HTMLElement, target: any = null) {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
         main_role: role, main_build: curMain(), alt_builds: [...altB], inner_ways: [...ways], partners,
         weapon_other: "",
+        dm_off: [...(me!.dm_off || []).filter((k) => !view.querySelector(`[data-dm="${k}"]`)),
+        ...[...view.querySelectorAll<HTMLInputElement>("[data-dm]")].filter((x) => !x.checked).map((x) => x.dataset.dm!)],
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });

@@ -506,7 +506,7 @@ class RemindIn(BaseModel):
 
 
 @router.post("/events/{event_id}/remind")
-def remind(event_id: str, payload: RemindIn, user: models.User = Depends(require_management)):
+def remind(event_id: str, payload: RemindIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
     """Wie /unsigned bei Raid-Helper: alle mit der Rolle, die noch nicht reagiert haben, im Kanal pingen und/oder per DM erinnern."""
     if not _ID.match(payload.role_id or ""):
         raise HTTPException(status_code=400, detail="Please choose a role")
@@ -523,7 +523,9 @@ def remind(event_id: str, payload: RemindIn, user: models.User = Depends(require
             _discord("POST", f"/channels/{channel}/messages", json={
                 "content": content, "allowed_mentions": {"parse": [], "users": ids}})
     if payload.dm and missing:
-        notify.dm([m["id"] for m in missing], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
+        off = {u.discord_id for u in db.query(models.User).filter(models.User.discord_id.in_([m["id"] for m in missing])).all()
+               if not u.wants_dm("reminder")}
+        notify.dm([m["id"] for m in missing if m["id"] not in off], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
     return {"ok": True, "count": len(missing)}
 
 

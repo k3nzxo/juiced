@@ -551,13 +551,14 @@ def _get_visible_vod(db: Session, vod_id: int, ctx: VodCtx) -> Vod:
 
 # ---------------------------------------------------------------- Benachrichtigungen
 
-def _notify(db: Session, user_ids, title: str, body: str, vod_id: int):
-    """Discord-DM an die Empfänger, Link jeweils in deren Sprache."""
+def _notify(db: Session, user_ids, title: str, body: str, vod_id: int, kind: str = "vod_review"):
+    """Discord-DM an die Empfänger (außer sie haben diese Art im Profil abgestellt), Link in deren Sprache."""
     ids = list({i for i in user_ids if i})
     if not ids:
         return
     for u in db.query(models.User).filter(models.User.id.in_(ids)).all():
-        notify.dm([u.discord_id], title, body, f"/{u.lang or 'en'}/app/#/vods/{vod_id}")
+        if u.wants_dm(kind):
+            notify.dm([u.discord_id], title, body, f"/{u.lang or 'en'}/app/#/vods/{vod_id}")
 
 
 def _coach_ids_for(db: Session, role: str) -> List[int]:
@@ -753,7 +754,7 @@ def complete_upload(vod_id: int, db: Session = Depends(get_db), ctx: VodCtx = De
     _start_processing(v.id)
     if v.role in COACH_ROLES:
         _notify(db, [i for i in _coach_ids_for(db, v.role) if i != ctx.user.id],
-                f"New {ROLE_LABELS[v.role]} VOD", f"{ctx.user.display_name} uploaded \"{v.title}\" for review.", v.id)
+                f"New {ROLE_LABELS[v.role]} VOD", f"{ctx.user.display_name} uploaded \"{v.title}\" for review.", v.id, kind="new_vod")
     return _vod_out(v, _users_map(db), 0, ctx)
 
 
@@ -902,7 +903,7 @@ def add_note(vod_id: int, payload: NoteIn, db: Session = Depends(get_db), ctx: V
     db.refresh(n)
     if first_from_user:
         _notify(db, [v.uploader_id], "Your VOD is being reviewed",
-                f"{ctx.user.display_name} started commenting on \"{v.title}\".", v.id)
+                f"{ctx.user.display_name} started commenting on \"{v.title}\".", v.id, kind="vod_comments")
     return _note_out(n, _users_map(db), ctx)
 
 

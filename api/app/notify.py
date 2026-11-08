@@ -6,6 +6,8 @@ import httpx
 from .config import APPLY_WEBHOOK_URL, DISCORD_BOT_TOKEN, PUBLIC_URL
 
 API = "https://discord.com/api/v10"
+# Hinweis unter jeder DM, wie man sie abstellt
+DM_FOOTER = "Don't want these messages? Turn them off in your profile on juiced.team."
 
 
 def _bg(fn, *args):
@@ -26,7 +28,7 @@ def _send_dm(discord_id: str, text: str):
 def dm(discord_ids, title: str, body: str, path: str):
     if not DISCORD_BOT_TOKEN:
         return
-    text = f"**{title}**\n{body}\n{PUBLIC_URL}{path}"
+    text = f"**{title}**\n{body}\n<{PUBLIC_URL}{path}>\n-# {DM_FOOTER}"
     for did in {d for d in discord_ids if d}:
         _bg(_send_dm, did, text)
 

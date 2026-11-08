@@ -21,7 +21,7 @@ def _add_missing_columns():
                          "region": "VARCHAR(8)", "gear_score": "INTEGER", "arena_rank": "VARCHAR(40)"},
         "users": {"weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)", "main_path": "VARCHAR(32)", "alt_paths": "VARCHAR(240)",
                   "inner_ways": "VARCHAR(900)", "partners": "VARCHAR(400)",
-                  "main_build": "VARCHAR(80)", "alt_builds": "VARCHAR(400)"},
+                  "main_build": "VARCHAR(80)", "alt_builds": "VARCHAR(400)", "dm_off": "VARCHAR(200)"},
         "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false", "repeat_days": "VARCHAR(7)"},
         "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
     }

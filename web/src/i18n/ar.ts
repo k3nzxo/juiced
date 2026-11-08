@@ -662,6 +662,18 @@ const ar: Partial<Dict & ExtraDict> = {
   vod_retry_in: "انقطع الاتصال – إعادة المحاولة خلال {n} ث",
   vod_retry_offline: "أنت غير متصل – سيستمر عند عودة الاتصال",
   rank_admin: "مشرف",
+  prof_dm: "رسائل Discord من البوت",
+  prof_notif: "الإشعارات",
+  prof_bell: "الجرس في الموقع",
+  prof_dm_hint: "اختر ما تريد أن تُبلَّغ عنه. ما لم يُحدَّد لن يُرسَل ولن يُحسَب.",
+  prof_n_new_vod: "مقاطع VOD جديدة للمراجعة",
+  prof_n_vod_comments: "أحدهم يعلّق على مقطعي",
+  prof_n_vod_review: "بدأت مراجعة مقطعي أو انتهت",
+  prof_n_reminder: "تذكيرات للتسجيل في الفعاليات",
+  prof_n_bell_apps: "طلبات الانضمام المفتوحة",
+  prof_n_bell_matches: "طلبات المباريات المفتوحة",
+  prof_n_bell_vods: "مقاطع VOD بلا مراجعة",
+  prof_n_bell_uploads: "رفع مقاطع VOD جارٍ",
 };
 
 export default ar;
