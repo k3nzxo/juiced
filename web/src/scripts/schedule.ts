@@ -29,9 +29,37 @@ export async function fetchEvents(from: Date, to: Date): Promise<Ev[]> {
 }
 
 const locale = (lang: string) => (lang === "pt" ? "pt-BR" : lang);
-export const timeFmt = (lang: string) => new Intl.DateTimeFormat(locale(lang), { hour: "2-digit", minute: "2-digit" });
+export const timeFmt = (lang: string) => new Intl.DateTimeFormat(locale(lang), { hour: "numeric", minute: "2-digit" });
 export const dayFmt = (lang: string, long = false) => new Intl.DateTimeFormat(locale(lang), { weekday: long ? "long" : "short" });
 export const dateFmt = (lang: string) => new Intl.DateTimeFormat(locale(lang), { day: "numeric", month: "short" });
+
+/** Kompakte Uhrzeit: bei 12h-Format volle Stunden ohne ":00" ("9 PM"), sonst normal ("21:00"). */
+function compact(parts: Intl.DateTimeFormatPart[], withPeriod: boolean): string {
+  const hasPeriod = parts.some((x) => x.type === "dayPeriod");
+  const zero = hasPeriod && parts.find((x) => x.type === "minute")?.value === "00";
+  let out = "";
+  for (let k = 0; k < parts.length; k++) {
+    const x = parts[k];
+    if (x.type === "dayPeriod" && !withPeriod) continue;
+    if (zero && x.type === "minute") continue;
+    if (zero && x.type === "literal" && parts[k + 1]?.type === "minute") continue;
+    out += x.value;
+  }
+  return out.trim();
+}
+
+export function timeShort(d: Date, lang: string): string {
+  return compact(timeFmt(lang).formatToParts(d), true);
+}
+
+/** Kompakter Zeitraum: "8–9:30 PM", "9 PM–12 AM" oder bei 24h "20:00–21:30". */
+export function timeRange(s: Date, e: Date, lang: string): string {
+  const tf = timeFmt(lang);
+  const ps = tf.formatToParts(s), pe = tf.formatToParts(e);
+  const per = (p: Intl.DateTimeFormatPart[]) => p.find((x) => x.type === "dayPeriod")?.value;
+  const same = !!per(ps) && per(ps) === per(pe);
+  return `${compact(ps, !same)}–${compact(pe, true)}`;
+}
 
 export function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -39,11 +67,10 @@ export function sameDay(a: Date, b: Date) {
 
 export function eventChip(e: Ev, lang: string, L: Record<string, string>): string {
   const s = new Date(e.starts_at), en = new Date(e.ends_at);
-  const tf = timeFmt(lang);
   return `<article class="ev kind-${esc(e.kind)}" tabindex="0" title="${esc(e.description || "")}">
     <div class="ev-time">${e.open_end
-      ? `${esc((L.sched_from || "{t}").replace("{t}", tf.format(s)))} <span class="ev-open">· ${esc(L.sched_open_end || "")}</span>`
-      : `${tf.format(s)}–${tf.format(en)}`}</div>
+      ? `${esc((L.sched_from || "{t}").replace("{t}", timeShort(s, lang)))} <span class="ev-open">${esc(L.sched_open_end || "")}</span>`
+      : timeRange(s, en, lang)}</div>
     <div class="ev-title">${esc(e.title)}</div>
     ${e.opponent ? `<div class="ev-sub">${esc((L.sched_vs || "vs {name}").replace("{name}", e.opponent))}</div>` : ""}
     <div class="ev-tags"><span class="ev-kind">${esc(L["kind_" + e.kind] || e.kind)}</span>${!e.is_public ? `<span class="ev-int">${esc(L.sched_internal)}</span>` : ""}</div>
