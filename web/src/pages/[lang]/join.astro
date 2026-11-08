@@ -55,9 +55,8 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
         </div>
         <div class="field">
           <span class="label">{t("join_platform")} *</span>
-          <div class="chips" data-plat-chips>
-            {(["pc", "ps", "mobile"] as const).map((p) => <button type="button" class="chip" aria-pressed="false" data-plat={p}>{t(`plat_${p}`)}</button>)}
-          </div>
+          <label class="check pc-check"><input type="checkbox" name="pc" /> <span>{t("join_pc")}</span></label>
+          <span class="hint">{t("join_pc_hint")}</span>
         </div>
         <div class="field">
           <span class="label">{t("join_region")} *</span>
@@ -190,14 +189,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-rm]");
     if (b) { shots.splice(Number(b.dataset.rm), 1); drawShots(); }
   });
-  const platforms = new Set<string>();
-  form.querySelectorAll<HTMLButtonElement>("[data-plat]").forEach((b) =>
-    b.addEventListener("click", () => {
-      const p = b.dataset.plat!;
-      platforms.has(p) ? platforms.delete(p) : platforms.add(p);
-      b.setAttribute("aria-pressed", String(platforms.has(p)));
-    }),
-  );
+
   const links = form.querySelector<HTMLElement>("[data-links]")!;
   const addBtn = form.querySelector<HTMLButtonElement>("[data-add-link]")!;
   addBtn.addEventListener("click", () => {
@@ -219,7 +211,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
     const payload = {
       discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"),
       experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
-      platforms: [...platforms], vod_links: vodLinks,
+      platforms: form.querySelector<HTMLInputElement>("[name=pc]")!.checked ? ["pc"] : [], vod_links: vodLinks,
       weapons: [...weapons], weapon_other: val("weapon_other"),
       build_images: shots.map((s) => s.data),
       region, gear_score: Number(val("gear_score")) || 0, arena_rank: val("arena_rank"),
@@ -228,7 +220,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       err.textContent = msgs.required; err.hidden = false; return;
     }
     if (!weapons.size && !payload.weapon_other) { err.textContent = msgs.weapon; err.hidden = false; return; }
-    if (!platforms.size) { err.textContent = msgs.platform; err.hidden = false; return; }
+    if (!payload.platforms.length) { err.textContent = msgs.platform; err.hidden = false; return; }
     if (!region) { err.textContent = msgs.region; err.hidden = false; return; }
     if (!payload.gear_score || payload.gear_score < 1) { err.textContent = msgs.gs; err.hidden = false; form.querySelector<HTMLElement>("#f-gs")?.focus(); return; }
     if (!shots.length) { err.textContent = msgs.shots; err.hidden = false; drop.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
@@ -309,4 +301,5 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   .expect li { position: relative; padding-left: 22px; font-size: 14.5px; color: var(--text-2); line-height: 1.45; }
   .expect li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
   .expect-note { font-size: 13.5px; font-weight: 600; color: var(--text); padding-top: 12px; border-top: 1px solid var(--border); }
+  .pc-check { align-items: center; font-weight: 500; color: var(--text); }
 </style>

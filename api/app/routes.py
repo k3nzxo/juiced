@@ -92,7 +92,8 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
         return {"ok": True}
     fields = dict(discord=clean(payload.discord, 64), ingame=clean(payload.ingame, 64), country=clean(payload.country, 64),
                   experience=clean(payload.experience, 2000))
-    platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
+    # Wir nehmen nur PC-Spieler auf
+    platforms = ["pc"] if "pc" in (payload.platforms or []) else []
     links = clean_links(payload.vod_links)
     weapons, weapon_other = models.clean_weapons(payload.weapons, payload.main_role), clean(payload.weapon_other, 40)
     if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms or not links:

@@ -34,7 +34,7 @@ const en = {
   match_side_3: "We confirm on Discord and put it on our schedule.",
   join_platform: "Platform", plat_pc: "PC", plat_ps: "PlayStation", plat_mobile: "Mobile",
   join_vods: "VODs", join_vods_hint: "Links to YouTube, Streamable, Twitch, Medal … up to 5.",
-  join_vods_add: "Add another link", join_err_url: "Please check your links: they need to start with https://", join_err_platform: "Please pick at least one platform.",
+  join_vods_add: "Add another link", join_err_url: "Please check your links: they need to start with https://", join_err_platform: "We only take PC players at the moment.",
   app_nav_schedule: "Schedule", app_nav_matches: "Match requests",
   ev_new: "New event", ev_edit: "Edit event", ev_title: "Title", ev_kind: "Type", ev_start: "Start", ev_duration: "Duration (minutes)",
   ev_opponent: "Opponent (optional)", ev_desc: "Details (optional)", ev_repeat: "Repeat on", ev_public: "Show on the public schedule",
@@ -150,6 +150,8 @@ const en = {
   join_expect_6: "You record your VODs and upload them",
   join_expect_7: "You take feedback from coaching and act on it",
   join_expect_vods: "Recording VODs is mandatory. Our coaches give feedback on them.",
+  join_pc: "I play on PC",
+  join_pc_hint: "We only take PC players at the moment.",
 };
 
 export type ExtraDict = typeof en;
@@ -188,7 +190,7 @@ const de: Partial<ExtraDict> = {
   match_side_3: "Wir bestätigen auf Discord und tragen es in unseren Wochenplan ein.",
   join_platform: "Plattform", plat_mobile: "Mobil",
   join_vods: "VODs", join_vods_hint: "Links zu YouTube, Streamable, Twitch, Medal … bis zu 5.",
-  join_vods_add: "Weiteren Link hinzufügen", join_err_url: "Bitte prüf deine Links: sie müssen mit https:// anfangen.", join_err_platform: "Bitte mindestens eine Plattform wählen.",
+  join_vods_add: "Weiteren Link hinzufügen", join_err_url: "Bitte prüf deine Links: sie müssen mit https:// anfangen.", join_err_platform: "Wir nehmen aktuell nur PC-Spieler auf.",
   app_nav_schedule: "Wochenplan", app_nav_matches: "Match-Anfragen",
   ev_new: "Neuer Termin", ev_edit: "Termin bearbeiten", ev_title: "Titel", ev_kind: "Art", ev_start: "Beginn", ev_duration: "Dauer (Minuten)",
   ev_opponent: "Gegner (optional)", ev_desc: "Details (optional)", ev_repeat: "Wiederholen an", ev_public: "Im öffentlichen Wochenplan zeigen",
@@ -305,6 +307,8 @@ const de: Partial<ExtraDict> = {
   join_expect_6: "Du nimmst deine VODs auf und lädst sie hoch",
   join_expect_7: "Du setzt Feedback aus dem Coaching um",
   join_expect_vods: "VODs aufnehmen ist Pflicht. Unsere Coaches geben dir Feedback darauf.",
+  join_pc: "Ich spiele auf dem PC",
+  join_pc_hint: "Wir nehmen aktuell nur PC-Spieler auf.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -335,7 +339,7 @@ const fr: Partial<ExtraDict> = {
   match_msg: "Autre chose ?", match_submit: "Envoyer la demande", match_sent_t: "Demande envoyée", match_sent_b: "Merci ! On te contacte sur Discord.",
   match_side_t: "Bon à savoir", match_side_1: "Propose-nous des jours et horaires qui vous conviennent.", match_side_2: "Indique ton format préféré et quelques créneaux.", match_side_3: "On confirme sur Discord et on l'ajoute au planning.",
   join_platform: "Plateforme", plat_mobile: "Mobile", join_vods: "VODs", join_vods_hint: "Liens YouTube, Streamable, Twitch, Medal … jusqu'à 5.",
-  join_vods_add: "Ajouter un lien", join_err_url: "Vérifie tes liens: ils doivent commencer par https://", join_err_platform: "Choisis au moins une plateforme.",
+  join_vods_add: "Ajouter un lien", join_err_url: "Vérifie tes liens: ils doivent commencer par https://", join_err_platform: "Pour l'instant, on ne prend que des joueurs PC.",
   app_nav_schedule: "Planning", app_nav_matches: "Demandes de match",
   ev_new: "Nouvel événement", ev_edit: "Modifier l'événement", ev_title: "Titre", ev_kind: "Type", ev_start: "Début", ev_duration: "Durée (minutes)",
   ev_opponent: "Adversaire (facultatif)", ev_desc: "Détails (facultatif)", ev_repeat: "Répéter le", ev_public: "Afficher sur le planning public",
@@ -451,6 +455,8 @@ const fr: Partial<ExtraDict> = {
   join_expect_6: "Tu enregistres tes VODs et les mets en ligne",
   join_expect_7: "Tu appliques les retours du coaching",
   join_expect_vods: "Enregistrer ses VODs est obligatoire. Nos coachs te font un retour dessus.",
+  join_pc: "Je joue sur PC",
+  join_pc_hint: "Pour l'instant, on ne prend que des joueurs PC.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -481,7 +487,7 @@ const es: Partial<ExtraDict> = {
   match_msg: "¿Algo más?", match_submit: "Enviar solicitud", match_sent_t: "Solicitud enviada", match_sent_b: "¡Gracias! Te contactamos en Discord.",
   match_side_t: "Bueno saber", match_side_1: "Propónnos días y horas que os vengan bien.", match_side_2: "Dinos tu formato preferido y algunos horarios.", match_side_3: "Confirmamos en Discord y lo añadimos al calendario.",
   join_platform: "Plataforma", plat_mobile: "Móvil", join_vods: "VODs", join_vods_hint: "Enlaces a YouTube, Streamable, Twitch, Medal … hasta 5.",
-  join_vods_add: "Añadir otro enlace", join_err_url: "Revisa tus enlaces: deben empezar por https://", join_err_platform: "Elige al menos una plataforma.",
+  join_vods_add: "Añadir otro enlace", join_err_url: "Revisa tus enlaces: deben empezar por https://", join_err_platform: "Por ahora solo aceptamos jugadores de PC.",
   app_nav_schedule: "Calendario", app_nav_matches: "Solicitudes de partida",
   ev_new: "Nuevo evento", ev_edit: "Editar evento", ev_title: "Título", ev_kind: "Tipo", ev_start: "Inicio", ev_duration: "Duración (minutos)",
   ev_opponent: "Rival (opcional)", ev_desc: "Detalles (opcional)", ev_repeat: "Repetir los", ev_public: "Mostrar en el calendario público",
@@ -597,6 +603,8 @@ const es: Partial<ExtraDict> = {
   join_expect_6: "Grabas tus VODs y los subes",
   join_expect_7: "Aplicas el feedback del coaching",
   join_expect_vods: "Grabar VODs es obligatorio. Nuestros coaches te dan feedback.",
+  join_pc: "Juego en PC",
+  join_pc_hint: "Por ahora solo aceptamos jugadores de PC.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -627,7 +635,7 @@ const pt: Partial<ExtraDict> = {
   match_msg: "Mais alguma coisa?", match_submit: "Enviar pedido", match_sent_t: "Pedido enviado", match_sent_b: "Valeu! Entraremos em contato no Discord.",
   match_side_t: "Bom saber", match_side_1: "Sugira dias e horários que funcionem para vocês.", match_side_2: "Diga o formato preferido e alguns horários.", match_side_3: "Confirmamos no Discord e colocamos na agenda.",
   join_platform: "Plataforma", plat_mobile: "Celular", join_vods: "VODs", join_vods_hint: "Links do YouTube, Streamable, Twitch, Medal … até 5.",
-  join_vods_add: "Adicionar outro link", join_err_url: "Confira os links: precisam começar com https://", join_err_platform: "Escolha pelo menos uma plataforma.",
+  join_vods_add: "Adicionar outro link", join_err_url: "Confira os links: precisam começar com https://", join_err_platform: "No momento só aceitamos jogadores de PC.",
   app_nav_schedule: "Agenda", app_nav_matches: "Pedidos de partida",
   ev_new: "Novo evento", ev_edit: "Editar evento", ev_title: "Título", ev_kind: "Tipo", ev_start: "Início", ev_duration: "Duração (minutos)",
   ev_opponent: "Adversário (opcional)", ev_desc: "Detalhes (opcional)", ev_repeat: "Repetir em", ev_public: "Mostrar na agenda pública",
@@ -743,6 +751,8 @@ const pt: Partial<ExtraDict> = {
   join_expect_6: "Você grava seus VODs e envia",
   join_expect_7: "Você aplica o feedback do coaching",
   join_expect_vods: "Gravar VODs é obrigatório. Nossos coaches dão feedback sobre eles.",
+  join_pc: "Eu jogo no PC",
+  join_pc_hint: "No momento só aceitamos jogadores de PC.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -773,7 +783,7 @@ const ru: Partial<ExtraDict> = {
   match_msg: "Что-то ещё?", match_submit: "Отправить заявку", match_sent_t: "Заявка отправлена", match_sent_b: "Спасибо! Мы свяжемся с тобой в Discord.",
   match_side_t: "Полезно знать", match_side_1: "Предложи дни и время, которые вам подходят.", match_side_2: "Укажите удобный формат и несколько вариантов времени.", match_side_3: "Мы подтвердим в Discord и добавим матч в расписание.",
   join_platform: "Платформа", plat_mobile: "Мобильные", join_vods: "VODs", join_vods_hint: "Ссылки на YouTube, Streamable, Twitch, Medal … до 5.",
-  join_vods_add: "Добавить ссылку", join_err_url: "Проверь ссылки: они должны начинаться с https://", join_err_platform: "Выбери хотя бы одну платформу.",
+  join_vods_add: "Добавить ссылку", join_err_url: "Проверь ссылки: они должны начинаться с https://", join_err_platform: "Сейчас мы принимаем только игроков на ПК.",
   app_nav_schedule: "Расписание", app_nav_matches: "Заявки на матчи",
   ev_new: "Новое событие", ev_edit: "Изменить событие", ev_title: "Название", ev_kind: "Тип", ev_start: "Начало", ev_duration: "Длительность (мин)",
   ev_opponent: "Соперник (необязательно)", ev_desc: "Подробности (необязательно)", ev_repeat: "Повторять по", ev_public: "Показывать в публичном расписании",
@@ -889,6 +899,8 @@ const ru: Partial<ExtraDict> = {
   join_expect_6: "Записываешь свои VOD и загружаешь их",
   join_expect_7: "Применяешь фидбек от коучей",
   join_expect_vods: "Записывать VOD обязательно. Коучи дают по ним фидбек.",
+  join_pc: "Я играю на ПК",
+  join_pc_hint: "Сейчас мы принимаем только игроков на ПК.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -919,7 +931,7 @@ const tr: Partial<ExtraDict> = {
   match_msg: "Eklemek istediğin bir şey?", match_submit: "İsteği gönder", match_sent_t: "İstek gönderildi", match_sent_b: "Teşekkürler! Discord'dan sana ulaşacağız.",
   match_side_t: "Bilmekte fayda var", match_side_1: "Size uyan gün ve saatleri öner.", match_side_2: "Tercih ettiğiniz formatı ve birkaç zaman aralığını yazın.", match_side_3: "Discord'dan onaylayıp programımıza ekliyoruz.",
   join_platform: "Platform", plat_mobile: "Mobil", join_vods: "VODs", join_vods_hint: "YouTube, Streamable, Twitch, Medal bağlantıları … en fazla 5.",
-  join_vods_add: "Başka bağlantı ekle", join_err_url: "Bağlantılarını kontrol et: https:// ile başlamalı.", join_err_platform: "En az bir platform seç.",
+  join_vods_add: "Başka bağlantı ekle", join_err_url: "Bağlantılarını kontrol et: https:// ile başlamalı.", join_err_platform: "Şu an yalnızca PC oyuncularını alıyoruz.",
   app_nav_schedule: "Program", app_nav_matches: "Maç istekleri",
   ev_new: "Yeni etkinlik", ev_edit: "Etkinliği düzenle", ev_title: "Başlık", ev_kind: "Tür", ev_start: "Başlangıç", ev_duration: "Süre (dakika)",
   ev_opponent: "Rakip (isteğe bağlı)", ev_desc: "Ayrıntılar (isteğe bağlı)", ev_repeat: "Tekrarla", ev_public: "Herkese açık programda göster",
@@ -1035,6 +1047,8 @@ const tr: Partial<ExtraDict> = {
   join_expect_6: "VOD'larını kaydedip yüklersin",
   join_expect_7: "Koçluktan gelen geri bildirimi uygularsın",
   join_expect_vods: "VOD kaydetmek zorunludur. Koçlarımız bunlar üzerine geri bildirim verir.",
+  join_pc: "PC'de oynuyorum",
+  join_pc_hint: "Şu an yalnızca PC oyuncularını alıyoruz.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -1065,7 +1079,7 @@ const pl: Partial<ExtraDict> = {
   match_msg: "Coś jeszcze?", match_submit: "Wyślij prośbę", match_sent_t: "Prośba wysłana", match_sent_b: "Dzięki! Odezwiemy się na Discordzie.",
   match_side_t: "Dobrze wiedzieć", match_side_1: "Zaproponuj dni i godziny, które wam pasują.", match_side_2: "Podajcie preferowany format i kilka terminów.", match_side_3: "Potwierdzamy na Discordzie i dodajemy do planu.",
   join_platform: "Platforma", plat_mobile: "Mobile", join_vods: "VODs", join_vods_hint: "Linki do YouTube, Streamable, Twitch, Medal … do 5.",
-  join_vods_add: "Dodaj kolejny link", join_err_url: "Sprawdź linki: muszą zaczynać się od https://", join_err_platform: "Wybierz co najmniej jedną platformę.",
+  join_vods_add: "Dodaj kolejny link", join_err_url: "Sprawdź linki: muszą zaczynać się od https://", join_err_platform: "Na razie przyjmujemy tylko graczy na PC.",
   app_nav_schedule: "Plan tygodnia", app_nav_matches: "Prośby o mecz",
   ev_new: "Nowe wydarzenie", ev_edit: "Edytuj wydarzenie", ev_title: "Tytuł", ev_kind: "Rodzaj", ev_start: "Początek", ev_duration: "Czas trwania (min)",
   ev_opponent: "Przeciwnik (opcjonalnie)", ev_desc: "Szczegóły (opcjonalnie)", ev_repeat: "Powtarzaj w", ev_public: "Pokaż w publicznym planie",
@@ -1181,6 +1195,8 @@ const pl: Partial<ExtraDict> = {
   join_expect_6: "Nagrywasz swoje VOD-y i je wrzucasz",
   join_expect_7: "Wdrażasz feedback z coachingu",
   join_expect_vods: "Nagrywanie VOD-ów jest obowiązkowe. Nasi coachowie dają do nich feedback.",
+  join_pc: "Gram na PC",
+  join_pc_hint: "Na razie przyjmujemy tylko graczy na PC.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
