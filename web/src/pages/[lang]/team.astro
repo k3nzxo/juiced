@@ -29,7 +29,8 @@ const labels = {
   const L = JSON.parse(root.dataset.labels || "{}");
   fetchTeam().then((all) => {
     const groups = [
-      { title: L.leadership, items: all.filter((m) => ["developer", "leader", "vice"].includes(m.rank)) },
+      { title: L.developer, items: all.filter((m) => m.rank === "developer") },
+      { title: L.leadership, items: all.filter((m) => ["leader", "vice"].includes(m.rank)) },
       { title: L.coaches, items: all.filter((m) => m.rank === "coach") },
       { title: L.members, items: all.filter((m) => m.rank === "member") },
     ].filter((g) => g.items.length);
