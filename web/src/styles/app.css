@@ -518,3 +518,25 @@ main.vod-main, .vod-main { max-width: none; }
 .rh-ev.is-cancelled h3 { color: var(--muted); }
 .rh-cancel-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; vertical-align: 2px; color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, transparent); }
 .rh-cancel-btn:hover { color: var(--danger); }
+/* Gruppenkopf im Planer: Name + Belegung, Füllbalken, Rollen + Plätze */
+.ro-col > header.ro-gh { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; min-height: 30px; }
+.ro-gh .ro-name { font-size: 14.5px; padding: 0 6px; }
+.ro-fill { flex: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ro-fill b { font-size: 16px; color: var(--text); }
+.ro-col.over .ro-fill b { color: var(--danger); }
+.ro-x { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; color: var(--faint); }
+.ro-x:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.ro-x svg { width: 14px; height: 14px; }
+.ro-bar { display: block; height: 3px; margin: 0 4px 8px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.ro-bar > i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .2s; }
+.ro-col.over .ro-bar > i { background: var(--danger); }
+.ro-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 4px 8px; }
+.ro-sub .ro-rc { gap: 10px; }
+.rc.is-zero { opacity: .35; }
+.ro-step { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 12px; color: var(--muted); }
+.ro-step span { padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ro-step button { width: 24px; height: 24px; display: grid; place-items: center; font-size: 15px; line-height: 1; color: var(--text-2); }
+.ro-step button:hover { background: var(--surface-2); color: var(--text); }
+.ro-ptoggle { gap: 6px; font-size: 13px; }
+.ro-ptoggle span { display: inline-flex; align-items: center; gap: 5px; }
+.ro-ptoggle svg { width: 13px; height: 13px; color: var(--accent); }

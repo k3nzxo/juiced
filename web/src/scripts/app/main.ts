@@ -501,6 +501,9 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     ? e.roster.groups.map((g: any) => ({ name: g.name, members: [...g.members], size: g.size || lastSize() }))
     : [{ name: "", members: [], size: lastSize() }, { name: "", members: [], size: lastSize() }];
   let target = Math.max(0, groups.findIndex((g) => g.members.length < g.size));
+  // Partnerschaften gelten für normale Raids, nicht für GvG (am Titel erkannt, im Planer umschaltbar)
+  let usePartners = !/\b(gvg|gw|guild\s*wars?|\d+\s*v\s*\d+)\b/i.test(plainTitle(e.title));
+  const partnerList = (): string[][] => (usePartners ? data.partnerships || [] : []);
   const info = (uid: string): RhPlayer => players.get(uid) || { uid, name: data.profiles?.[uid]?.name || "?", path: "", role: data.profiles?.[uid]?.main_role || "dps", playing: false };
   const pool = () => [...players.values()].filter((p) => p.playing && !groups.some((g) => g.members.includes(p.uid)))
     .sort((a, b) => (ROLE_ORDER[a.role] ?? 3) - (ROLE_ORDER[b.role] ?? 3) || a.name.localeCompare(b.name));
@@ -511,7 +514,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     const tip = mates.length ? ` · ${T("pt_with", { names: mates.map((u) => info(u).name).join(", ") })}` : "";
     return `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${split ? "is-split" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc((p.playing ? p.name : T("roster_left")) + tip)}"><b>${esc(p.name)}</b>${mates.length ? `<i class="ro-link">${icon.link}</i>` : ""}${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
   };
-  const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return n ? `<span class="rc role-${r}" title="${esc(T("role_" + r))}"><i></i>${n}</span>` : ""; }).join("");
+  const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return `<span class="rc role-${r} ${n ? "" : "is-zero"}" title="${esc(T("role_" + r))}"><i></i>${n}</span>`; }).join("");
   const nextOpen = (from: number) => {
     for (let k = 0; k < groups.length; k++) { const i = (from + k) % groups.length; if (groups[i].members.length < groups[i].size) return i; }
     return -1;
@@ -522,6 +525,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     if (target >= groups.length) target = groups.length - 1;
     card.innerHTML = `<header class="rh-head"><div><h3>${esc(e.title)}</h3><span class="muted">${esc(T("roster_hint"))}</span></div>
       <div class="rh-side">
+        ${(data.partnerships || []).length ? `<label class="check check-sm ro-ptoggle"><input type="checkbox" data-ptoggle ${usePartners ? "checked" : ""}> <span>${icon.link} ${esc(T("roster_partners"))}</span></label>` : ""}
         <button class="btn btn-ghost btn-sm" data-auto>${esc(T("roster_auto"))}</button>
         <button class="btn btn-ghost btn-sm" data-reset>${esc(T("roster_reset"))}</button>
       </div></header>
@@ -529,10 +533,12 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
         <section class="ro-col ro-pool" data-drop="-1"><header><strong>${esc(T("roster_pool"))}</strong><span>${free.length}</span></header>
           <div class="ro-list">${free.map(chip).join("")}</div></section>
         <div class="ro-groups">${groups.map((g, i) => `<section class="ro-col ${i === target ? "is-target" : ""} ${g.members.length > g.size ? "over" : ""}" data-drop="${i}" data-target="${i}">
-          <header><input class="ro-name" data-gname="${i}" maxlength="40" value="${esc(g.name)}" placeholder="${esc(T("roster_group", { n: i + 1 }))}">
-            <span class="ro-rc">${roleCount(g.members)}</span>
-            <span class="ro-n">${g.members.length}/<input class="ro-sz" type="number" min="1" max="40" data-gsize="${i}" value="${g.size}" title="${esc(T("roster_size"))}"></span>
-            <button type="button" class="btn btn-ghost btn-sm" data-rm="${i}" title="${esc(T("roster_remove_group"))}">${icon.x}</button></header>
+          <header class="ro-gh"><input class="ro-name" data-gname="${i}" maxlength="40" value="${esc(g.name)}" placeholder="${esc(T("roster_group", { n: i + 1 }))}">
+            <span class="ro-fill"><b>${g.members.length}</b>/${g.size}</span>
+            <button type="button" class="ro-x" data-rm="${i}" title="${esc(T("roster_remove_group"))}">${icon.x}</button></header>
+          <i class="ro-bar"><i style="width:${Math.min(100, Math.round((g.members.length / g.size) * 100))}%"></i></i>
+          <div class="ro-sub"><span class="ro-rc">${roleCount(g.members)}</span>
+            <span class="ro-step" title="${esc(T("roster_size"))}"><button type="button" data-dec="${i}" aria-label="−">−</button><span>${g.size} ${esc(T("roster_slots"))}</span><button type="button" data-inc="${i}" aria-label="+">+</button></span></div>
           <div class="ro-list">${g.members.map((u) => chip(info(u))).join("") || `<span class="ro-empty">${esc(T("roster_drop"))}</span>`}</div></section>`).join("")}
           <button type="button" class="ro-add" data-add>${icon.plus} ${esc(T("roster_add_group"))}</button></div>
       </div>
@@ -557,7 +563,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     const all = [...players.values()].filter((p) => p.playing);
     const ids = new Set(all.map((p) => p.uid));
     // Partnerschaften: nur Anwesende, überlappende zusammenführen
-    let clusters: string[][] = (data.partnerships || []).map((c: string[]) => c.filter((u) => ids.has(u))).filter((c: string[]) => c.length >= 2);
+    let clusters: string[][] = partnerList().map((c: string[]) => c.filter((u) => ids.has(u))).filter((c: string[]) => c.length >= 2);
     for (let merged = true; merged;) {
       merged = false;
       outer: for (let a = 0; a < clusters.length; a++) for (let b = a + 1; b < clusters.length; b++) {
@@ -607,7 +613,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     if (warn.length) toast(warn.join(" · "));
   };
   // Partner eines Spielers (für Markierung + Warnung "getrennt")
-  const partnersOf = (uid: string) => [...new Set((data.partnerships || []).filter((c: string[]) => c.includes(uid)).flat())].filter((u) => u !== uid) as string[];
+  const partnersOf = (uid: string) => [...new Set(partnerList().filter((c: string[]) => c.includes(uid)).flat())].filter((u) => u !== uid) as string[];
 
   card.classList.add("is-editing");
   draw();
@@ -617,6 +623,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
   });
   card.addEventListener("change", (ev) => {
     const t = ev.target as HTMLInputElement;
+    if (t.matches("[data-ptoggle]")) { usePartners = t.checked; return draw(); }
     if (t.dataset.gsize) {
       const v = Math.max(1, Math.min(40, Math.round(Number(t.value)) || 1));
       groups[Number(t.dataset.gsize)].size = v;
@@ -632,6 +639,13 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     if (t.closest("[data-auto]")) return autoFill();
     if (t.closest("[data-reset]")) { groups.forEach((g) => (g.members = [])); target = 0; return draw(); }
     if (t.closest("[data-add]")) { groups.push({ name: "", members: [], size: groups[groups.length - 1]?.size || lastSize() }); target = groups.length - 1; return draw(); }
+    const step = t.closest<HTMLElement>("[data-inc], [data-dec]");
+    if (step) {
+      const k = Number(step.dataset.inc ?? step.dataset.dec);
+      groups[k].size = Math.max(1, Math.min(40, groups[k].size + (step.dataset.inc !== undefined ? 1 : -1)));
+      try { sessionStorage.setItem("juiced-roster-size", String(groups[k].size)); } catch { /* egal */ }
+      return draw();
+    }
     const rm = t.closest<HTMLElement>("[data-rm]");
     if (rm) { groups.splice(Number(rm.dataset.rm), 1); return draw(); }
     if (t.closest("[data-cancel]")) { card.classList.remove("is-editing"); card.replaceWith(card.cloneNode()); return redraw(); }

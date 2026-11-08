@@ -327,6 +327,8 @@ const en = {
   rh_delete: "Delete event",
   rh_delete_confirm: "Delete “{title}” for good? The post in Discord and all sign-ups are removed. This can't be undone.",
   rh_deleted: "Event deleted",
+  roster_partners: "Use partnerships",
+  roster_slots: "slots",
 };
 
 export type ExtraDict = typeof en;
@@ -650,6 +652,8 @@ const de: Partial<ExtraDict> = {
   rh_delete: "Event löschen",
   rh_delete_confirm: "„{title}“ endgültig löschen? Der Post in Discord und alle Anmeldungen verschwinden. Das lässt sich nicht rückgängig machen.",
   rh_deleted: "Event gelöscht",
+  roster_partners: "Partnerschaften beachten",
+  roster_slots: "Plätze",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -964,6 +968,8 @@ const fr: Partial<ExtraDict> = {
   rh_delete: "Supprimer l'événement",
   rh_delete_confirm: "Supprimer « {title} » définitivement ? Le post Discord et les inscriptions disparaissent. Irréversible.",
   rh_deleted: "Événement supprimé",
+  roster_partners: "Respecter les partenariats",
+  roster_slots: "places",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1278,6 +1284,8 @@ const es: Partial<ExtraDict> = {
   rh_delete: "Eliminar evento",
   rh_delete_confirm: "¿Eliminar «{title}» para siempre? Se borran el post de Discord y las inscripciones. No se puede deshacer.",
   rh_deleted: "Evento eliminado",
+  roster_partners: "Respetar parejas",
+  roster_slots: "plazas",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1592,6 +1600,8 @@ const pt: Partial<ExtraDict> = {
   rh_delete: "Excluir evento",
   rh_delete_confirm: "Excluir “{title}” de vez? O post no Discord e as inscrições somem. Não dá para desfazer.",
   rh_deleted: "Evento excluído",
+  roster_partners: "Respeitar parcerias",
+  roster_slots: "vagas",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1906,6 +1916,8 @@ const ru: Partial<ExtraDict> = {
   rh_delete: "Удалить событие",
   rh_delete_confirm: "Удалить «{title}» навсегда? Пост в Discord и все записи исчезнут. Это нельзя отменить.",
   rh_deleted: "Событие удалено",
+  roster_partners: "Учитывать связки",
+  roster_slots: "мест",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2220,6 +2232,8 @@ const tr: Partial<ExtraDict> = {
   rh_delete: "Etkinliği sil",
   rh_delete_confirm: "“{title}” kalıcı olarak silinsin mi? Discord gönderisi ve kayıtlar silinir. Geri alınamaz.",
   rh_deleted: "Etkinlik silindi",
+  roster_partners: "Ortaklıkları dikkate al",
+  roster_slots: "yer",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2534,6 +2548,8 @@ const pl: Partial<ExtraDict> = {
   rh_delete: "Usuń wydarzenie",
   rh_delete_confirm: "Usunąć „{title}” na zawsze? Post na Discordzie i zapisy znikną. Nie da się tego cofnąć.",
   rh_deleted: "Wydarzenie usunięte",
+  roster_partners: "Uwzględnij partnerstwa",
+  roster_slots: "miejsc",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
