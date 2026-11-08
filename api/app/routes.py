@@ -146,6 +146,44 @@ class ProfileIn(BaseModel):
     lang: Optional[str] = None
 
 
+def _apply_build(user: models.User, data: dict):
+    """Build-Felder (eigenes Profil oder durch Leader/Vice): Rolle, Haupt-Build, weitere Kombis, Inner Ways, Partner."""
+    if "partners" in data:
+        user.partners = _clean_partner_ids(data["partners"], user.discord_id)
+    if "main_build" in data:
+        user.main_build = wwm.clean_build(data["main_build"])
+    if "alt_builds" in data:
+        alts = [b for b in dict.fromkeys(wwm.clean_build(x) for x in data["alt_builds"] or []) if b and b != user.main_build]
+        user.alt_builds = ",".join(alts[:8]) or None
+    if "inner_ways" in data:
+        ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
+        user.inner_ways = ",".join(ways[:24]) or None
+
+
+class BuildIn(BaseModel):
+    main_role: Optional[str] = None
+    main_build: Optional[str] = None
+    alt_builds: Optional[list[str]] = None
+    inner_ways: Optional[list[str]] = None
+    partners: Optional[list[str]] = None
+
+
+@router.put("/members/{uid}/build")
+def set_member_build(uid: int, payload: BuildIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
+    """Build einer Person ändern: man selbst oder Leader/Vice für alle."""
+    u = db.get(models.User, uid)
+    if not u or u.rank == "guest":
+        raise HTTPException(status_code=404, detail="Not found")
+    if user.id != u.id and user.level < models.RANK_LEVEL["vice"]:
+        raise HTTPException(status_code=403, detail="Not allowed")
+    data = payload.model_dump(exclude_unset=True)
+    if "main_role" in data:
+        u.main_role = data["main_role"] if data["main_role"] in models.MAIN_ROLES else None
+    _apply_build(u, data)
+    db.commit()
+    return member_out(u)
+
+
 @router.put("/me")
 def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_user)):
     data = payload.model_dump(exclude_unset=True)
@@ -166,16 +204,7 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.alt_paths = ",".join(alt[:10]) or None
     elif user.main_path and user.main_path in user.alt_path_list:
         user.alt_paths = ",".join(p for p in user.alt_path_list if p != user.main_path) or None
-    if "partners" in data:
-        user.partners = _clean_partner_ids(data["partners"], user.discord_id)
-    if "main_build" in data:
-        user.main_build = wwm.clean_build(data["main_build"])
-    if "alt_builds" in data:
-        alts = [b for b in dict.fromkeys(wwm.clean_build(x) for x in data["alt_builds"] or []) if b and b != user.main_build]
-        user.alt_builds = ",".join(alts[:8]) or None
-    if "inner_ways" in data:
-        ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
-        user.inner_ways = ",".join(ways[:24]) or None
+    _apply_build(user, data)
     if not user.main_role:
         user.weapons = None  # Freitext (weapon_other) bleibt: "kann auch spielen", z. B. Mo/TB
     elif user.weapons:  # nach Rollenwechsel nur passende Waffen behalten
@@ -237,7 +266,8 @@ def member(uid: int, db: DbSession = Depends(get_db), user: models.User = Depend
     if not u or u.rank == "guest":
         raise HTTPException(status_code=404, detail="Not found")
     return {**member_out(u), **_partner_info(db, u),
-            "can_edit_partners": user.id == u.id or user.level >= models.RANK_LEVEL["vice"]}
+            "can_edit_partners": user.id == u.id or user.level >= models.RANK_LEVEL["vice"],
+            "can_edit_build": user.id == u.id or user.level >= models.RANK_LEVEL["vice"]}
 
 
 class PartnersSet(BaseModel):

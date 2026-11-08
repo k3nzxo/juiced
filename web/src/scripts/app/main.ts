@@ -174,7 +174,12 @@ function route() {
   view.classList.add("in");
   switch (seg) {
     case "vods": return renderVods(view, me);
-    case "roster": { const id = Number(h.split("/")[1]); return id ? viewMember(view, id) : viewRoster(view); }
+    case "roster": {
+      const [, sid, sub] = h.split("/");
+      const id = Number(sid);
+      if (id && sub === "edit") return editMemberBuild(view, id);
+      return id ? viewMember(view, id) : viewRoster(view);
+    }
     case "signups": return viewSignups(view);
     case "applications": return me.can_manage ? viewApplications(view) : viewDashboard(view);
     case "schedule": return me.is_admin ? viewSchedule(view) : viewDashboard(view);
@@ -981,6 +986,15 @@ async function editPartnersFor(u: any, done: (info: any) => void) {
   });
 }
 
+async function editMemberBuild(view: HTMLElement, id: number) {
+  view.innerHTML = loading;
+  try {
+    const u = await api<any>(`/members/${id}`);
+    if (!u.can_edit_build) { location.hash = `#/roster/${id}`; return; }
+    viewProfile(view, u);
+  } catch (e) { view.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
+}
+
 async function viewMember(view: HTMLElement, id: number) {
   view.innerHTML = `<a class="back-link" href="#/roster">← ${esc(T("mem_back"))}</a><div id="mem">${loading}</div>`;
   const el = view.querySelector<HTMLElement>("#mem")!;
@@ -995,7 +1009,8 @@ async function viewMember(view: HTMLElement, id: number) {
       <div class="mh-main"><h1>${esc(u.display_name)} ${flag(u.country)}</h1>
         <div class="mh-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
         <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span></div>
-      ${u.id === me!.id ? `<a class="btn btn-outline btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a>` : ""}
+      ${u.id === me!.id ? `<a class="btn btn-outline btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a>`
+        : u.can_edit_build ? `<a class="btn btn-outline btn-sm" href="#/roster/${u.id}/edit">${icon.edit} ${esc(T("dash_build_edit"))}</a>` : ""}
     </section>
     <h2 class="v-sub">Build</h2>
     <section class="card build-card">${buildBlock(u)}</section>
@@ -1096,26 +1111,29 @@ async function viewAdmin(view: HTMLElement) {
 
 const COUNTRIES = ["AE", "AL", "AM", "AR", "AT", "AU", "AZ", "BA", "BE", "BG", "BR", "BY", "CA", "CH", "CL", "CN", "CO", "CY", "CZ", "DE", "DK", "DZ", "EE", "EG", "ES", "FI", "FR", "GB", "GE", "GR", "HR", "HU", "ID", "IE", "IL", "IN", "IS", "IT", "JP", "KR", "KZ", "LT", "LU", "LV", "MA", "MD", "ME", "MK", "MT", "MX", "MY", "NG", "NL", "NO", "NZ", "PE", "PH", "PK", "PL", "PT", "RO", "RS", "RU", "SA", "SE", "SG", "SI", "SK", "TH", "TN", "TR", "TW", "UA", "US", "VE", "VN", "XK", "ZA"];
 
-function viewProfile(view: HTMLElement) {
+// target: Mitglied, dessen Build ein Leader/Vice bearbeitet (sonst das eigene Profil)
+function viewProfile(view: HTMLElement, target: any = null) {
+  const own = !target || target.id === me!.id;
+  const u: any = own ? me! : target;
   const regionName = (() => { try { return new Intl.DisplayNames([lang()], { type: "region" }); } catch { return null; } })();
   const opts = COUNTRIES.map((c) => ({ c, n: regionName?.of(c) || c })).sort((a, b) => a.n.localeCompare(b.n));
   // Build = Rolle + zwei beliebige Waffen (Hybride erlaubt), weitere Kombis als Liste
   const ROLES3 = ["tank", "healer", "dps"];
-  let role: string | null = me!.main_role && ROLES3.includes(me!.main_role) ? me!.main_role : null;
-  let mainSel: string[] = buildWeapons(me!.main_build).map((w) => w.id);
-  const altB = new Set<string>(me!.alt_builds || []);
+  let role: string | null = u.main_role && ROLES3.includes(u.main_role) ? u.main_role : null;
+  let mainSel: string[] = buildWeapons(u.main_build).map((w) => w.id);
+  const altB = new Set<string>(u.alt_builds || []);
   const curMain = () => (mainSel.length === 2 ? buildId(mainSel[0], mainSel[1]) : null);
   let altSel: string[] = [];
-  const ways = new Set<string>(me!.inner_ways || []);
+  const ways = new Set<string>(u.inner_ways || []);
   let showAll = false;
-  const partners: string[] = [...(me!.partners || [])];
+  const partners: string[] = (u.partners || []).map((x: any) => (typeof x === "string" ? x : x.id));
   let people: { id: string; name: string }[] = [];
-  view.innerHTML = head(T("prof_title")) + `<form class="profile card" novalidate>
-    <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div>
-      <a class="btn btn-ghost btn-sm prof-view" href="#/roster/${me!.id}">${icon.user}</a></div>
-    <div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
-    <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
-    <h2 class="prof-sec">${esc(T("prof_build"))}</h2>
+  view.innerHTML = (own ? head(T("prof_title")) : `<a class="back-link" href="#/roster/${u.id}">← ${esc(u.display_name)}</a>` + head(T("prof_edit_other", { name: u.display_name }))) + `<form class="profile card" novalidate>
+    <div class="prof-top">${avatar(u, 56)}<div><strong>${esc(u.username)}</strong>${rankBadge(own ? me!.public_rank : u.rank)}</div>
+      <a class="btn btn-ghost btn-sm prof-view" href="#/roster/${u.id}">${icon.user}</a></div>
+    ${own ? `<div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
+    <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>` : ""}
+    <h2 class="prof-sec">${esc(own ? T("prof_build") : "Build")}</h2>
     <div class="field"><span class="label">${esc(T("prof_role"))}</span>
       <div class="seg-tabs path-roles" role="group">${ROLES3.map((r) => `<button type="button" data-prole="${r}" aria-pressed="${role === r}"><span class="role-tag role-${r}">${esc(T("role_" + r))}</span></button>`).join("")}</div></div>
     <div class="field"><span class="label">${esc(T("prof_main_build"))}</span><p class="hint">${esc(T("prof_main_build_hint"))}</p>
@@ -1133,7 +1151,7 @@ function viewProfile(view: HTMLElement) {
     <div class="field"><span class="label">${esc(T("prof_partners"))}</span><p class="hint">${esc(T("prof_partners_hint"))}</p>
       <div class="pp-partners" data-partners></div>
       <div class="pp-search"><input class="input" id="p-psearch" autocomplete="off" placeholder="${esc(T("prof_partners_ph"))}"><div class="pp-sugg" data-sugg hidden></div></div></div>
-    <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>
+    ${own ? `<label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>` : ""}
     <button class="btn btn-primary" type="submit">${esc(T("save"))}</button>
   </form>`;
 
@@ -1169,7 +1187,7 @@ function viewProfile(view: HTMLElement) {
   const sugg = view.querySelector<HTMLElement>("[data-sugg]")!;
   const showSugg = () => {
     const q = search.value.trim().toLowerCase();
-    const list = q ? people.filter((x) => x.id !== me!.discord_id && !partners.includes(x.id) && x.name.toLowerCase().includes(q)).slice(0, 8) : [];
+    const list = q ? people.filter((x) => x.id !== u.discord_id && !partners.includes(x.id) && x.name.toLowerCase().includes(q)).slice(0, 8) : [];
     sugg.innerHTML = list.map((x) => `<button type="button" data-addp="${esc(x.id)}">${esc(x.name)}</button>`).join("");
     sugg.hidden = !list.length;
   };
@@ -1232,6 +1250,14 @@ function viewProfile(view: HTMLElement) {
   });
   view.querySelector("form")!.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!own) {  // Leader/Vice speichert den Build eines Mitglieds
+      try {
+        await api(`/members/${u.id}/build`, { method: "PUT", json: { main_role: role, main_build: curMain(), alt_builds: [...altB], inner_ways: [...ways], partners } });
+        toast(T("saved"));
+        location.hash = `#/roster/${u.id}`;
+      } catch (err) { toast((err as Error).message); }
+      return;
+    }
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
