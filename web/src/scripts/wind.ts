@@ -1,5 +1,8 @@
 // Windfeld im Hero: feine Strömungslinien, die der Maus ausweichen und um sie herum wirbeln.
-type P = { x: number; y: number; px: number; py: number; vx: number; vy: number; s: number; life: number; c: number; hot: number };
+// Jede Linie merkt sich ihre letzten Punkte (Ringpuffer); gezeichnet wird jedes Bild komplett neu, dadurch bleibt kein Schleier zurück.
+const TL = 30;
+type P = { x: number; y: number; vx: number; vy: number; s: number; life: number; c: number; hot: number;
+  tx: Float32Array; ty: Float32Array; head: number; n: number; dying: boolean };
 
 export function initWind(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
@@ -22,7 +25,9 @@ export function initWind(canvas: HTMLCanvasElement) {
   const spawn = (p: P, anywhere: boolean) => {
     p.x = anywhere ? Math.random() * w : -10 - Math.random() * 60;
     p.y = Math.random() * h;
-    p.px = p.x; p.py = p.y; p.vx = 0; p.vy = 0; p.hot = 0;
+    p.vx = 0; p.vy = 0; p.hot = 0; p.dying = false;
+    if (!p.tx) { p.tx = new Float32Array(TL); p.ty = new Float32Array(TL); }
+    p.head = 0; p.n = 1; p.tx[0] = p.x; p.ty[0] = p.y;
     p.s = 0.7 + Math.random() * 1.5;
     p.life = 160 + Math.random() * 360;
     p.c = Math.random() < 0.93 ? 0 : 1;
@@ -50,16 +55,18 @@ export function initWind(canvas: HTMLCanvasElement) {
 
   const step = () => {
     t += 0.004;
-    // Spuren langsam ausblenden (funktioniert auf transparentem Canvas, egal welches Theme)
-    ctx.globalCompositeOperation = "destination-out";
-    ctx.fillStyle = "rgba(0,0,0,0.07)";
-    ctx.fillRect(0, 0, w, h);
-    ctx.globalCompositeOperation = "source-over";
+    ctx.clearRect(0, 0, w, h);
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     // Bewegen: jede Linie hat Schwung und gleitet zurück in die Windrichtung
     const mspeed = Math.min(40, Math.hypot(mouse.vx, mouse.vy));
     for (const p of parts) {
+      if (p.dying) {
+        // Spur läuft aus statt plötzlich zu verschwinden
+        if (--p.n <= 1) spawn(p, true);
+        continue;
+      }
       const a = angle(p.x, p.y);
       const tx = Math.cos(a) * p.s * 1.6 * calm, ty = Math.sin(a) * p.s * 1.6 * calm;
       p.vx += (tx - p.vx) * 0.06;
@@ -77,27 +84,33 @@ export function initWind(canvas: HTMLCanvasElement) {
       }
       const sp = Math.hypot(p.vx, p.vy);
       if (sp > 7) { p.vx *= 7 / sp; p.vy *= 7 / sp; }
-      p.px = p.x; p.py = p.y;
       p.x += p.vx; p.y += p.vy;
-      if (--p.life < 0 || p.x > w + 20 || p.x < -80 || p.y < -40 || p.y > h + 40) spawn(p, p.life < 0);
+      if (p.x > w + 20 || p.x < -80 || p.y < -40 || p.y > h + 40) { spawn(p, false); continue; }
+      p.head = (p.head + 1) % TL;
+      p.tx[p.head] = p.x; p.ty[p.head] = p.y;
+      if (p.n < TL) p.n++;
+      if (--p.life < 0) p.dying = true;
     }
 
-    // Zeichnen: normal, neutral, und "heiß" (nah an der Maus, kräftiger)
+    // Zeichnen: Spur von hell (vorne) nach durchsichtig (hinten); normal, neutral, "heiß" nah an der Maus
     const pass = (c: number, hot: boolean, alpha: number, width: number) => {
       ctx.strokeStyle = colors[c];
-      ctx.globalAlpha = alpha;
       ctx.lineWidth = width;
-      ctx.beginPath();
-      for (const p of parts) {
-        if (p.c !== c || (p.hot > 0.15) !== hot || p.px === p.x && p.py === p.y) continue;
-        ctx.moveTo(p.px, p.py);
-        ctx.lineTo(p.x, p.y);
+      for (let k = 0; k < TL - 1; k++) {
+        ctx.globalAlpha = alpha * (1 - k / (TL - 1));
+        ctx.beginPath();
+        for (const p of parts) {
+          if (p.c !== c || (p.hot > 0.15) !== hot || k + 1 >= p.n) continue;
+          const i0 = (p.head - k + TL) % TL, i1 = (p.head - k - 1 + TL) % TL;
+          ctx.moveTo(p.tx[i0], p.ty[i0]);
+          ctx.lineTo(p.tx[i1], p.ty[i1]);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
     };
-    pass(1, false, 0.25, 1.35);
-    pass(0, false, 0.7, 1.35);
-    pass(1, true, 0.5, 1.8);
+    pass(1, false, 0.3, 1.35);
+    pass(0, false, 0.75, 1.35);
+    pass(1, true, 0.55, 1.8);
     pass(0, true, 1, 2.2);
     ctx.globalAlpha = 1;
     mouse.vx *= 0.8; mouse.vy *= 0.8;
