@@ -350,6 +350,8 @@ const en = {
   vod_review_start: "Start review",
   vod_review_stop: "Stop review",
   vod_review_started_toast: "Review started – the uploader gets a message",
+  vod_uploading_by: "{name} is uploading · {pct}%",
+  vod_uploading_now: "A VOD is being uploaded right now",
 };
 
 export type ExtraDict = typeof en;
@@ -696,6 +698,8 @@ const de: Partial<ExtraDict> = {
   vod_review_start: "Review starten",
   vod_review_stop: "Review stoppen",
   vod_review_started_toast: "Review gestartet – der Uploader bekommt eine Nachricht",
+  vod_uploading_by: "{name} lädt hoch · {pct} %",
+  vod_uploading_now: "Gerade wird ein VOD hochgeladen",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1033,6 +1037,8 @@ const fr: Partial<ExtraDict> = {
   vod_review_start: "Commencer",
   vod_review_stop: "Arrêter",
   vod_review_started_toast: "Revue commencée – l'auteur est prévenu",
+  vod_uploading_by: "{name} envoie · {pct} %",
+  vod_uploading_now: "Une VOD est en cours d'envoi",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1370,6 +1376,8 @@ const es: Partial<ExtraDict> = {
   vod_review_start: "Empezar revisión",
   vod_review_stop: "Parar revisión",
   vod_review_started_toast: "Revisión iniciada – el autor recibe un aviso",
+  vod_uploading_by: "{name} está subiendo · {pct} %",
+  vod_uploading_now: "Se está subiendo un VOD",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1707,6 +1715,8 @@ const pt: Partial<ExtraDict> = {
   vod_review_start: "Iniciar revisão",
   vod_review_stop: "Parar revisão",
   vod_review_started_toast: "Revisão iniciada – quem enviou recebe um aviso",
+  vod_uploading_by: "{name} está enviando · {pct}%",
+  vod_uploading_now: "Um VOD está sendo enviado",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2044,6 +2054,8 @@ const ru: Partial<ExtraDict> = {
   vod_review_start: "Начать разбор",
   vod_review_stop: "Остановить",
   vod_review_started_toast: "Разбор начат — автор получит сообщение",
+  vod_uploading_by: "{name} загружает · {pct}%",
+  vod_uploading_now: "Сейчас загружается VOD",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2381,6 +2393,8 @@ const tr: Partial<ExtraDict> = {
   vod_review_start: "İncelemeye başla",
   vod_review_stop: "İncelemeyi durdur",
   vod_review_started_toast: "İnceleme başladı – yükleyen bilgilendirildi",
+  vod_uploading_by: "{name} yüklüyor · %{pct}",
+  vod_uploading_now: "Şu anda bir VOD yükleniyor",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2718,6 +2732,8 @@ const pl: Partial<ExtraDict> = {
   vod_review_start: "Rozpocznij",
   vod_review_stop: "Zatrzymaj",
   vod_review_started_toast: "Rozpoczęto – autor dostanie wiadomość",
+  vod_uploading_by: "{name} wysyła · {pct}%",
+  vod_uploading_now: "Właśnie wysyłany jest VOD",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

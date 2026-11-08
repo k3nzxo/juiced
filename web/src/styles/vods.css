@@ -200,3 +200,7 @@ main.vod-main { max-width: 1500px; }
 .vod-thumb .vod-review-progress { color: #93c5fd; }
 .vod-review-pulse { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: currentColor; animation: vodPulse 1.6s ease-in-out infinite; }
 @keyframes vodPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+/* Upload von jemand anderem läuft gerade */
+.vod-up-other { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.vod-up-bar { height: 5px; border-radius: 5px; background: var(--border); overflow: hidden; }
+.vod-up-bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s; }

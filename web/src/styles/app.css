@@ -623,3 +623,7 @@ a.pp-chip:hover { border-color: var(--accent); }
 .rh-sub-h { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--sc); margin-bottom: 6px; }
 .rh-sub-h i { width: 7px; height: 7px; border-radius: 50%; background: var(--sc); }
 .rh-sub-h b { color: var(--muted); font-weight: 600; margin-left: 2px; }
+.nav-up { display: inline-flex; margin-inline-start: auto; color: var(--accent); animation: vodPulse 1.6s ease-in-out infinite; }
+.nav-up svg { width: 14px; height: 14px; }
+.nav-up + .nbadge { margin-inline-start: 6px; }
+@keyframes vodPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }

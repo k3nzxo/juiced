@@ -448,6 +448,7 @@ def _vod_out(v: Vod, users: dict, note_count: int, ctx: VodCtx) -> dict:
         "uploader_id": v.uploader_id, "uploader_name": users.get(v.uploader_id),
         "original_filename": v.original_filename,
         "size_bytes": v.size_bytes, "received_bytes": v.received_bytes,
+        "is_mine": v.uploader_id == ctx.user.id,
         "status": v.status, "error": v.error, "duration_sec": v.duration_sec,
         "note_count": note_count,
         "pinned": bool(v.pinned),
@@ -548,7 +549,17 @@ def list_vods(db: Session = Depends(get_db), ctx: VodCtx = Depends(vod_ctx)):
     counts = dict(db.query(VodNote.vod_id, func.count(VodNote.id)).group_by(VodNote.vod_id).all())
     users = _users_map(db)
     return [_vod_out(v, users, counts.get(v.id, 0), ctx) for v in vods
-            if _can_view(v, ctx) and (v.status != "uploading" or v.uploader_id == ctx.user.id)]
+            if _can_view(v, ctx) and (v.status != "uploading" or v.uploader_id == ctx.user.id or _upload_active(v))]
+
+
+def _upload_active(v) -> bool:
+    """Upload eines anderen gerade aktiv (in den letzten 15 Minuten Daten bekommen)?"""
+    t = v.updated_at or v.created_at
+    if not t:
+        return False
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - t < timedelta(minutes=15)
 
 
 @router.post("")

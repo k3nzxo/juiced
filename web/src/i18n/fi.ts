@@ -653,6 +653,8 @@ const fi: Partial<Dict & ExtraDict> = {
   vod_review_start: "Aloita arviointi",
   vod_review_stop: "Lopeta arviointi",
   vod_review_started_toast: "Arviointi aloitettu – lataaja saa viestin",
+  vod_uploading_by: "{name} lataa · {pct} %",
+  vod_uploading_now: "VODia ladataan juuri nyt",
 };
 
 export default fi;

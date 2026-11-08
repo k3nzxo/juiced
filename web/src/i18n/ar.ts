@@ -653,6 +653,8 @@ const ar: Partial<Dict & ExtraDict> = {
   vod_review_start: "ابدأ المراجعة",
   vod_review_stop: "أوقف المراجعة",
   vod_review_started_toast: "بدأت المراجعة – سيصل إشعار لمن رفع المقطع",
+  vod_uploading_by: "{name} يرفع الآن · {pct}%",
+  vod_uploading_now: "يتم رفع VOD الآن",
 };
 
 export default ar;

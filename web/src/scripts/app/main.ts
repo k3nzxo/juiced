@@ -141,8 +141,15 @@ function renderShell() {
 
 // Offene Punkte als Zahl an den Menüpunkten (gleiche Daten wie die Glocke im Header).
 // Die Glocke fragt regelmäßig nach (juiced:bell), hier wird nur direkt nach eigenen Aktionen neu geladen.
-type Counts = { applications: number; matches: number; vods: number; total: number };
+type Counts = { applications: number; matches: number; vods: number; total: number; uploading?: number };
 function applyBadges(n: Counts) {
+  // laufender Upload: kleiner pulsierender Pfeil am VOD-Menüpunkt
+  const vodNav = root.querySelector<HTMLElement>('[data-nav="vods"]');
+  if (vodNav) {
+    let up = vodNav.querySelector<HTMLElement>(".nav-up");
+    if (n.uploading && !up) vodNav.insertAdjacentHTML("beforeend", `<span class="nav-up" title="${esc(T("vod_uploading_now"))}">${icon.upload}</span>`);
+    if (!n.uploading) up?.remove();
+  }
   const map: Record<string, number> = { applications: n.applications, matches: n.matches, vods: n.vods };
   root.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
     const c = map[a.dataset.nav || ""] || 0;

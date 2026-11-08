@@ -157,7 +157,7 @@ async function loadVodList() {
   }
   drawVodList();
   // Solange etwas verarbeitet wird, regelmäßig neu laden
-  if (vodState.list.some(v => v.status === "processing") && location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash)) {
+  if (vodState.list.some(v => v.status === "processing" || (v.status === "uploading" && !v.is_mine)) && location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash)) {
     vodState.pollTimer = setTimeout(loadVodList, 5000);
   }
 }
@@ -204,7 +204,9 @@ function drawVodList() {
           <span>${v.uploader_name ? escapeHtml(vt("by", { name: v.uploader_name })) : ""}</span>
           <span class="vod-foot-right">${vodExpiryLabel(v)}<span>${vt("notes_n", { n: v.note_count })}</span></span>
         </div>
-        ${v.status === "uploading" && !vodState.uploads[v.id] ? `<div class="vod-resume-row">
+        ${v.status === "uploading" && !v.is_mine ? `<div class="vod-up-other"><div class="vod-up-bar"><i style="width:${v.size_bytes ? Math.min(100, Math.round(v.received_bytes / v.size_bytes * 100)) : 0}%"></i></div>
+          <span>${escapeHtml(vt("uploading_by", { name: v.uploader_name || "?", pct: v.size_bytes ? Math.min(100, Math.round(v.received_bytes / v.size_bytes * 100)) : 0 }))}</span></div>` : ""}
+        ${v.status === "uploading" && v.is_mine && !vodState.uploads[v.id] ? `<div class="vod-resume-row">
           <button class="btn btn-sm btn-outline" data-resume-id="${v.id}">${icon.refresh} ${vt("resume")}</button>
           <button class="btn btn-sm btn-ghost" data-discard-id="${v.id}">${icon.x} ${vt("cancel")}</button></div>` : ""}
       </div>
