@@ -210,14 +210,26 @@ p { margin: 0; }
 ::view-transition-group(site-header), ::view-transition-old(site-header), ::view-transition-new(site-header) { animation: none; }
 ::view-transition-old(site-header) { display: none; }
 
-/* ---------- Lichtkegel unter dem Mauszeiger auf Karten */
-.spot { position: relative; isolation: isolate; }
-.spot::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
-  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), var(--accent-soft), transparent 60%);
-  opacity: 0; transition: opacity 0.3s;
+/* ---------- Lichtschein unter dem Mauszeiger auf Karten:
+   Fläche nur ganz leicht neutral aufgehellt, Orange nur als feine Kante, die der Maus folgt */
+.spot { position: relative; isolation: isolate; --spot-fill: rgba(0, 0, 0, 0.025); }
+:root[data-theme="dark"] .spot { --spot-fill: rgba(255, 255, 255, 0.035); }
+.spot::before, .spot::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity 0.35s ease;
 }
-.spot:hover::before { opacity: 1; }
+.spot::before {
+  z-index: -1;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), var(--spot-fill), transparent 70%);
+}
+.spot::after {
+  z-index: 1; padding: 1px;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 75%, transparent), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.spot:hover::before, .spot:hover::after { opacity: 1; }
 
 /* ---------- Navigation: Strich unter dem aktiven Punkt */
 .nav-link { position: relative; }
