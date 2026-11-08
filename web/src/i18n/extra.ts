@@ -344,6 +344,7 @@ const en = {
   prof_alt_add: "Add combo",
   prof_alt_pick_hint: "Click two weapons – the combo is added. Then pick the next one.",
   prof_edit_other: "Build of {name}",
+  mem_also: "Can also:",
 };
 
 export type ExtraDict = typeof en;
@@ -684,6 +685,7 @@ const de: Partial<ExtraDict> = {
   prof_alt_add: "Kombi hinzufügen",
   prof_alt_pick_hint: "Zwei Waffen anklicken – die Kombi wird hinzugefügt. Danach direkt die nächste wählen.",
   prof_edit_other: "Build von {name}",
+  mem_also: "Kann auch:",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1015,6 +1017,7 @@ const fr: Partial<ExtraDict> = {
   prof_alt_add: "Ajouter",
   prof_alt_pick_hint: "Clique deux armes – le combo est ajouté. Puis choisis le suivant.",
   prof_edit_other: "Build de {name}",
+  mem_also: "Joue aussi :",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1346,6 +1349,7 @@ const es: Partial<ExtraDict> = {
   prof_alt_add: "Añadir combo",
   prof_alt_pick_hint: "Haz clic en dos armas: se añade el combo. Luego elige el siguiente.",
   prof_edit_other: "Build de {name}",
+  mem_also: "También:",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1677,6 +1681,7 @@ const pt: Partial<ExtraDict> = {
   prof_alt_add: "Adicionar combo",
   prof_alt_pick_hint: "Clique em duas armas – o combo é adicionado. Depois escolha o próximo.",
   prof_edit_other: "Build de {name}",
+  mem_also: "Também:",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2008,6 +2013,7 @@ const ru: Partial<ExtraDict> = {
   prof_alt_add: "Добавить комбо",
   prof_alt_pick_hint: "Нажми два оружия — комбо добавится. Потом выбери следующее.",
   prof_edit_other: "Билд: {name}",
+  mem_also: "Также:",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2339,6 +2345,7 @@ const tr: Partial<ExtraDict> = {
   prof_alt_add: "Kombo ekle",
   prof_alt_pick_hint: "İki silaha tıkla – kombo eklenir. Sonra sıradakini seç.",
   prof_edit_other: "{name} build'i",
+  mem_also: "Ayrıca:",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2670,6 +2677,7 @@ const pl: Partial<ExtraDict> = {
   prof_alt_add: "Dodaj kombinację",
   prof_alt_pick_hint: "Kliknij dwie bronie – kombinacja zostanie dodana. Potem wybierz następną.",
   prof_edit_other: "Build: {name}",
+  mem_also: "Gra też:",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

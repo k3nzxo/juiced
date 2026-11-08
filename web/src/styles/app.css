@@ -616,3 +616,4 @@ a.pp-chip:hover { border-color: var(--accent); }
 .mc-bname { display: inline-flex; align-items: center; gap: 5px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mc-bname i { flex: none; width: 7px; height: 7px; border-radius: 50%; }
 .emo-dot { background: var(--sc, var(--role, var(--muted))); }
+.mc-also { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); } .mc-also .path-tag { font-size: 12px; }

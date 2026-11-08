@@ -894,13 +894,24 @@ const buildTag = (id: string | null | undefined, main = false) => {
 };
 // Kategorie für Übersichten: Tank / Healer / DPS, Twinblades-DPS extra als "TB" (lila)
 const CAT_COLOR: Record<string, string> = { tank: "#eab308", healer: "#22c55e", dps: "#3b82f6", tb: "#a855f7" };
-function category(u: any): string | null {
-  const ws = buildWeapons(u.main_build).map((w) => w.id);
-  let r: string | null = u.main_role || null;
+// Kategorie eines Builds aus den Waffen (für weitere Kombis ohne eigene Rolle)
+function buildCategory(id: string | null | undefined, role: string | null = null): string | null {
+  const ws = buildWeapons(id).map((w) => w.id);
+  let r: string | null = role;
   if (!r && ws.length) r = ws.some((w) => ["museflow_drum", "panacea_fan", "soulshade_umbrella"].includes(w)) ? "healer" : ws.includes("stormbreaker_spear") ? "tank" : "dps";
   if (r === "dps" && ws.some((w) => w.endsWith("twinblades"))) return "tb";
   return r;
 }
+const category = (u: any) => buildCategory(u.main_build, u.main_role || null);
+// alle Kategorien einer Person: Haupt-Build (mit Rolle) + weitere Kombis -> Kategorie => Build
+function memberCats(u: any): Map<string, string | null> {
+  const m = new Map<string, string | null>();
+  const main = category(u);
+  if (main) m.set(main, u.main_build || null);
+  for (const b of u.alt_builds || []) { const c = buildCategory(b); if (c && !m.has(c)) m.set(c, b); }
+  return m;
+}
+const matchesCat = (u: any, cat: string) => { const m = memberCats(u); return m.has(cat) || (cat === "dps" && m.has("tb")); };
 const catTag = (u: any) => {
   const c = category(u);
   return c ? `<span class="path-tag cat-tag" style="--role:${CAT_COLOR[c]}"><i></i>${esc(c === "tb" ? "TB" : T("role_" + c))}</span>` : `<span class="path-tag"><i></i>—</span>`;
@@ -920,13 +931,19 @@ async function viewRoster(view: HTMLElement) {
   const draw = () => {
     const q = memFilter.q.toLowerCase();
     const items = list.filter((u) => (!q || `${u.display_name} ${u.username}`.toLowerCase().includes(q))
-      && (!memFilter.role || category(u) === memFilter.role || (memFilter.role === "dps" && category(u) === "tb")));
+      && (!memFilter.role || matchesCat(u, memFilter.role)));
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
         <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
         <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
+        ${(() => {  // passt nur über eine weitere Kombi? Dann zeigen, welche
+          const c = memFilter.role, m = memberCats(u), main = category(u);
+          if (!c || main === c || (c === "dps" && main === "tb")) return "";
+          const b = m.get(c) ?? (c === "dps" ? m.get("tb") : null);
+          return b ? `<div class="mc-also">${esc(T("mem_also"))} ${buildTag(b)}</div>` : "";
+        })()}
         <div class="mc-meta">${u.main_build ? `<span>${esc(buildWeapons(u.main_build).map((w) => w.name).join(" + "))}</span>` : `<span class="mc-empty">${esc(T("mem_no_build"))}</span>`}<span>${(u.inner_ways || []).length ? `${u.inner_ways.length} ${esc(T("prof_inner_ways"))}` : ""}</span></div>
       </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   };
