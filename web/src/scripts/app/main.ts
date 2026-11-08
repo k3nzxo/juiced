@@ -39,7 +39,7 @@ const flag = (cc: string | null) => (cc && /^[A-Z]{2}$/i.test(cc) ? `<img class=
 // Icons: Discord-Emotes, die Raid-Helper für Klassen ("bellstrike") und Pfade ("bamboocut_wind") nutzt
 let EMOTES: Record<string, string> = {};
 const emoteUrl = (id: string) => `https://cdn.discordapp.com/emojis/${id}.png?size=48`;
-const emoteImg = (id: string | undefined | null, cls = "emo") => (id ? `<img class="${cls}" src="${emoteUrl(id)}" alt="" width="18" height="18" loading="lazy" decoding="async">` : "");
+const emoteImg = (id: string | undefined | null, cls = "emo", color = "") => (id ? `<img class="${cls}" ${color ? `style="--sc:${color}"` : ""} src="${emoteUrl(id)}" alt="" width="18" height="18" loading="lazy" decoding="async">` : "");
 const schoolEmote = (school: string) => EMOTES[school.toLowerCase()] || "";
 // kaputte Icons still entfernen
 document.addEventListener("error", (ev) => {
@@ -48,6 +48,8 @@ document.addEventListener("error", (ev) => {
   t.parentElement?.classList.remove("has-emo");  // Chip zeigt wieder seinen Farbpunkt
   const dot = document.createElement("i");
   dot.className = "emo-dot";
+  const c = t.style.getPropertyValue("--sc");
+  if (c) dot.style.setProperty("--sc", c);
   t.replaceWith(dot);
 }, true);
 
@@ -225,7 +227,7 @@ async function viewDashboard(view: HTMLElement) {
     const el = view.querySelector<HTMLElement>("#dash-mem");
     if (!el) return;
     el.innerHTML = list.length ? `<div class="mem-strip">${list.slice(0, 18).map((u) => `<a class="ms card" href="#/roster/${u.id}" title="${esc(u.display_name)}">
-      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${roleOrBuildTag(u)}</a>`).join("")}</div>`
+      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${catTag(u)}</a>`).join("")}</div>`
       : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   }).catch(() => { view.querySelector("#dash-mem")?.remove(); });
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
@@ -885,10 +887,23 @@ const iwTile = (id: string, small = false) => {
 const hasBuild = (u: any) => !!(u.main_build || (u.alt_builds || []).length || (u.inner_ways || []).length);
 // Farbpunkte je Schule (Hybride = zwei Farben)
 const buildDots = (id: string | null | undefined) => [...new Set(buildWeapons(id).map((w) => w.school))]
-  .map((sc) => schoolEmote(sc) ? emoteImg(schoolEmote(sc), "emo emo-s") : `<i style="background:${schoolColor(sc)}"></i>`).join("");
+  .map((sc) => schoolEmote(sc) ? emoteImg(schoolEmote(sc), "emo emo-s", schoolColor(sc)) : `<i style="background:${schoolColor(sc)}"></i>`).join("");
 const buildTag = (id: string | null | undefined, main = false) => {
   const ws = buildWeapons(id);
   return ws.length ? `<span class="path-tag build-tag ${main ? "is-main" : ""}" title="${esc(ws.map((w) => w.name).join(" + "))}">${buildDots(id)}${esc(buildLabel(id))}</span>` : "";
+};
+// Kategorie für Übersichten: Tank / Healer / DPS, Twinblades-DPS extra als "TB" (lila)
+const CAT_COLOR: Record<string, string> = { tank: "#eab308", healer: "#22c55e", dps: "#3b82f6", tb: "#a855f7" };
+function category(u: any): string | null {
+  const ws = buildWeapons(u.main_build).map((w) => w.id);
+  let r: string | null = u.main_role || null;
+  if (!r && ws.length) r = ws.some((w) => ["museflow_drum", "panacea_fan", "soulshade_umbrella"].includes(w)) ? "healer" : ws.includes("stormbreaker_spear") ? "tank" : "dps";
+  if (r === "dps" && ws.some((w) => w.endsWith("twinblades"))) return "tb";
+  return r;
+}
+const catTag = (u: any) => {
+  const c = category(u);
+  return c ? `<span class="path-tag cat-tag" style="--role:${CAT_COLOR[c]}"><i></i>${esc(c === "tb" ? "TB" : T("role_" + c))}</span>` : `<span class="path-tag"><i></i>—</span>`;
 };
 const roleOrBuildTag = (u: any, main = false) => u.main_build ? buildTag(u.main_build, main)
   : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`;
@@ -899,18 +914,18 @@ const memFilter = { q: "", role: "" };
 async function viewRoster(view: HTMLElement) {
   view.innerHTML = head(T("mem_title")) + `<div class="mem-filter">
       <input class="input search" placeholder="${esc(T("mem_search"))}" data-q value="${esc(memFilter.q)}">
-      <div class="seg-tabs" role="group">${["", ...ROLES].map((r) => `<button type="button" data-role="${r}" aria-pressed="${memFilter.role === r}">${r ? `<span class="role-tag role-${r}">${esc(T("role_" + r))}</span>` : esc(T("mem_all"))}</button>`).join("")}</div>
+      <div class="seg-tabs" role="group">${["", ...ROLES, "tb"].map((r) => `<button type="button" data-role="${r}" aria-pressed="${memFilter.role === r}">${r ? `<span class="role-tag" style="--role:${CAT_COLOR[r]}">${esc(r === "tb" ? "TB" : T("role_" + r))}</span>` : esc(T("mem_all"))}</button>`).join("")}</div>
     </div><p class="muted mem-count" data-count></p><div id="rost">${loading}</div>`;
   let list: any[] = [];
   const draw = () => {
     const q = memFilter.q.toLowerCase();
     const items = list.filter((u) => (!q || `${u.display_name} ${u.username}`.toLowerCase().includes(q))
-      && (!memFilter.role || u.main_role === memFilter.role));
+      && (!memFilter.role || category(u) === memFilter.role || (memFilter.role === "dps" && category(u) === "tb")));
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
         <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
-        <div class="mc-build">${roleOrBuildTag(u, true)}${u.main_build && u.main_role ? `<span class="role-tag role-${esc(u.main_role)}">${esc(T("role_" + u.main_role))}</span>` : ""}
+        <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
         <div class="mc-meta">${u.main_build ? `<span>${esc(buildWeapons(u.main_build).map((w) => w.name).join(" + "))}</span>` : `<span class="mc-empty">${esc(T("mem_no_build"))}</span>`}<span>${(u.inner_ways || []).length ? `${u.inner_ways.length} ${esc(T("prof_inner_ways"))}` : ""}</span></div>
       </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_empty"))}</p>`;
