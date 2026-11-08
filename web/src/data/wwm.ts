@@ -81,3 +81,61 @@ export const innerWayById = (id: string) => INNER_WAYS.find((w) => w.id === id);
 export const innerWayImg = (id: string) => `/wwm/iw/${id}.webp`;
 // Raid-Helper-Klassen/Specs ("Bellstrike_Splendor", "Silkbind Deluge") auf unsere Pfade abbilden
 export const pathFromText = (s: string | null | undefined) => { const k = String(s || "").toLowerCase().replace(/[^a-z]+/g, "_").replace(/^_|_$/g, ""); return PATHS.find((p) => p.id === k); };
+
+// ---------------------------------------------------------------- Waffen + Builds (zwei beliebige Waffen, auch Hybride)
+export type School = "bellstrike" | "bamboocut" | "silkbind" | "stonesplit";
+export const SCHOOLS: { id: School; name: string; color: string }[] = [
+  { id: "bellstrike", name: "Bellstrike", color: "#3b82f6" },
+  { id: "bamboocut", name: "Bamboocut", color: "#a855f7" },
+  { id: "silkbind", name: "Silkbind", color: "#22c55e" },
+  { id: "stonesplit", name: "Stonesplit", color: "#eab308" },
+];
+export type Weapon = { id: string; name: string; school: School; short: string };
+export const WEAPONS: Weapon[] = [
+  { id: "nameless_sword", name: "Nameless Sword", school: "bellstrike", short: "NS" },
+  { id: "strategic_sword", name: "Strategic Sword", school: "bellstrike", short: "SS" },
+  { id: "nameless_spear", name: "Nameless Spear", school: "bellstrike", short: "NSp" },
+  { id: "heavenquaker_spear", name: "Heavenquaker Spear", school: "bellstrike", short: "HQ" },
+  { id: "infernal_twinblades", name: "Infernal Twinblades", school: "bamboocut", short: "TB" },
+  { id: "riven_twinblades", name: "Riven Twinblades", school: "bamboocut", short: "Riven" },
+  { id: "mortal_rope_dart", name: "Mortal Rope Dart", school: "bamboocut", short: "Mo" },
+  { id: "unfettered_rope_dart", name: "Unfettered Rope Dart", school: "bamboocut", short: "Unfettered" },
+  { id: "skygrasp_rope_dart", name: "Skygrasp Rope Dart", school: "bamboocut", short: "Skygrasp" },
+  { id: "everspring_umbrella", name: "Everspring Umbrella", school: "bamboocut", short: "Everspring" },
+  { id: "heavenwill_gauntlets", name: "Heavenwill Gauntlets", school: "bamboocut", short: "Heavenwill" },
+  { id: "skystrike_gauntlets", name: "Skystrike Gauntlets", school: "bamboocut", short: "Skystrike" },
+  { id: "inkwell_fan", name: "Inkwell Fan", school: "silkbind", short: "Inkwell" },
+  { id: "vernal_umbrella", name: "Vernal Umbrella", school: "silkbind", short: "Vernal" },
+  { id: "panacea_fan", name: "Panacea Fan", school: "silkbind", short: "Panacea" },
+  { id: "soulshade_umbrella", name: "Soulshade Umbrella", school: "silkbind", short: "Soulshade" },
+  { id: "willowbend_fan", name: "Willowbend Fan", school: "silkbind", short: "Willowbend" },
+  { id: "museflow_drum", name: "Museflow Waist Drum", school: "silkbind", short: "Drum" },
+  { id: "thundercry_blade", name: "Thundercry Blade", school: "stonesplit", short: "Thundercry" },
+  { id: "stormbreaker_spear", name: "Stormbreaker Spear", school: "stonesplit", short: "Stormbreaker" },
+  { id: "snowparting_blade", name: "Snowparting Blade", school: "stonesplit", short: "Snowparting" },
+  { id: "phalanxbane_blade", name: "Phalanxbane Blade", school: "stonesplit", short: "Phalanxbane" },
+];
+export const PRESETS: { name: string; weapons: [string, string]; role: "dps" | "tank" | "healer" }[] = [
+  { name: "Double Sword", weapons: ["nameless_sword", "strategic_sword"], role: "dps" },
+  { name: "Nameless/HQ", weapons: ["nameless_sword", "heavenquaker_spear"], role: "dps" },
+  { name: "Full Umbra", weapons: ["strategic_sword", "heavenquaker_spear"], role: "dps" },
+  { name: "Mo/TB", weapons: ["mortal_rope_dart", "infernal_twinblades"], role: "dps" },
+  { name: "Drums", weapons: ["willowbend_fan", "museflow_drum"], role: "healer" },
+];
+export const weaponById = (id: string) => WEAPONS.find((w) => w.id === id);
+export const schoolColor = (s: string) => SCHOOLS.find((x) => x.id === s)?.color || "var(--muted)";
+/** Build-ID: zwei Waffen, sortiert, mit "+" verbunden */
+export const buildId = (a: string, b: string) => [a, b].sort().join("+");
+export const buildWeapons = (id: string | null | undefined) => (String(id || "").split("+").map(weaponById).filter(Boolean) as Weapon[])
+  .sort((a, b) => WEAPONS.indexOf(a) - WEAPONS.indexOf(b));
+export const buildLabel = (id: string | null | undefined) => {
+  const ws = buildWeapons(id);
+  if (!ws.length) return "";
+  const p = PRESETS.find((x) => buildId(x.weapons[0], x.weapons[1]) === id);
+  return p ? p.name : ws.map((w) => w.short).join("/");
+};
+/** Pfade (für Inner Ways), zu denen die Waffen eines Builds gehören */
+export const buildPaths = (id: string | null | undefined) => {
+  const names = buildWeapons(id).map((w) => w.name);
+  return PATHS.filter((p) => p.weapons.some((w) => names.includes(w))).map((p) => p.id);
+};

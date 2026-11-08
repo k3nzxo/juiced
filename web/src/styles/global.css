@@ -193,11 +193,11 @@ p { margin: 0; }
 
 :root[data-theme="dark"] .badge-management { color: #b59bff; }
 :root[data-theme="dark"] .badge-coach { color: #5fe0ee; }
-.role-healer { --role: #16a34a; }
-.role-tank { --role: #ca8a04; }
+.role-healer { --role: #22c55e; }
+.role-tank { --role: #eab308; }
 .role-nameless { --role: #2563eb; }
 .role-twinblades { --role: #8b3fd9; }
-.role-dps { --role: #dc2626; }
+.role-dps { --role: #3b82f6; }
 .role-team { --role: #d97706; }
 .role-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-2); }
 .role-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--role, var(--faint)); }

@@ -4,12 +4,12 @@ import { api, esc, fmtDate, icon, initI18n, lang, modal, T, timeAgo, toast } fro
 import { renderVods, vodCleanup } from "./vods.js";
 import { enhancePicker, closePicker } from "./picker";
 import { timeRange, timeShort } from "../schedule";
-import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText } from "../../data/wwm";
+import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText, WEAPONS, SCHOOLS, buildId, buildWeapons, buildLabel, buildPaths, schoolColor } from "../../data/wwm";
 
 type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
-  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[];
+  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[];
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; rank_manual: boolean;
 };
 
@@ -204,7 +204,7 @@ async function viewDashboard(view: HTMLElement) {
     const el = view.querySelector<HTMLElement>("#dash-mem");
     if (!el) return;
     el.innerHTML = list.length ? `<div class="mem-strip">${list.slice(0, 18).map((u) => `<a class="ms card" href="#/roster/${u.id}" title="${esc(u.display_name)}">
-      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${u.main_path ? pathTag(u.main_path) : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`}</a>`).join("")}</div>`
+      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${roleOrBuildTag(u)}</a>`).join("")}</div>`
       : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   }).catch(() => { view.querySelector("#dash-mem")?.remove(); });
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
@@ -272,24 +272,26 @@ function editAnnouncement(a: any | null, done: () => void) {
 
 // ------------------------------------------------------------------ Anmeldungen aus Raid-Helper + Aufstellung (Leader/Vice)
 
-const RH_CLASS_COLORS: Record<string, string> = { tank: "#ca8a04", healer: "#16a34a", dps: "#dc2626", melee: "#dc2626", ranged: "#ea580c", support: "#0891b2" };
+const RH_CLASS_COLORS: Record<string, string> = { tank: "#eab308", healer: "#22c55e", dps: "#3b82f6", melee: "#3b82f6", ranged: "#3b82f6", support: "#22c55e", bellstrike: "#3b82f6", silkbind: "#22c55e", stonesplit: "#eab308", bamboocut: "#a855f7" };
 const ROLE_ORDER: Record<string, number> = { tank: 0, healer: 1, dps: 2 };
 // "Bamboocut_Wind" -> Pfad aus unseren Spieldaten, sonst lesbarer Text
 const rhLabel = (s: string) => pathFromText(s)?.name || String(s || "").replace(/_/g, " ");
 const rhColor = (cls: string) => { const p = pathFromText(cls); return RH_CLASS_COLORS[(p?.role || cls).toLowerCase()] || "var(--accent)"; };
 
-type RhPlayer = { uid: string; name: string; path: string; role: string; playing: boolean };
+type RhPlayer = { uid: string; name: string; path: string; role: string; playing: boolean; color?: string };
 function rhPlayers(e: any, profiles: Record<string, any>): Map<string, RhPlayer> {
   const m = new Map<string, RhPlayer>();
   for (const s of e.signups) {
     if (!s.user_id) continue;
-    const p = pathFromText(s.spec) || pathFromText(s.class) || pathById(profiles[s.user_id]?.main_path);
+    const p = pathFromText(s.spec) || pathFromText(s.class);
+    const prof = profiles[s.user_id];
     const role = p?.role || (ROLE_ORDER[s.class.toLowerCase()] !== undefined ? s.class.toLowerCase() : profiles[s.user_id]?.main_role || "dps");
-    m.set(s.user_id, { uid: s.user_id, name: profiles[s.user_id]?.name || s.name, path: p?.name || (s.spec && s.spec.toLowerCase() !== s.class.toLowerCase() ? s.spec.replace(/_/g, " ") : ""), role, playing: s.playing });
+    m.set(s.user_id, { uid: s.user_id, name: profiles[s.user_id]?.name || s.name, path: p?.name || (s.spec && s.spec.toLowerCase() !== s.class.toLowerCase() ? s.spec.replace(/_/g, " ") : "") || buildLabel(prof?.main_build), role, playing: s.playing,
+      color: p ? schoolColor(p.group) : buildWeapons(prof?.main_build)[0] ? schoolColor(buildWeapons(prof?.main_build)[0].school) : "" });
   }
   return m;
 }
-const rhChip = (p: RhPlayer, extra = "") => `<span class="rh-p role-${esc(p.role)} ${p.uid === me!.discord_id ? "is-me" : ""} ${extra}" title="${esc(p.name)}${p.path ? ` · ${esc(p.path)}` : ""}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</span>`;
+const rhChip = (p: RhPlayer, extra = "") => `<span ${p.color ? `style="--role:${p.color}"` : ""} class="rh-p role-${esc(p.role)} ${p.uid === me!.discord_id ? "is-me" : ""} ${extra}" title="${esc(p.name)}${p.path ? ` · ${esc(p.path)}` : ""}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</span>`;
 
 async function viewSignups(view: HTMLElement) {
   view.innerHTML = head(T("rh_title"), T("rh_sub")) + `<div id="rh">${loading}</div>`;
@@ -523,7 +525,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     const mine = groups.findIndex((g) => g.members.includes(p.uid));
     const split = mine >= 0 && mates.some((u) => { const o = groups.findIndex((g) => g.members.includes(u)); return o >= 0 && o !== mine; });
     const tip = mates.length ? ` · ${T("pt_with", { names: mates.map((u) => info(u).name).join(", ") })}` : "";
-    return `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${split ? "is-split" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc((p.playing ? p.name : T("roster_left")) + tip)}"><b>${esc(p.name)}</b>${mates.length ? `<i class="ro-link">${icon.link}</i>` : ""}${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
+    return `<button type="button" ${p.color ? `style="--role:${p.color}"` : ""} class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${split ? "is-split" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc((p.playing ? p.name : T("roster_left")) + tip)}"><b>${esc(p.name)}</b>${mates.length ? `<i class="ro-link">${icon.link}</i>` : ""}${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
   };
   const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return `<span class="rc role-${r} ${n ? "" : "is-zero"}" title="${esc(T("role_" + r))}"><i></i>${n}</span>`; }).join("");
   const nextOpen = (from: number) => {
@@ -712,7 +714,7 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
 }
 
 // Aufstellung als Bild (wie der Screenshot im Raid-Helper-Comp-Tool)
-const ROLE_HEX: Record<string, string> = { tank: "#ca8a04", healer: "#16a34a", dps: "#dc2626" };
+const ROLE_HEX: Record<string, string> = { tank: "#eab308", healer: "#22c55e", dps: "#3b82f6" };
 async function rosterImage(e: any, data: any): Promise<Blob> {
   const players = rhPlayers(e, data.profiles || {});
   const groups: any[] = e.roster.groups;
@@ -845,7 +847,15 @@ const iwTile = (id: string, small = false) => {
   const w = innerWayById(id);
   return w ? `<span class="iw ${small ? "iw-sm" : ""}" title="${esc(w.name)}"><img src="${innerWayImg(id)}" alt="" loading="lazy" width="48" height="64">${small ? "" : `<span>${esc(w.name)}</span>`}</span>` : "";
 };
-const hasBuild = (u: any) => !!(u.main_path || (u.alt_paths || []).length || (u.inner_ways || []).length);
+const hasBuild = (u: any) => !!(u.main_build || (u.alt_builds || []).length || (u.inner_ways || []).length || u.weapon_other);
+// Farbpunkte je Schule (Hybride = zwei Farben)
+const buildDots = (id: string | null | undefined) => [...new Set(buildWeapons(id).map((w) => w.school))].map((sc) => `<i style="background:${schoolColor(sc)}"></i>`).join("");
+const buildTag = (id: string | null | undefined, main = false) => {
+  const ws = buildWeapons(id);
+  return ws.length ? `<span class="path-tag build-tag ${main ? "is-main" : ""}" title="${esc(ws.map((w) => w.name).join(" + "))}">${buildDots(id)}${esc(buildLabel(id))}</span>` : "";
+};
+const roleOrBuildTag = (u: any, main = false) => u.main_build ? buildTag(u.main_build, main)
+  : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`;
 
 // ------------------------------------------------------------------ Mitglieder: Liste mit Filter, Klick öffnet das Profil
 
@@ -864,9 +874,9 @@ async function viewRoster(view: HTMLElement) {
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
         <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
-        <div class="mc-build">${u.main_path ? pathTag(u.main_path, true) : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`}
-          ${(u.alt_paths || []).length ? `<span class="mc-more">+${u.alt_paths.length}</span>` : ""}</div>
-        <div class="mc-meta">${pathById(u.main_path) ? `<span>${esc(pathById(u.main_path)!.weapons.join(" + "))}</span>` : `<span class="mc-empty">${esc(T("mem_no_build"))}</span>`}<span>${(u.inner_ways || []).length ? `${u.inner_ways.length} ${esc(T("prof_inner_ways"))}` : ""}</span></div>
+        <div class="mc-build">${roleOrBuildTag(u, true)}${u.main_build && u.main_role ? `<span class="role-tag role-${esc(u.main_role)}">${esc(T("role_" + u.main_role))}</span>` : ""}
+          ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
+        <div class="mc-meta">${u.main_build ? `<span>${esc(buildWeapons(u.main_build).map((w) => w.name).join(" + "))}</span>` : `<span class="mc-empty">${esc(T("mem_no_build"))}</span>`}<span>${(u.inner_ways || []).length ? `${u.inner_ways.length} ${esc(T("prof_inner_ways"))}` : ""}</span></div>
       </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   };
   view.querySelector("[data-q]")!.addEventListener("input", (e) => { memFilter.q = (e.target as HTMLInputElement).value; draw(); });
@@ -879,14 +889,16 @@ async function viewRoster(view: HTMLElement) {
 }
 
 function buildBlock(u: any, compact = false) {
-  const main = pathById(u.main_path);
-  const alt = (u.alt_paths || []).filter((p: string) => pathById(p));
+  const main = buildWeapons(u.main_build);
+  const alt = (u.alt_builds || []).filter((b: string) => buildWeapons(b).length);
   const ways = (u.inner_ways || []).filter((w: string) => innerWayById(w));
   const other = String(u.weapon_other || "").trim();
-  if (!main && !alt.length && !ways.length && !other) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
-  return `${main ? `<div class="path-main role-${main.role}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${esc(main.name)}</strong>
-      <span class="pm-weapons">${esc(main.weapons.join(" + "))}</span>${roleTag(main.role)}</div>` : ""}
-    ${alt.length || other ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((p: string) => pathTag(p)).join("")}${other ? `<span class="path-tag path-other"><i></i>${esc(other)}</span>` : ""}</div></div>` : ""}
+  if (!main.length && !alt.length && !ways.length && !other) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
+  const cols = [...new Set(main.map((w) => schoolColor(w.school)))];
+  return `${main.length ? `<div class="path-main build-main" style="--b1:${cols[0]};--b2:${cols[1] || cols[0]}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</strong>
+      <span class="pm-weapons">${esc(main.map((w) => w.name).join(" + "))}</span>${u.main_role ? roleTag(u.main_role) : ""}</div>`
+      : u.main_role ? `<div class="build-row"><span class="label">${esc(T("prof_role"))}</span><div class="tags">${roleTag(u.main_role)}</div></div>` : ""}
+    ${alt.length || other ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((b: string) => buildTag(b)).join("")}${other ? `<span class="path-tag path-other"><i></i>${esc(other)}</span>` : ""}</div></div>` : ""}
     ${ways.length ? `<div class="build-row"><span class="label">${esc(T("prof_inner_ways"))}</span><div class="iw-grid ${compact ? "small" : ""}">${ways.map((w: string) => iwTile(w, compact)).join("")}</div></div>` : ""}`;
 }
 
@@ -1057,28 +1069,31 @@ const COUNTRIES = ["AE", "AL", "AM", "AR", "AT", "AU", "AZ", "BA", "BE", "BG", "
 function viewProfile(view: HTMLElement) {
   const regionName = (() => { try { return new Intl.DisplayNames([lang()], { type: "region" }); } catch { return null; } })();
   const opts = COUNTRIES.map((c) => ({ c, n: regionName?.of(c) || c })).sort((a, b) => a.n.localeCompare(b.n));
-  let mainPath: string | null = me!.main_path || null;
-  const alt = new Set<string>(me!.alt_paths || []);
+  // Build = Rolle + zwei beliebige Waffen (Hybride erlaubt), weitere Kombis als Liste
+  const ROLES3 = ["tank", "healer", "dps"];
+  let role: string | null = me!.main_role && ROLES3.includes(me!.main_role) ? me!.main_role : null;
+  let mainSel: string[] = buildWeapons(me!.main_build).map((w) => w.id);
+  const altB = new Set<string>(me!.alt_builds || []);
+  const curMain = () => (mainSel.length === 2 ? buildId(mainSel[0], mainSel[1]) : null);
   const ways = new Set<string>(me!.inner_ways || []);
   let showAll = false;
   const partners: string[] = [...(me!.partners || [])];
   let people: { id: string; name: string }[] = [];
-  // erst die Rolle wählen, dann nur deren Pfade zeigen (Tank, Heiler, DPS)
-  const PATH_ROLES = ["tank", "healer", "dps"] as const;
-  const byRole = [...PATHS].sort((a, b) => PATH_ROLES.indexOf(a.role) - PATH_ROLES.indexOf(b.role));
-  let pickRole: string = pathById(mainPath)?.role || (me!.main_role && (PATH_ROLES as readonly string[]).includes(me!.main_role) ? me!.main_role : "dps");
   view.innerHTML = head(T("prof_title")) + `<form class="profile card" novalidate>
     <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div>
       <a class="btn btn-ghost btn-sm prof-view" href="#/roster/${me!.id}">${icon.user}</a></div>
     <div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
     <h2 class="prof-sec">${esc(T("prof_build"))}</h2>
-    <div class="field"><span class="label">${esc(T("prof_main_path"))}</span><p class="hint">${esc(T("prof_main_hint"))}</p>
-      <div class="seg-tabs path-roles" role="group">${PATH_ROLES.map((r) => `<button type="button" data-prole="${r}" aria-pressed="${pickRole === r}"><span class="role-tag role-${r}">${esc(T("role_" + r))}</span></button>`).join("")}</div>
-      <div class="path-pick">${byRole.map((p) => `<button type="button" class="pp role-${p.role}" data-main="${p.id}" data-for-role="${p.role}" aria-pressed="${mainPath === p.id}" ${p.role === pickRole ? "" : "hidden"}>
-        <strong>${esc(p.name)}</strong><span>${esc(p.weapons.join(" + "))}</span></button>`).join("")}</div></div>
-    <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span>
-      <div class="chips">${byRole.map((p) => `<button type="button" class="chip path-chip role-${p.role}" data-alt="${p.id}" aria-pressed="${alt.has(p.id)}" ${mainPath === p.id ? "hidden" : ""}>${esc(p.name)}</button>`).join("")}</div>
+    <div class="field"><span class="label">${esc(T("prof_role"))}</span>
+      <div class="seg-tabs path-roles" role="group">${ROLES3.map((r) => `<button type="button" data-prole="${r}" aria-pressed="${role === r}"><span class="role-tag role-${r}">${esc(T("role_" + r))}</span></button>`).join("")}</div></div>
+    <div class="field"><span class="label">${esc(T("prof_main_build"))}</span><p class="hint">${esc(T("prof_main_build_hint"))}</p>
+      <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h"><i></i>${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-w="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div>
+      <div class="bp-current" data-bcur></div></div>
+    <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span><p class="hint">${esc(T("prof_alt_hint"))}</p>
+      <div class="pp-partners" data-alts></div>
+      <div class="alt-add"><select class="select" data-alt-a>${SCHOOLS.map((sc) => `<optgroup label="${esc(sc.name)}">${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}</optgroup>`).join("")}</select><span>+</span><select class="select" data-alt-b>${SCHOOLS.map((sc) => `<optgroup label="${esc(sc.name)}">${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}</optgroup>`).join("")}</select>
+        <button type="button" class="btn btn-ghost btn-sm" data-alt-add>${icon.plus} ${esc(T("prof_alt_add"))}</button></div>
       <input class="input alt-other" id="p-other" maxlength="40" value="${esc(me!.weapon_other || "")}" placeholder="${esc(T("prof_alt_other_ph"))}"></div>
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
@@ -1092,11 +1107,12 @@ function viewProfile(view: HTMLElement) {
 
   // Inner Ways: nach Pfad gruppiert; ohne "Alle zeigen" nur eigene Pfade + allgemeine (+ schon gewählte)
   const drawWays = () => {
-    const mine = new Set([mainPath, ...alt].filter(Boolean) as string[]);
+    const mainPaths = buildPaths(curMain());
+    const mine = new Set([...mainPaths, ...[...altB].flatMap((b) => buildPaths(b))]);
     const groups = [...PATHS.map((p) => ({ id: p.id, name: p.name })), { id: "general", name: T("iw_general") }]
       .map((g) => ({ ...g, items: INNER_WAYS.filter((w) => w.path === g.id && (showAll || mine.has(g.id) || g.id === "general" || ways.has(w.id))) }))
       .filter((g) => g.items.length)
-      .sort((a, b) => Number(b.id === mainPath) - Number(a.id === mainPath));
+      .sort((a, b) => Number(mainPaths.includes(b.id)) - Number(mainPaths.includes(a.id)));
     view.querySelector("[data-iw]")!.innerHTML = groups.map((g) => `<div class="iw-group"><span class="iw-gname">${esc(g.name)}</span>
       <div class="iw-grid pick">${g.items.map((w) => `<button type="button" class="iw" data-way="${w.id}" aria-pressed="${ways.has(w.id)}" title="${esc(w.name)}">
         <img src="${innerWayImg(w.id)}" alt="" loading="lazy" width="48" height="64"><span>${esc(w.name)}</span></button>`).join("")}</div></div>`).join("");
@@ -1138,30 +1154,45 @@ function viewProfile(view: HTMLElement) {
     if (!t.closest(".pp-search")) sugg.hidden = true;
   });
   view.querySelector<HTMLInputElement>("[data-iw-all]")!.addEventListener("change", (e) => { showAll = (e.target as HTMLInputElement).checked; drawWays(); });
-  view.querySelectorAll<HTMLElement>("[data-prole]").forEach((b) => b.addEventListener("click", () => {
-    pickRole = b.dataset.prole!;
-    view.querySelectorAll<HTMLElement>("[data-prole]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.prole === pickRole)));
-    view.querySelectorAll<HTMLElement>("[data-for-role]").forEach((x) => { x.hidden = x.dataset.forRole !== pickRole; });
-  }));
-  view.querySelectorAll<HTMLElement>("[data-main]").forEach((b) => b.addEventListener("click", () => {
-    mainPath = mainPath === b.dataset.main ? null : b.dataset.main!;
-    if (mainPath) alt.delete(mainPath);
-    view.querySelectorAll<HTMLElement>("[data-main]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.main === mainPath)));
-    view.querySelectorAll<HTMLElement>("[data-alt]").forEach((x) => { x.hidden = x.dataset.alt === mainPath; x.setAttribute("aria-pressed", String(alt.has(x.dataset.alt!))); });
-    drawWays();
-  }));
-  view.querySelectorAll<HTMLElement>("[data-alt]").forEach((b) => b.addEventListener("click", () => {
-    const id = b.dataset.alt!;
-    alt.has(id) ? alt.delete(id) : alt.add(id);
-    b.setAttribute("aria-pressed", String(alt.has(id)));
-    drawWays();
-  }));
+  const drawMain = () => {
+    const id = curMain();
+    view.querySelectorAll<HTMLElement>("[data-w]").forEach((b) => b.setAttribute("aria-pressed", String(mainSel.includes(b.dataset.w!))));
+    view.querySelector("[data-bcur]")!.innerHTML = id
+      ? `${buildTag(id, true)}<span class="muted">${esc(buildWeapons(id).map((w) => w.name).join(" + "))}</span>`
+      : `<span class="muted">${esc(T("prof_pick_two"))}</span>`;
+  };
+  const drawAlts = () => {
+    view.querySelector("[data-alts]")!.innerHTML = [...altB].map((b) => `<span class="pp-chip build-chip-x">${buildDots(b)}<b>${esc(buildLabel(b))}</b><button type="button" data-unalt="${esc(b)}" aria-label="×">${icon.x}</button></span>`).join("");
+  };
+  const setRole = (r: string | null) => {
+    role = r;
+    view.querySelectorAll<HTMLElement>("[data-prole]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.prole === role)));
+  };
+  drawMain(); drawAlts();
+  view.addEventListener("click", (ev) => {
+    const t = ev.target as HTMLElement;
+    const pr = t.closest<HTMLElement>("[data-prole]");
+    if (pr) { setRole(role === pr.dataset.prole ? null : pr.dataset.prole!); return; }
+    const w = t.closest<HTMLElement>("[data-w]");
+    if (w) {
+      const id = w.dataset.w!;
+      mainSel = mainSel.includes(id) ? mainSel.filter((x) => x !== id) : [...mainSel, id].slice(-2);
+      const m = curMain(); if (m) altB.delete(m);
+      drawMain(); drawAlts(); drawWays(); return;
+    }
+    const un = t.closest<HTMLElement>("[data-unalt]");
+    if (un) { altB.delete(un.dataset.unalt!); drawAlts(); drawWays(); return; }
+    if (t.closest("[data-alt-add]")) {
+      const a = view.querySelector<HTMLSelectElement>("[data-alt-a]")!.value, b = view.querySelector<HTMLSelectElement>("[data-alt-b]")!.value;
+      if (a && b && a !== b) { const id = buildId(a, b); if (id !== curMain() && altB.size < 8) altB.add(id); drawAlts(); drawWays(); }
+    }
+  });
   view.querySelector("form")!.addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
-        main_path: mainPath, alt_paths: [...alt], inner_ways: [...ways], partners,
+        main_role: role, main_build: curMain(), alt_builds: [...altB], inner_ways: [...ways], partners,
         weapon_other: (view.querySelector("#p-other") as HTMLInputElement).value,
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),

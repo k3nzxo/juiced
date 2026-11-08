@@ -74,3 +74,56 @@ INNER_WAYS = {
     "throat_piercing_art": "stonesplit_strength",
     "steadfast_devotion": "stonesplit_strength",
 }
+
+
+# Waffen (für Builds aus zwei beliebigen Waffen)
+WEAPONS = {
+    "nameless_sword": "bellstrike",
+    "strategic_sword": "bellstrike",
+    "nameless_spear": "bellstrike",
+    "heavenquaker_spear": "bellstrike",
+    "infernal_twinblades": "bamboocut",
+    "riven_twinblades": "bamboocut",
+    "mortal_rope_dart": "bamboocut",
+    "unfettered_rope_dart": "bamboocut",
+    "skygrasp_rope_dart": "bamboocut",
+    "everspring_umbrella": "bamboocut",
+    "heavenwill_gauntlets": "bamboocut",
+    "skystrike_gauntlets": "bamboocut",
+    "inkwell_fan": "silkbind",
+    "vernal_umbrella": "silkbind",
+    "panacea_fan": "silkbind",
+    "soulshade_umbrella": "silkbind",
+    "willowbend_fan": "silkbind",
+    "museflow_drum": "silkbind",
+    "thundercry_blade": "stonesplit",
+    "stormbreaker_spear": "stonesplit",
+    "snowparting_blade": "stonesplit",
+    "phalanxbane_blade": "stonesplit",
+}
+# alte Pfade -> Waffenpaar (für die Übernahme bestehender Profile)
+PATH_WEAPONS = {
+    "bellstrike_splendor": ("nameless_sword", "nameless_spear"),
+    "bellstrike_umbra": ("strategic_sword", "heavenquaker_spear"),
+    "bamboocut_wind": ("infernal_twinblades", "mortal_rope_dart"),
+    "bamboocut_dust": ("everspring_umbrella", "unfettered_rope_dart"),
+    "bamboocut_kite": ("heavenwill_gauntlets", "skygrasp_rope_dart"),
+    "bamboocut_draught": ("riven_twinblades", "skystrike_gauntlets"),
+    "silkbind_jade": ("inkwell_fan", "vernal_umbrella"),
+    "silkbind_deluge": ("panacea_fan", "soulshade_umbrella"),
+    "silkbind_wings": ("willowbend_fan", "museflow_drum"),
+    "stonesplit_might": ("thundercry_blade", "stormbreaker_spear"),
+    "stonesplit_strength": ("snowparting_blade", "phalanxbane_blade"),
+}
+
+
+def build_id(a: str, b: str) -> str:
+    return "+".join(sorted((a, b)))
+
+
+def clean_build(v) -> str | None:
+    """'a+b' mit zwei bekannten, verschiedenen Waffen -> sortierte ID, sonst None."""
+    parts = [x for x in str(v or "").split("+") if x in WEAPONS]
+    if len(parts) != 2 or parts[0] == parts[1]:
+        return None
+    return build_id(*parts)

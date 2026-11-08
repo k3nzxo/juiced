@@ -20,7 +20,8 @@ def _add_missing_columns():
                          "build": "TEXT", "build_link": "VARCHAR(300)", "inner_ways": "TEXT", "build_images": "TEXT",
                          "region": "VARCHAR(8)", "gear_score": "INTEGER", "arena_rank": "VARCHAR(40)"},
         "users": {"weapons": "VARCHAR(80)", "weapon_other": "VARCHAR(40)", "main_path": "VARCHAR(32)", "alt_paths": "VARCHAR(240)",
-                  "inner_ways": "VARCHAR(900)", "partners": "VARCHAR(400)"},
+                  "inner_ways": "VARCHAR(900)", "partners": "VARCHAR(400)",
+                  "main_build": "VARCHAR(80)", "alt_builds": "VARCHAR(400)"},
         "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false", "repeat_days": "VARCHAR(7)"},
         "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
     }
@@ -32,6 +33,18 @@ def _add_missing_columns():
                 with engine.begin() as conn:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {typ}"))
                 print(f"[db] {table}.{col} angelegt")
+    # Pfade -> Builds (zwei Waffen): bestehende Profile einmalig übernehmen
+    from .wwm import PATH_WEAPONS, build_id
+    with engine.begin() as conn:
+        rows = conn.execute(text("SELECT id, main_path, alt_paths FROM users WHERE main_build IS NULL AND "
+                                 "(main_path IS NOT NULL OR alt_paths IS NOT NULL)")).fetchall()
+        for uid, mp, ap in rows:
+            mb = build_id(*PATH_WEAPONS[mp]) if mp in PATH_WEAPONS else None
+            alts = [build_id(*PATH_WEAPONS[p]) for p in (ap or "").split(",") if p in PATH_WEAPONS]
+            conn.execute(text("UPDATE users SET main_build = :mb, alt_builds = :ab WHERE id = :id"),
+                         {"mb": mb, "ab": ",".join(alts) or None, "id": uid})
+        if rows:
+            print(f"[db] {len(rows)} Profile von Pfaden auf Builds umgestellt")
     # Früher waren Nameless/Twinblades Hauptrollen, jetzt: Rolle DPS + Waffe
     with engine.begin() as conn:
         for table in ("users", "applications"):

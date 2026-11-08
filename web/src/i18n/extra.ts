@@ -336,6 +336,12 @@ const en = {
   pt_from_profiles: "From member profiles ({n}), used automatically",
   prof_partner_of: "Listed as partner by:",
   prof_alt_other_ph: "Other, e.g. Mo/TB",
+  prof_main_build: "Main build",
+  prof_main_build_hint: "The two weapons you play the most. Hybrids are fine (e.g. Nameless Sword + Inkwell Fan).",
+  prof_quick: "Quick pick",
+  prof_pick_two: "Pick two weapons",
+  prof_alt_hint: "Other combos you can play.",
+  prof_alt_add: "Add combo",
 };
 
 export type ExtraDict = typeof en;
@@ -668,6 +674,12 @@ const de: Partial<ExtraDict> = {
   pt_from_profiles: "Aus den Profilen der Mitglieder ({n}), wird automatisch beachtet",
   prof_partner_of: "Als Partner eingetragen von:",
   prof_alt_other_ph: "Sonstiges, z. B. Mo/TB",
+  prof_main_build: "Haupt-Build",
+  prof_main_build_hint: "Die zwei Waffen, die du am meisten spielst. Hybride sind okay (z. B. Nameless Sword + Inkwell Fan).",
+  prof_quick: "Schnellwahl",
+  prof_pick_two: "Wähle zwei Waffen",
+  prof_alt_hint: "Weitere Kombis, die du spielen kannst.",
+  prof_alt_add: "Kombi hinzufügen",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -991,6 +1003,12 @@ const fr: Partial<ExtraDict> = {
   pt_from_profiles: "Depuis les profils ({n}), pris en compte automatiquement",
   prof_partner_of: "Indiqué comme partenaire par :",
   prof_alt_other_ph: "Autre, ex. Mo/TB",
+  prof_main_build: "Build principal",
+  prof_main_build_hint: "Les deux armes que tu joues le plus. Les hybrides sont ok.",
+  prof_quick: "Choix rapide",
+  prof_pick_two: "Choisis deux armes",
+  prof_alt_hint: "Autres combos que tu peux jouer.",
+  prof_alt_add: "Ajouter",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1314,6 +1332,12 @@ const es: Partial<ExtraDict> = {
   pt_from_profiles: "De los perfiles ({n}), se usa automáticamente",
   prof_partner_of: "Marcado como compañero por:",
   prof_alt_other_ph: "Otro, p. ej. Mo/TB",
+  prof_main_build: "Build principal",
+  prof_main_build_hint: "Las dos armas que más juegas. Los híbridos valen.",
+  prof_quick: "Rápido",
+  prof_pick_two: "Elige dos armas",
+  prof_alt_hint: "Otros combos que puedes jugar.",
+  prof_alt_add: "Añadir combo",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1637,6 +1661,12 @@ const pt: Partial<ExtraDict> = {
   pt_from_profiles: "Dos perfis ({n}), usado automaticamente",
   prof_partner_of: "Marcado como parceiro por:",
   prof_alt_other_ph: "Outro, ex. Mo/TB",
+  prof_main_build: "Build principal",
+  prof_main_build_hint: "As duas armas que você mais joga. Híbridos valem.",
+  prof_quick: "Rápido",
+  prof_pick_two: "Escolha duas armas",
+  prof_alt_hint: "Outros combos que você joga.",
+  prof_alt_add: "Adicionar combo",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1960,6 +1990,12 @@ const ru: Partial<ExtraDict> = {
   pt_from_profiles: "Из профилей ({n}), учитывается автоматически",
   prof_partner_of: "Указан напарником у:",
   prof_alt_other_ph: "Другое, напр. Mo/TB",
+  prof_main_build: "Основной билд",
+  prof_main_build_hint: "Два оружия, на которых ты играешь чаще всего. Гибриды можно.",
+  prof_quick: "Быстрый выбор",
+  prof_pick_two: "Выбери два оружия",
+  prof_alt_hint: "Другие комбо, которые ты можешь играть.",
+  prof_alt_add: "Добавить комбо",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2283,6 +2319,12 @@ const tr: Partial<ExtraDict> = {
   pt_from_profiles: "Profillerden ({n}), otomatik kullanılır",
   prof_partner_of: "Partner olarak ekleyen:",
   prof_alt_other_ph: "Diğer, ör. Mo/TB",
+  prof_main_build: "Ana build",
+  prof_main_build_hint: "En çok oynadığın iki silah. Hibritler olur.",
+  prof_quick: "Hızlı seçim",
+  prof_pick_two: "İki silah seç",
+  prof_alt_hint: "Oynayabildiğin diğer kombolar.",
+  prof_alt_add: "Kombo ekle",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2606,6 +2648,12 @@ const pl: Partial<ExtraDict> = {
   pt_from_profiles: "Z profili ({n}), uwzględniane automatycznie",
   prof_partner_of: "Dodany jako partner przez:",
   prof_alt_other_ph: "Inne, np. Mo/TB",
+  prof_main_build: "Główny build",
+  prof_main_build_hint: "Dwie bronie, którymi grasz najczęściej. Hybrydy są ok.",
+  prof_quick: "Szybki wybór",
+  prof_pick_two: "Wybierz dwie bronie",
+  prof_alt_hint: "Inne kombinacje, którymi grasz.",
+  prof_alt_add: "Dodaj kombinację",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

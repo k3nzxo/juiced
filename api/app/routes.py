@@ -137,6 +137,8 @@ class ProfileIn(BaseModel):
     weapon_other: Optional[str] = None
     main_path: Optional[str] = None
     alt_paths: Optional[list[str]] = None
+    main_build: Optional[str] = None
+    alt_builds: Optional[list[str]] = None
     inner_ways: Optional[list[str]] = None
     partners: Optional[list[str]] = None
     country: Optional[str] = None
@@ -166,6 +168,11 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.alt_paths = ",".join(p for p in user.alt_path_list if p != user.main_path) or None
     if "partners" in data:
         user.partners = _clean_partner_ids(data["partners"], user.discord_id)
+    if "main_build" in data:
+        user.main_build = wwm.clean_build(data["main_build"])
+    if "alt_builds" in data:
+        alts = [b for b in dict.fromkeys(wwm.clean_build(x) for x in data["alt_builds"] or []) if b and b != user.main_build]
+        user.alt_builds = ",".join(alts[:8]) or None
     if "inner_ways" in data:
         ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
         user.inner_ways = ",".join(ways[:24]) or None
@@ -195,6 +202,7 @@ def member_out(u: models.User) -> dict:
     return {"id": u.id, "discord_id": u.discord_id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
             "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list,
             "weapon_other": u.weapon_other, "main_path": u.main_path, "alt_paths": u.alt_path_list, "inner_ways": u.inner_way_list,
+            "main_build": u.main_build, "alt_builds": u.alt_build_list,
             "country": u.country, "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
 
 

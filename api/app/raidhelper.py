@@ -172,7 +172,7 @@ def events(db: DbSession = Depends(get_db), user: models.User = Depends(require_
     rosters = {r.event_id: r for r in db.query(models.Roster).filter(models.Roster.event_id.in_([e["id"] for e in evs])).all()} if evs else {}
     users = db.query(models.User).filter(models.User.rank != "guest").all()
     names = {u.id: u.display_name for u in users}
-    profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role,
+    profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role, "main_build": u.main_build,
                                "alt_paths": u.alt_path_list} for u in users}
     can_edit = user.level >= models.RANK_LEVEL["vice"]
     partners = _all_partnerships(db, users) if can_edit else []

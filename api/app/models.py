@@ -44,6 +44,8 @@ class User(Base):
     alt_paths = Column(String(240), nullable=True)     # weitere spielbare Pfade, kommagetrennt
     inner_ways = Column(String(900), nullable=True)    # gewählte Inner Ways, kommagetrennt
     partners = Column(String(400), nullable=True)      # Ingame-Partner (Discord-IDs), kommagetrennt
+    main_build = Column(String(80), nullable=True)     # Haupt-Build: zwei Waffen "a+b" (auch Hybride)
+    alt_builds = Column(String(400), nullable=True)    # weitere Builds, kommagetrennt
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
     lang = Column(String(5), nullable=True)
@@ -57,6 +59,10 @@ class User(Base):
     @property
     def alt_path_list(self) -> list[str]:
         return [p for p in (self.alt_paths or "").split(",") if p]
+
+    @property
+    def alt_build_list(self) -> list[str]:
+        return [b for b in (self.alt_builds or "").split(",") if b]
 
     @property
     def partner_list(self) -> list[str]:
