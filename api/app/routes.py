@@ -1,7 +1,9 @@
 import json
+import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -287,6 +289,7 @@ class EventIn(BaseModel):
     opponent: Optional[str] = None
     description: Optional[str] = None
     repeat_weekly: bool = False
+    repeat_days: Optional[str] = None  # z. B. "0123456" = täglich, "4" = jeden Freitag
     open_end: bool = False
     is_public: bool = True
 
@@ -295,10 +298,23 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
+# Wiederholungen laufen in Gildenzeit, damit 20:00 auch nach der Zeitumstellung 20:00 bleibt
+EVENT_TZ = ZoneInfo(os.environ.get("EVENT_TZ", "Europe/Berlin"))
+
+
+def _repeat_days(e: models.Event) -> str:
+    """Effektive Wochentage; alte 'wöchentlich'-Termine nehmen den Wochentag ihres Starts."""
+    if e.repeat_days:
+        return e.repeat_days
+    if e.repeat_weekly:
+        return str(_aware(e.starts_at).astimezone(EVENT_TZ).weekday())
+    return ""
+
+
 def _event_out(e: models.Event, start: datetime, can_edit: bool) -> dict:
     return {"id": e.id, "title": e.title, "kind": e.kind, "starts_at": iso(start),
             "ends_at": iso(start + timedelta(minutes=e.duration_min)), "duration_min": e.duration_min,
-            "opponent": e.opponent, "description": e.description, "repeat_weekly": e.repeat_weekly, "open_end": bool(e.open_end),
+            "opponent": e.opponent, "description": e.description, "repeat_weekly": bool(_repeat_days(e)), "repeat_days": _repeat_days(e), "open_end": bool(e.open_end),
             "is_public": e.is_public, "first_start": iso(e.starts_at), "can_edit": can_edit}
 
 
@@ -318,27 +334,34 @@ def list_events(start: datetime, end: datetime, db: DbSession = Depends(get_db),
     for e in q.all():
         first = _aware(e.starts_at)
         dur = timedelta(minutes=e.duration_min)
-        if not e.repeat_weekly:
+        days = _repeat_days(e)
+        if not days:
             if first + dur > start:
                 out.append(_event_out(e, first, can_edit))
             continue
-        weeks = max(0, int((start - first).total_seconds() // (7 * 86400)))
-        t = first + timedelta(weeks=weeks)
-        while t < end:
-            if t + dur > start:
-                out.append(_event_out(e, t, can_edit))
-            t += timedelta(weeks=1)
+        local = first.astimezone(EVENT_TZ)
+        day = max(local.date(), (start - dur).astimezone(EVENT_TZ).date() - timedelta(days=1))
+        last = end.astimezone(EVENT_TZ).date()
+        while day <= last:
+            if str(day.weekday()) in days:
+                t = datetime.combine(day, local.timetz().replace(tzinfo=None), EVENT_TZ).astimezone(timezone.utc)
+                if first <= t < end and t + dur > start:
+                    out.append(_event_out(e, t, can_edit))
+            day += timedelta(days=1)
     out.sort(key=lambda x: x["starts_at"])
     return out
 
 
 def _validate_event(p: EventIn) -> dict:
     title = clean(p.title, 120)
+    days = "".join(sorted({c for c in (p.repeat_days or "") if c in "0123456"}))
+    if p.repeat_days is None and p.repeat_weekly:  # ältere Clients
+        days = str(_aware(p.starts_at).astimezone(EVENT_TZ).weekday())
     if not title or p.kind not in models.EVENT_KINDS or not (10 <= p.duration_min <= 24 * 60):
         raise HTTPException(status_code=400, detail="Missing fields")
-    return dict(title=title, kind=p.kind, starts_at=_aware(p.starts_at), duration_min=p.duration_min,
+    return dict(title=title, kind=p.kind, starts_at=_aware(p.starts_at).astimezone(timezone.utc), duration_min=p.duration_min,
                 opponent=clean(p.opponent, 80), description=clean(p.description, 2000),
-                repeat_weekly=p.repeat_weekly, open_end=p.open_end, is_public=p.is_public)
+                repeat_weekly=bool(days), repeat_days=days or None, open_end=p.open_end, is_public=p.is_public)
 
 
 @router.post("/events")

@@ -207,3 +207,12 @@ body.vod-focus .site-footer { margin-top: 40px; }
 .dp-foot { display: flex; justify-content: space-between; margin-top: 8px; }
 .dp-foot button { font-size: 13px; font-weight: 600; color: var(--accent); padding: 4px 6px; border-radius: 6px; }
 .dp-foot button:hover { background: var(--accent-soft); }
+
+/* Termin: Wochentage für Wiederholung */
+.rep-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rep-days { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.rep-day { min-width: 38px; height: 30px; padding: 0 6px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--muted); transition: background-color .15s, color .15s; }
+.rep-day:hover { background: var(--surface-2); color: var(--text); }
+.rep-day[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.rep-quick { height: 30px; padding: 0 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-2); border: 1px solid var(--border); }
+.rep-quick:hover { border-color: var(--border-strong); color: var(--text); }

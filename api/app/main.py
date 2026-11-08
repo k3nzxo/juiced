@@ -17,7 +17,7 @@ def _add_missing_columns():
     from sqlalchemy import inspect, text
     wanted = {
         "applications": {"platforms": "VARCHAR(40)", "vod_links": "TEXT"},
-        "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false"},
+        "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false", "repeat_days": "VARCHAR(7)"},
         "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
     }
     insp = inspect(engine)

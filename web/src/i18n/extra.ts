@@ -37,7 +37,7 @@ const en = {
   join_vods_add: "Add another link", join_err_url: "Please check your links: they need to start with https://", join_err_platform: "Please pick at least one platform.",
   app_nav_schedule: "Schedule", app_nav_matches: "Match requests",
   ev_new: "New event", ev_edit: "Edit event", ev_title: "Title", ev_kind: "Type", ev_start: "Start", ev_duration: "Duration (minutes)",
-  ev_opponent: "Opponent (optional)", ev_desc: "Details (optional)", ev_repeat: "Repeat every week", ev_public: "Show on the public schedule",
+  ev_opponent: "Opponent (optional)", ev_desc: "Details (optional)", ev_repeat: "Repeat on", ev_public: "Show on the public schedule",
   ev_delete_confirm: "Delete this event? Weekly events are removed for every week.", ev_upcoming: "Next 14 days", ev_none: "No events planned.", ev_weekly: "weekly",
   mt_title: "Match requests", mt_empty: "No requests.", mt_accept: "Accept & plan", mt_decline: "Decline", mt_delete_confirm: "Delete this request?",
   mt_pending: "Open", mt_accepted: "Accepted", mt_declined: "Declined",
@@ -81,6 +81,9 @@ const en = {
   match_notfound: "Request not found. Check the link.",
   match_sent_on: "Sent {d}",
   mt_reply_ph: "Optional message to the guild (shown on their status page)",
+  ev_rep_daily: "Every day",
+  ev_rep_none: "Once",
+  ev_daily: "daily",
 };
 
 export type ExtraDict = typeof en;
@@ -122,7 +125,7 @@ const de: Partial<ExtraDict> = {
   join_vods_add: "Weiteren Link hinzufügen", join_err_url: "Bitte prüf deine Links: sie müssen mit https:// anfangen.", join_err_platform: "Bitte mindestens eine Plattform wählen.",
   app_nav_schedule: "Wochenplan", app_nav_matches: "Match-Anfragen",
   ev_new: "Neuer Termin", ev_edit: "Termin bearbeiten", ev_title: "Titel", ev_kind: "Art", ev_start: "Beginn", ev_duration: "Dauer (Minuten)",
-  ev_opponent: "Gegner (optional)", ev_desc: "Details (optional)", ev_repeat: "Jede Woche wiederholen", ev_public: "Im öffentlichen Wochenplan zeigen",
+  ev_opponent: "Gegner (optional)", ev_desc: "Details (optional)", ev_repeat: "Wiederholen an", ev_public: "Im öffentlichen Wochenplan zeigen",
   ev_delete_confirm: "Diesen Termin löschen? Wöchentliche Termine verschwinden für alle Wochen.", ev_upcoming: "Nächste 14 Tage", ev_none: "Keine Termine geplant.", ev_weekly: "wöchentlich",
   mt_title: "Match-Anfragen", mt_empty: "Keine Anfragen.", mt_accept: "Annehmen & planen", mt_decline: "Ablehnen", mt_delete_confirm: "Diese Anfrage löschen?",
   mt_pending: "Offen", mt_accepted: "Angenommen", mt_declined: "Abgelehnt",
@@ -167,6 +170,9 @@ const de: Partial<ExtraDict> = {
   match_notfound: "Anfrage nicht gefunden. Prüf den Link.",
   match_sent_on: "Gesendet am {d}",
   mt_reply_ph: "Optionale Nachricht an die Gilde (sieht sie auf ihrer Status-Seite)",
+  ev_rep_daily: "Täglich",
+  ev_rep_none: "Einmalig",
+  ev_daily: "täglich",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -200,7 +206,7 @@ const fr: Partial<ExtraDict> = {
   join_vods_add: "Ajouter un lien", join_err_url: "Vérifie tes liens: ils doivent commencer par https://", join_err_platform: "Choisis au moins une plateforme.",
   app_nav_schedule: "Planning", app_nav_matches: "Demandes de match",
   ev_new: "Nouvel événement", ev_edit: "Modifier l'événement", ev_title: "Titre", ev_kind: "Type", ev_start: "Début", ev_duration: "Durée (minutes)",
-  ev_opponent: "Adversaire (facultatif)", ev_desc: "Détails (facultatif)", ev_repeat: "Répéter chaque semaine", ev_public: "Afficher sur le planning public",
+  ev_opponent: "Adversaire (facultatif)", ev_desc: "Détails (facultatif)", ev_repeat: "Répéter le", ev_public: "Afficher sur le planning public",
   ev_delete_confirm: "Supprimer cet événement ? Les événements hebdomadaires disparaissent pour toutes les semaines.", ev_upcoming: "14 prochains jours", ev_none: "Aucun événement prévu.", ev_weekly: "hebdo",
   mt_title: "Demandes de match", mt_empty: "Aucune demande.", mt_accept: "Accepter et planifier", mt_decline: "Refuser", mt_delete_confirm: "Supprimer cette demande ?",
   mt_pending: "Ouverte", mt_accepted: "Acceptée", mt_declined: "Refusée", apps_platforms: "Plateforme",
@@ -244,6 +250,9 @@ const fr: Partial<ExtraDict> = {
   match_notfound: "Demande introuvable. Vérifie le lien.",
   match_sent_on: "Envoyée le {d}",
   mt_reply_ph: "Message optionnel pour la guilde (visible sur sa page de statut)",
+  ev_rep_daily: "Tous les jours",
+  ev_rep_none: "Une fois",
+  ev_daily: "tous les jours",
 };
 
 const es: Partial<ExtraDict> = {
@@ -277,7 +286,7 @@ const es: Partial<ExtraDict> = {
   join_vods_add: "Añadir otro enlace", join_err_url: "Revisa tus enlaces: deben empezar por https://", join_err_platform: "Elige al menos una plataforma.",
   app_nav_schedule: "Calendario", app_nav_matches: "Solicitudes de partida",
   ev_new: "Nuevo evento", ev_edit: "Editar evento", ev_title: "Título", ev_kind: "Tipo", ev_start: "Inicio", ev_duration: "Duración (minutos)",
-  ev_opponent: "Rival (opcional)", ev_desc: "Detalles (opcional)", ev_repeat: "Repetir cada semana", ev_public: "Mostrar en el calendario público",
+  ev_opponent: "Rival (opcional)", ev_desc: "Detalles (opcional)", ev_repeat: "Repetir los", ev_public: "Mostrar en el calendario público",
   ev_delete_confirm: "¿Eliminar este evento? Los semanales desaparecen de todas las semanas.", ev_upcoming: "Próximos 14 días", ev_none: "No hay eventos planeados.", ev_weekly: "semanal",
   mt_title: "Solicitudes de partida", mt_empty: "No hay solicitudes.", mt_accept: "Aceptar y planificar", mt_decline: "Rechazar", mt_delete_confirm: "¿Eliminar esta solicitud?",
   mt_pending: "Abierta", mt_accepted: "Aceptada", mt_declined: "Rechazada", apps_platforms: "Plataforma",
@@ -321,6 +330,9 @@ const es: Partial<ExtraDict> = {
   match_notfound: "Solicitud no encontrada. Revisa el enlace.",
   match_sent_on: "Enviada el {d}",
   mt_reply_ph: "Mensaje opcional para la guild (lo ve en su página de estado)",
+  ev_rep_daily: "Cada día",
+  ev_rep_none: "Una vez",
+  ev_daily: "a diario",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -354,7 +366,7 @@ const pt: Partial<ExtraDict> = {
   join_vods_add: "Adicionar outro link", join_err_url: "Confira os links: precisam começar com https://", join_err_platform: "Escolha pelo menos uma plataforma.",
   app_nav_schedule: "Agenda", app_nav_matches: "Pedidos de partida",
   ev_new: "Novo evento", ev_edit: "Editar evento", ev_title: "Título", ev_kind: "Tipo", ev_start: "Início", ev_duration: "Duração (minutos)",
-  ev_opponent: "Adversário (opcional)", ev_desc: "Detalhes (opcional)", ev_repeat: "Repetir toda semana", ev_public: "Mostrar na agenda pública",
+  ev_opponent: "Adversário (opcional)", ev_desc: "Detalhes (opcional)", ev_repeat: "Repetir em", ev_public: "Mostrar na agenda pública",
   ev_delete_confirm: "Apagar este evento? Eventos semanais somem de todas as semanas.", ev_upcoming: "Próximos 14 dias", ev_none: "Nenhum evento planejado.", ev_weekly: "semanal",
   mt_title: "Pedidos de partida", mt_empty: "Nenhum pedido.", mt_accept: "Aceitar e planejar", mt_decline: "Recusar", mt_delete_confirm: "Apagar este pedido?",
   mt_pending: "Aberto", mt_accepted: "Aceito", mt_declined: "Recusado", apps_platforms: "Plataforma",
@@ -398,6 +410,9 @@ const pt: Partial<ExtraDict> = {
   match_notfound: "Pedido não encontrado. Confira o link.",
   match_sent_on: "Enviado em {d}",
   mt_reply_ph: "Mensagem opcional para a guilda (aparece na página de status)",
+  ev_rep_daily: "Todo dia",
+  ev_rep_none: "Uma vez",
+  ev_daily: "diário",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -431,7 +446,7 @@ const ru: Partial<ExtraDict> = {
   join_vods_add: "Добавить ссылку", join_err_url: "Проверь ссылки: они должны начинаться с https://", join_err_platform: "Выбери хотя бы одну платформу.",
   app_nav_schedule: "Расписание", app_nav_matches: "Заявки на матчи",
   ev_new: "Новое событие", ev_edit: "Изменить событие", ev_title: "Название", ev_kind: "Тип", ev_start: "Начало", ev_duration: "Длительность (мин)",
-  ev_opponent: "Соперник (необязательно)", ev_desc: "Подробности (необязательно)", ev_repeat: "Повторять каждую неделю", ev_public: "Показывать в публичном расписании",
+  ev_opponent: "Соперник (необязательно)", ev_desc: "Подробности (необязательно)", ev_repeat: "Повторять по", ev_public: "Показывать в публичном расписании",
   ev_delete_confirm: "Удалить событие? Еженедельные события исчезнут из всех недель.", ev_upcoming: "Ближайшие 14 дней", ev_none: "Событий не запланировано.", ev_weekly: "еженедельно",
   mt_title: "Заявки на матчи", mt_empty: "Заявок нет.", mt_accept: "Принять и запланировать", mt_decline: "Отклонить", mt_delete_confirm: "Удалить заявку?",
   mt_pending: "Открыта", mt_accepted: "Принята", mt_declined: "Отклонена", apps_platforms: "Платформа",
@@ -475,6 +490,9 @@ const ru: Partial<ExtraDict> = {
   match_notfound: "Запрос не найден. Проверь ссылку.",
   match_sent_on: "Отправлено {d}",
   mt_reply_ph: "Необязательное сообщение гильдии (видно на её странице статуса)",
+  ev_rep_daily: "Каждый день",
+  ev_rep_none: "Один раз",
+  ev_daily: "ежедневно",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -508,7 +526,7 @@ const tr: Partial<ExtraDict> = {
   join_vods_add: "Başka bağlantı ekle", join_err_url: "Bağlantılarını kontrol et: https:// ile başlamalı.", join_err_platform: "En az bir platform seç.",
   app_nav_schedule: "Program", app_nav_matches: "Maç istekleri",
   ev_new: "Yeni etkinlik", ev_edit: "Etkinliği düzenle", ev_title: "Başlık", ev_kind: "Tür", ev_start: "Başlangıç", ev_duration: "Süre (dakika)",
-  ev_opponent: "Rakip (isteğe bağlı)", ev_desc: "Ayrıntılar (isteğe bağlı)", ev_repeat: "Her hafta tekrarla", ev_public: "Herkese açık programda göster",
+  ev_opponent: "Rakip (isteğe bağlı)", ev_desc: "Ayrıntılar (isteğe bağlı)", ev_repeat: "Tekrarla", ev_public: "Herkese açık programda göster",
   ev_delete_confirm: "Bu etkinlik silinsin mi? Haftalık etkinlikler tüm haftalardan kalkar.", ev_upcoming: "Önümüzdeki 14 gün", ev_none: "Planlanmış etkinlik yok.", ev_weekly: "haftalık",
   mt_title: "Maç istekleri", mt_empty: "İstek yok.", mt_accept: "Kabul et ve planla", mt_decline: "Reddet", mt_delete_confirm: "Bu istek silinsin mi?",
   mt_pending: "Açık", mt_accepted: "Kabul edildi", mt_declined: "Reddedildi", apps_platforms: "Platform",
@@ -552,6 +570,9 @@ const tr: Partial<ExtraDict> = {
   match_notfound: "İstek bulunamadı. Bağlantıyı kontrol et.",
   match_sent_on: "Gönderildi: {d}",
   mt_reply_ph: "Loncaya isteğe bağlı mesaj (durum sayfasında görünür)",
+  ev_rep_daily: "Her gün",
+  ev_rep_none: "Bir kez",
+  ev_daily: "her gün",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -585,7 +606,7 @@ const pl: Partial<ExtraDict> = {
   join_vods_add: "Dodaj kolejny link", join_err_url: "Sprawdź linki: muszą zaczynać się od https://", join_err_platform: "Wybierz co najmniej jedną platformę.",
   app_nav_schedule: "Plan tygodnia", app_nav_matches: "Prośby o mecz",
   ev_new: "Nowe wydarzenie", ev_edit: "Edytuj wydarzenie", ev_title: "Tytuł", ev_kind: "Rodzaj", ev_start: "Początek", ev_duration: "Czas trwania (min)",
-  ev_opponent: "Przeciwnik (opcjonalnie)", ev_desc: "Szczegóły (opcjonalnie)", ev_repeat: "Powtarzaj co tydzień", ev_public: "Pokaż w publicznym planie",
+  ev_opponent: "Przeciwnik (opcjonalnie)", ev_desc: "Szczegóły (opcjonalnie)", ev_repeat: "Powtarzaj w", ev_public: "Pokaż w publicznym planie",
   ev_delete_confirm: "Usunąć to wydarzenie? Cotygodniowe znikną ze wszystkich tygodni.", ev_upcoming: "Najbliższe 14 dni", ev_none: "Brak zaplanowanych wydarzeń.", ev_weekly: "co tydzień",
   mt_title: "Prośby o mecz", mt_empty: "Brak próśb.", mt_accept: "Przyjmij i zaplanuj", mt_decline: "Odrzuć", mt_delete_confirm: "Usunąć tę prośbę?",
   mt_pending: "Otwarta", mt_accepted: "Przyjęta", mt_declined: "Odrzucona", apps_platforms: "Platforma",
@@ -629,6 +650,9 @@ const pl: Partial<ExtraDict> = {
   match_notfound: "Nie znaleziono prośby. Sprawdź link.",
   match_sent_on: "Wysłano {d}",
   mt_reply_ph: "Opcjonalna wiadomość dla gildii (widoczna na stronie statusu)",
+  ev_rep_daily: "Codziennie",
+  ev_rep_none: "Jednorazowo",
+  ev_daily: "codziennie",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

@@ -344,6 +344,10 @@ function shortUrl(u: string) {
 const KINDS = ["gvg", "scrim", "ingame", "friday", "other"];
 const loc = () => (lang() === "pt" ? "pt-BR" : lang());
 const fmtWhen = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+// Wochentage Mo=0 ... So=6 (wie im Backend)
+const wdName = (i: number) => new Date(2024, 0, 1 + i).toLocaleDateString(loc(), { weekday: "short" }).replace(".", "");
+const repeatLabel = (days: string) => !days ? "" : days.length === 7 ? T("ev_daily")
+  : days.length === 1 ? T("ev_weekly") : days.split("").map((d) => wdName(Number(d))).join(", ");
 const fmtWhenEv = (e: any) => e.open_end
   ? `${new Date(e.starts_at).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })}, ${T("sched_from", { t: new Date(e.starts_at).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" }) })} · ${T("sched_open_end")}`
   : fmtWhen(e.starts_at);
@@ -357,7 +361,7 @@ function evRow(e: any, editable: boolean) {
   return `<div class="tr ev-row kind-${esc(e.kind)}" data-id="${e.id}">
     <span class="ev-dot"></span>
     <div class="tr-main"><strong>${esc(e.title)}${e.opponent ? ` <span class="muted">· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
-      <span class="muted">${esc(fmtWhenEv(e))} · ${esc(T("kind_" + e.kind))}${e.repeat_weekly ? ` · ${esc(T("ev_weekly"))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span></div>
+      <span class="muted">${esc(fmtWhenEv(e))} · ${esc(T("kind_" + e.kind))}${e.repeat_days ? ` · ${esc(repeatLabel(e.repeat_days))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span></div>
     ${editable ? `<div class="row-gap"><button class="btn btn-ghost btn-sm" data-edit>${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button></div>` : ""}
   </div>`;
 }
@@ -399,7 +403,7 @@ function toLocalInput(iso: string | null) {
 }
 
 function editEvent(e: any | null, done: () => void, preset: any = {}) {
-  const v = { title: "", kind: "gvg", duration_min: 90, opponent: "", description: "", repeat_weekly: false, open_end: false, is_public: true, ...preset, ...(e || {}) };
+  const v = { title: "", kind: "gvg", duration_min: 90, opponent: "", description: "", repeat_days: "", open_end: false, is_public: true, ...preset, ...(e || {}) };
   const start = e ? (e.first_start || e.starts_at) : preset.starts_at || null;
   const m = modal(e ? T("ev_edit") : T("ev_new"), `
     <div class="field"><label>${esc(T("ev_title"))}</label><input class="input" id="ev-title" maxlength="120" value="${esc(v.title)}"></div>
@@ -413,12 +417,22 @@ function editEvent(e: any | null, done: () => void, preset: any = {}) {
     </div>
     <label class="check"><input type="checkbox" id="ev-open" ${v.open_end ? "checked" : ""}> <span>${esc(T("ev_open_end"))}</span></label>
     <div class="field"><label>${esc(T("ev_desc"))}</label><textarea class="textarea" id="ev-desc" rows="3" maxlength="2000">${esc(v.description || "")}</textarea></div>
-    <label class="check"><input type="checkbox" id="ev-rep" ${v.repeat_weekly ? "checked" : ""}> <span>${esc(T("ev_repeat"))}</span></label>
+    <div class="field"><span class="label">${esc(T("ev_repeat"))}</span>
+      <div class="rep-row">
+        <div class="rep-days">${[0, 1, 2, 3, 4, 5, 6].map((d) => `<button type="button" class="rep-day" data-day="${d}" aria-pressed="${(v.repeat_days || "").includes(String(d))}">${esc(wdName(d))}</button>`).join("")}</div>
+        <button type="button" class="rep-quick" data-rep="all">${esc(T("ev_rep_daily"))}</button>
+        <button type="button" class="rep-quick" data-rep="none">${esc(T("ev_rep_none"))}</button>
+      </div></div>
     <label class="check"><input type="checkbox" id="ev-pub" ${v.is_public ? "checked" : ""}> <span>${esc(T("ev_public"))}</span></label>`,
     `<button class="btn btn-primary" data-save>${esc(T("save"))}</button>`);
   const q = <T extends HTMLElement>(sel: string) => m.el.querySelector(sel) as T;
   enhancePicker(q<HTMLInputElement>("#ev-start"), "datetime");
   const openEnd = q<HTMLInputElement>("#ev-open");
+  const dayBtns = [...m.el.querySelectorAll<HTMLElement>(".rep-day")];
+  const repDays = () => dayBtns.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.day).join("");
+  dayBtns.forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"))));
+  m.el.querySelectorAll<HTMLElement>("[data-rep]").forEach((b) => b.addEventListener("click", () =>
+    dayBtns.forEach((x) => x.setAttribute("aria-pressed", String(b.dataset.rep === "all")))));
   const syncOpen = () => { q<HTMLInputElement>("#ev-dur").disabled = openEnd.checked; };
   openEnd.addEventListener("change", syncOpen);
   // Friday Night beginnt fest, das Ende ist offen
@@ -432,7 +446,7 @@ function editEvent(e: any | null, done: () => void, preset: any = {}) {
       title: q<HTMLInputElement>("#ev-title").value, kind: q<HTMLSelectElement>("#ev-kind").value,
       starts_at: new Date(startVal).toISOString(), duration_min: Number(q<HTMLInputElement>("#ev-dur").value) || 90,
       opponent: q<HTMLInputElement>("#ev-opp").value, description: q<HTMLTextAreaElement>("#ev-desc").value,
-      repeat_weekly: q<HTMLInputElement>("#ev-rep").checked, is_public: q<HTMLInputElement>("#ev-pub").checked,
+      repeat_days: repDays(), is_public: q<HTMLInputElement>("#ev-pub").checked,
       open_end: openEnd.checked,
     };
     try {

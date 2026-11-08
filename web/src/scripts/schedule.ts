@@ -3,7 +3,7 @@ import { esc } from "./team";
 
 export type Ev = {
   id: number; title: string; kind: string; starts_at: string; ends_at: string; duration_min: number;
-  opponent: string | null; description: string | null; repeat_weekly: boolean; open_end?: boolean; is_public: boolean; can_edit: boolean;
+  opponent: string | null; description: string | null; repeat_weekly: boolean; repeat_days?: string; open_end?: boolean; is_public: boolean; can_edit: boolean;
 };
 
 export const KINDS = ["gvg", "scrim", "ingame", "friday", "other"] as const;

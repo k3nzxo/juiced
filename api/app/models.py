@@ -109,6 +109,7 @@ class Event(Base):
     opponent = Column(String(80), nullable=True)
     description = Column(Text, nullable=True)
     repeat_weekly = Column(Boolean, nullable=False, default=False)
+    repeat_days = Column(String(7), nullable=True)  # Wochentage der Wiederholung, Mo=0 ... So=6 (Gildenzeit)
     open_end = Column(Boolean, nullable=False, default=False)   # z. B. Friday Night: Beginn bekannt, Ende offen
     is_public = Column(Boolean, nullable=False, default=True)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
