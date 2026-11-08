@@ -316,9 +316,11 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
     ${roster ? `<section class="ro-view">
       <div class="ro-vhead"><h4>${esc(T("roster_title"))}</h4>${myGroup ? `<span class="rh-me ok">${esc(T("roster_you", { group: gName(myGroup, roster.groups.indexOf(myGroup)) }))}</span>` : ""}
         ${roster.updated_by ? `<span class="muted">${esc(T("roster_by", { name: roster.updated_by, when: roster.updated_at ? timeAgo(roster.updated_at) : "" }))}</span>` : ""}
-        ${data.can_edit ? `<button class="btn btn-outline btn-sm ro-push" data-push>${icon.external} ${esc(T("roster_push"))}</button>` : ""}</div>
+        <span class="ro-actions"><button class="btn btn-ghost btn-sm" data-img title="${esc(T("roster_img"))}">${icon.download} ${esc(T("roster_img"))}</button>
+        <button class="btn btn-ghost btn-sm" data-img-copy title="${esc(T("roster_img_copy"))}">${icon.copy}</button>
+        ${data.can_edit ? `<button class="btn btn-outline btn-sm" data-push>${icon.external} ${esc(T("roster_push"))}</button>` : ""}</span></div>
       <div class="rh-groups">${roster.groups.map((g: any, i: number) => `<div class="rh-group ro-g">
-        <div class="rh-gh"><i></i>${esc(gName(g, i))}<span>${g.members.length}</span></div>
+        <div class="rh-gh"><i></i>${esc(gName(g, i))}<span>${g.members.length}${g.size ? `/${g.size}` : ""}</span></div>
         <div class="rh-people">${g.members.map((uid: string) => {
           const p = players.get(uid);
           const prof = data.profiles?.[uid];
@@ -332,10 +334,15 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
           <div class="rh-gh"><i></i><span class="rh-gname">${esc(rhLabel(cls))}</span><span>${list.length}</span></div>
           <div class="rh-people">${list.map(chipFor).join("")}</div>
         </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
+      ${e.unsigned?.length ? `<div class="rh-out rh-unsigned"><span>${esc(T("rh_unsigned", { n: e.unsigned.length }))}</span>${e.unsigned.slice(0, 40).map((u: any) => `<span class="rh-p"><b>${esc(u.name)}</b></span>`).join("")}${e.unsigned.length > 40 ? `<span class="muted">+${e.unsigned.length - 40}</span>` : ""}
+        <button class="btn btn-outline btn-sm" data-remind>${icon.bell} ${esc(T("rh_remind"))}</button></div>` : ""}
       ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p"><b>${esc(s.name)}</b><small>${esc(s.status !== "primary" ? s.status : rhLabel(s.class))}</small></span>`).join("")}</div>` : ""}
     </details>`;
   card.querySelector("[data-plan]")?.addEventListener("click", () => editRoster(card, e, data, players));
-  card.querySelector("[data-push]")?.addEventListener("click", () => pushRoster(e));
+  card.querySelector("[data-push]")?.addEventListener("click", () => pushRoster(e, data));
+  card.querySelector("[data-img]")?.addEventListener("click", () => rosterImageAction(e, data, false));
+  card.querySelector("[data-img-copy]")?.addEventListener("click", () => rosterImageAction(e, data, true));
+  card.querySelector("[data-remind]")?.addEventListener("click", () => remindUnsigned(e, data));
 }
 
 // Neues Raid-Helper-Event (wie im Raid-Helper-Dashboard), Leader ist man selbst
@@ -366,10 +373,12 @@ function newRhEvent(data: any, done: () => void) {
 }
 
 // gespeicherte Aufstellung ins Comp-Tool von Raid-Helper übertragen, optional im Kanal posten
-function pushRoster(e: any) {
+function pushRoster(e: any, data: any) {
+  const chans: { id: string; name: string }[] = data.channels || [];
   const m = modal(T("roster_push"), `
     <p class="hint">${esc(T("roster_push_hint"))}</p>
     <label class="check"><input type="checkbox" id="rp-ann"> <span>${esc(T("roster_announce"))}</span></label>
+    <div class="field"><label>${esc(T("rh_channel"))}</label><select class="select" id="rp-ch" disabled>${chans.map((c) => `<option value="${esc(c.id)}" ${c.id === e.channel_id ? "selected" : ""}>#${esc(c.name || c.id)}</option>`).join("")}</select></div>
     <label class="check"><input type="checkbox" id="rp-men" disabled> <span>${esc(T("roster_mention"))}</span></label>
     <div class="field"><label>${esc(T("roster_note"))}</label><textarea class="textarea" id="rp-note" rows="2" maxlength="500" disabled></textarea></div>`,
     `<button class="btn btn-primary" data-save>${esc(T("roster_push"))}</button>`);
@@ -378,13 +387,14 @@ function pushRoster(e: any) {
     const on = (x.target as HTMLInputElement).checked;
     q<HTMLInputElement>("#rp-men").disabled = !on;
     q<HTMLTextAreaElement>("#rp-note").disabled = !on;
+    q<HTMLSelectElement>("#rp-ch").disabled = !on;
   });
   q<HTMLElement>("[data-save]").addEventListener("click", async (ev) => {
     const b = ev.currentTarget as HTMLButtonElement;
     b.disabled = true;
     try {
       const r = await api<any>(`/raidhelper/rosters/${encodeURIComponent(e.id)}/push`, { method: "POST", json: {
-        announce: q<HTMLInputElement>("#rp-ann").checked, mention: q<HTMLInputElement>("#rp-men").checked,
+        announce: q<HTMLInputElement>("#rp-ann").checked, mention: q<HTMLInputElement>("#rp-men").checked, channel_id: q<HTMLSelectElement>("#rp-ch").value || null,
         description: q<HTMLTextAreaElement>("#rp-note").value,
       } });
       m.close();
@@ -394,33 +404,39 @@ function pushRoster(e: any) {
   });
 }
 
-// Aufstellung bearbeiten: Spieler per Ziehen oder Antippen in Gruppen verteilen
+// Aufstellung bearbeiten: Gruppe antippen = Ziel, Spieler anklicken = rein in die Zielgruppe (nochmal = zurück).
+// Ziehen geht weiterhin. Jede Gruppe hat ihre eigene Größe.
 function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, RhPlayer>) {
-  let size = Number(sessionStorage.getItem("juiced-roster-size")) || 10;
-  const groups: { name: string; members: string[] }[] = e.roster
-    ? e.roster.groups.map((g: any) => ({ name: g.name, members: [...g.members] }))
-    : [{ name: "", members: [] }, { name: "", members: [] }];
-  let selected: string | null = null;
+  const lastSize = () => Number(sessionStorage.getItem("juiced-roster-size")) || 10;
+  const groups: { name: string; members: string[]; size: number }[] = e.roster
+    ? e.roster.groups.map((g: any) => ({ name: g.name, members: [...g.members], size: g.size || lastSize() }))
+    : [{ name: "", members: [], size: lastSize() }, { name: "", members: [], size: lastSize() }];
+  let target = Math.max(0, groups.findIndex((g) => g.members.length < g.size));
   const info = (uid: string): RhPlayer => players.get(uid) || { uid, name: data.profiles?.[uid]?.name || "?", path: "", role: data.profiles?.[uid]?.main_role || "dps", playing: false };
   const pool = () => [...players.values()].filter((p) => p.playing && !groups.some((g) => g.members.includes(p.uid)))
     .sort((a, b) => (ROLE_ORDER[a.role] ?? 3) - (ROLE_ORDER[b.role] ?? 3) || a.name.localeCompare(b.name));
-  const chip = (p: RhPlayer) => `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${selected === p.uid ? "sel" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc(p.playing ? p.name : T("roster_left"))}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
+  const chip = (p: RhPlayer) => `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"}" draggable="true" data-uid="${esc(p.uid)}" title="${esc(p.playing ? p.name : T("roster_left"))}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
   const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return n ? `<span class="rc role-${r}" title="${esc(T("role_" + r))}"><i></i>${n}</span>` : ""; }).join("");
+  const nextOpen = (from: number) => {
+    for (let k = 0; k < groups.length; k++) { const i = (from + k) % groups.length; if (groups[i].members.length < groups[i].size) return i; }
+    return -1;
+  };
 
   const draw = () => {
     const free = pool();
+    if (target >= groups.length) target = groups.length - 1;
     card.innerHTML = `<header class="rh-head"><div><h3>${esc(e.title)}</h3><span class="muted">${esc(T("roster_hint"))}</span></div>
       <div class="rh-side">
-        <label class="ro-size">${esc(T("roster_size"))} <select class="select" data-size>${[5, 6, 8, 10, 12, 15].map((n) => `<option ${n === size ? "selected" : ""}>${n}</option>`).join("")}</select></label>
         <button class="btn btn-ghost btn-sm" data-auto>${esc(T("roster_auto"))}</button>
         <button class="btn btn-ghost btn-sm" data-reset>${esc(T("roster_reset"))}</button>
       </div></header>
       <div class="ro-board">
         <section class="ro-col ro-pool" data-drop="-1"><header><strong>${esc(T("roster_pool"))}</strong><span>${free.length}</span></header>
           <div class="ro-list">${free.map(chip).join("")}</div></section>
-        <div class="ro-groups">${groups.map((g, i) => `<section class="ro-col ${g.members.length > size ? "over" : ""}" data-drop="${i}">
+        <div class="ro-groups">${groups.map((g, i) => `<section class="ro-col ${i === target ? "is-target" : ""} ${g.members.length > g.size ? "over" : ""}" data-drop="${i}" data-target="${i}">
           <header><input class="ro-name" data-gname="${i}" maxlength="40" value="${esc(g.name)}" placeholder="${esc(T("roster_group", { n: i + 1 }))}">
-            <span class="ro-rc">${roleCount(g.members)}</span><span class="ro-n">${g.members.length}/${size}</span>
+            <span class="ro-rc">${roleCount(g.members)}</span>
+            <span class="ro-n">${g.members.length}/<input class="ro-sz" type="number" min="1" max="40" data-gsize="${i}" value="${g.size}" title="${esc(T("roster_size"))}"></span>
             <button type="button" class="btn btn-ghost btn-sm" data-rm="${i}" title="${esc(T("roster_remove_group"))}">${icon.x}</button></header>
           <div class="ro-list">${g.members.map((u) => chip(info(u))).join("") || `<span class="ro-empty">${esc(T("roster_drop"))}</span>`}</div></section>`).join("")}
           <button type="button" class="ro-add" data-add>${icon.plus} ${esc(T("roster_add_group"))}</button></div>
@@ -430,15 +446,22 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
   const move = (uid: string, to: number) => {
     for (const g of groups) g.members = g.members.filter((u) => u !== uid);
     if (to >= 0 && groups[to]) groups[to].members.push(uid);
-    selected = null;
     draw();
+  };
+  // Klick aus dem Pool: in die Zielgruppe; ist sie voll, in die nächste freie (oder eine neue)
+  const toTarget = (uid: string) => {
+    let i = groups[target] && groups[target].members.length < groups[target].size ? target : nextOpen(target);
+    if (i < 0) { groups.push({ name: "", members: [], size: groups[groups.length - 1]?.size || lastSize() }); i = groups.length - 1; }
+    target = i;
+    move(uid, i);
+    if (groups[i].members.length >= groups[i].size) { const n = nextOpen(i); if (n >= 0) { target = n; draw(); } }
   };
   const autoFill = () => {
     for (const p of pool()) {
-      let open = groups.filter((g) => g.members.length < size);
-      if (!open.length) { groups.push({ name: "", members: [] }); open = [groups[groups.length - 1]]; }
+      let open = groups.filter((g) => g.members.length < g.size);
+      if (!open.length) { groups.push({ name: "", members: [], size: groups[groups.length - 1]?.size || lastSize() }); open = [groups[groups.length - 1]]; }
       const n = (g: { members: string[] }) => g.members.filter((u) => info(u).role === p.role).length;
-      open.sort((a, b) => n(a) - n(b) || a.members.length - b.members.length);
+      open.sort((a, b) => n(a) - n(b) || a.members.length / a.size - b.members.length / b.size);
       open[0].members.push(p.uid);
     }
     draw();
@@ -451,8 +474,13 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     if (t.dataset.gname) groups[Number(t.dataset.gname)].name = t.value;
   });
   card.addEventListener("change", (ev) => {
-    const t = ev.target as HTMLSelectElement;
-    if (t.matches("[data-size]")) { size = Number(t.value); try { sessionStorage.setItem("juiced-roster-size", String(size)); } catch { /* egal */ } draw(); }
+    const t = ev.target as HTMLInputElement;
+    if (t.dataset.gsize) {
+      const v = Math.max(1, Math.min(40, Math.round(Number(t.value)) || 1));
+      groups[Number(t.dataset.gsize)].size = v;
+      try { sessionStorage.setItem("juiced-roster-size", String(v)); } catch { /* egal */ }
+      draw();
+    }
   });
   card.addEventListener("click", async (ev) => {
     const t = ev.target as HTMLElement;
@@ -460,8 +488,8 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     const chipEl = t.closest<HTMLElement>("[data-uid]");
     const col = t.closest<HTMLElement>("[data-drop]");
     if (t.closest("[data-auto]")) return autoFill();
-    if (t.closest("[data-reset]")) { groups.forEach((g) => (g.members = [])); return draw(); }
-    if (t.closest("[data-add]")) { groups.push({ name: "", members: [] }); return draw(); }
+    if (t.closest("[data-reset]")) { groups.forEach((g) => (g.members = [])); target = 0; return draw(); }
+    if (t.closest("[data-add]")) { groups.push({ name: "", members: [], size: groups[groups.length - 1]?.size || lastSize() }); target = groups.length - 1; return draw(); }
     const rm = t.closest<HTMLElement>("[data-rm]");
     if (rm) { groups.splice(Number(rm.dataset.rm), 1); return draw(); }
     if (t.closest("[data-cancel]")) { card.classList.remove("is-editing"); card.replaceWith(card.cloneNode()); return redraw(); }
@@ -476,12 +504,13 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
       } catch (x) { toast((x as Error).message); }
       return;
     }
-    if (t.closest("input, select, button:not([data-uid])")) return;
-    if (chipEl && (!selected || selected === chipEl.dataset.uid)) {
-      selected = selected === chipEl.dataset.uid ? null : chipEl.dataset.uid!;
-      return draw();
+    if (chipEl) {
+      // im Pool: in die Zielgruppe; in einer Gruppe: zurück in den Pool
+      const inPool = chipEl.closest("[data-drop]")?.getAttribute("data-drop") === "-1";
+      return inPool ? toTarget(chipEl.dataset.uid!) : move(chipEl.dataset.uid!, -1);
     }
-    if (selected && col) move(selected, Number(col.dataset.drop));
+    if (t.closest("input, button")) return;
+    if (col && col.dataset.target) { target = Number(col.dataset.target); draw(); }
   });
   card.addEventListener("dragstart", (ev) => {
     const c = (ev.target as HTMLElement).closest<HTMLElement>("[data-uid]");
@@ -515,6 +544,93 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
   }
 }
 
+// Aufstellung als Bild (wie der Screenshot im Raid-Helper-Comp-Tool)
+const ROLE_HEX: Record<string, string> = { tank: "#ca8a04", healer: "#16a34a", dps: "#dc2626" };
+async function rosterImage(e: any, data: any): Promise<Blob> {
+  const players = rhPlayers(e, data.profiles || {});
+  const groups: any[] = e.roster.groups;
+  const cols = Math.min(groups.length, groups.length > 4 ? 3 : groups.length <= 2 ? groups.length : 2) || 1;
+  const W = 1200, pad = 36, gap = 18, colW = (W - pad * 2 - gap * (cols - 1)) / cols, rowH = 34, headH = 44;
+  const rowsPer = (g: any) => Math.max(g.members.length, 1);
+  const lines: number[] = [];
+  for (let i = 0; i < groups.length; i += cols) lines.push(Math.max(...groups.slice(i, i + cols).map(rowsPer)));
+  const H = pad + 86 + lines.reduce((a, n) => a + headH + n * rowH + 16 + gap, 0) + pad - gap + 20;
+  const c = document.createElement("canvas");
+  const dpr = 2;
+  c.width = W * dpr; c.height = H * dpr;
+  const x = c.getContext("2d")!;
+  x.scale(dpr, dpr);
+  const font = (w: number, s: number) => `${w} ${s}px Inter, system-ui, sans-serif`;
+  const rr = (X: number, Y: number, w: number, h: number, r: number) => { x.beginPath(); x.roundRect(X, Y, w, h, r); };
+  const fit = (t: string, max: number) => { if (x.measureText(t).width <= max) return t; while (t.length && x.measureText(t + "…").width > max) t = t.slice(0, -1); return t + "…"; };
+  x.fillStyle = "#0e0d12"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#ff7a18"; x.fillRect(0, 0, W, 5);
+  x.fillStyle = "#f4f2ee"; x.font = font(800, 30); x.fillText(fit(e.title, W - pad * 2 - 160), pad, pad + 30);
+  const when = e.start ? new Date(e.start).toLocaleString(loc(), { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "";
+  x.fillStyle = "#9b98a3"; x.font = font(500, 16); x.fillText(`${when}${e.leader ? `  ·  ${e.leader}` : ""}`, pad, pad + 60);
+  x.textAlign = "right"; x.fillStyle = "#ff7a18"; x.font = font(800, 20); x.fillText("JUICED", W - pad, pad + 30); x.textAlign = "left";
+  let y = pad + 86;
+  lines.forEach((n, li) => {
+    groups.slice(li * cols, li * cols + cols).forEach((g, ci) => {
+      const gx = pad + ci * (colW + gap), gi = li * cols + ci;
+      rr(gx, y, colW, headH + n * rowH + 16, 12); x.fillStyle = "#17161c"; x.fill();
+      x.fillStyle = "#f4f2ee"; x.font = font(700, 16); x.fillText(fit((g.name || T("roster_group", { n: gi + 1 })).toUpperCase(), colW - 80), gx + 16, y + 28);
+      x.textAlign = "right"; x.fillStyle = "#9b98a3"; x.font = font(600, 14); x.fillText(`${g.members.length}/${g.size || g.members.length}`, gx + colW - 16, y + 28); x.textAlign = "left";
+      g.members.forEach((uid: string, k: number) => {
+        const p = players.get(uid) || { name: data.profiles?.[uid]?.name || "?", path: "", role: data.profiles?.[uid]?.main_role || "" } as any;
+        const ry = y + headH + k * rowH;
+        rr(gx + 10, ry, colW - 20, rowH - 5, 7); x.fillStyle = "#211f27"; x.fill();
+        x.fillStyle = ROLE_HEX[p.role] || "#6b6875"; rr(gx + 10, ry, 4, rowH - 5, 2); x.fill();
+        x.fillStyle = "#f4f2ee"; x.font = font(600, 14); x.fillText(fit(p.name, colW * 0.55), gx + 24, ry + 19);
+        if (p.path) { x.textAlign = "right"; x.fillStyle = "#9b98a3"; x.font = font(500, 12); x.fillText(fit(p.path, colW * 0.38), gx + colW - 20, ry + 19); x.textAlign = "left"; }
+      });
+    });
+    y += headH + n * rowH + 16 + gap;
+  });
+  x.fillStyle = "#6b6875"; x.font = font(500, 12); x.fillText("juiced.team", pad, H - pad + 14);
+  return new Promise((res) => c.toBlob((b) => res(b!), "image/png"));
+}
+
+async function rosterImageAction(e: any, data: any, copy: boolean) {
+  try { await document.fonts?.ready; } catch { /* egal */ }
+  const blob = await rosterImage(e, data);
+  if (copy && navigator.clipboard && "ClipboardItem" in window) {
+    try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); toast(T("roster_img_copied")); return; } catch { /* Fallback: herunterladen */ }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${e.title.replace(/[^\w-]+/g, "_").slice(0, 40) || "roster"}.png`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+// Erinnerung an alle, die noch nicht angemeldet sind
+function remindUnsigned(e: any, data: any) {
+  const chans: { id: string; name: string }[] = data.channels || [];
+  const m = modal(T("rh_remind_t"), `
+    <p class="hint">${esc(T("rh_unsigned_hint"))}</p>
+    <div class="unsigned-list">${e.unsigned.map((u: any) => `<span class="rh-p"><b>${esc(u.name)}</b></span>`).join("")}</div>
+    <label class="check"><input type="checkbox" id="rm-post" checked> <span>${esc(T("rh_remind_post"))}</span></label>
+    <div class="row2"><div class="field"><label>${esc(T("rh_channel"))}</label><select class="select" id="rm-ch">${chans.map((c) => `<option value="${esc(c.id)}" ${c.id === e.channel_id ? "selected" : ""}>#${esc(c.name || c.id)}</option>`).join("")}</select></div>
+      <div class="field"><label>${esc(T("rh_remind_role"))}</label><input class="input" id="rm-role" maxlength="100" placeholder="G1"></div></div>
+    ${data.can_dm ? `<label class="check"><input type="checkbox" id="rm-dm"> <span>${esc(T("rh_remind_dm"))}</span></label>` : ""}
+    <div class="field"><label>${esc(T("rh_remind_text"))}</label><textarea class="textarea" id="rm-text" rows="2" maxlength="800">${esc(T("rh_remind_default", { title: e.title }))}</textarea></div>`,
+    `<button class="btn btn-primary" data-save>${esc(T("rh_remind"))}</button>`);
+  const q = <X extends HTMLElement>(sel: string) => m.el.querySelector(sel) as X;
+  q<HTMLElement>("[data-save]").addEventListener("click", async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement;
+    b.disabled = true;
+    try {
+      await api(`/raidhelper/events/${encodeURIComponent(e.id)}/remind`, { method: "POST", json: {
+        post: q<HTMLInputElement>("#rm-post").checked, channel_id: q<HTMLSelectElement>("#rm-ch")?.value || null,
+        role: q<HTMLInputElement>("#rm-role").value, text: q<HTMLTextAreaElement>("#rm-text").value,
+        dm: !!m.el.querySelector<HTMLInputElement>("#rm-dm")?.checked,
+      } });
+      m.close(); toast(T("rh_reminded"));
+    } catch (x) { toast((x as Error).message); b.disabled = false; }
+  });
+}
+
 // ------------------------------------------------------------------ Build: Pfade + Inner Ways (Darstellung)
 
 const pathTag = (id: string | null | undefined, main = false) => {
@@ -529,30 +645,27 @@ const hasBuild = (u: any) => !!(u.main_path || (u.alt_paths || []).length || (u.
 
 // ------------------------------------------------------------------ Mitglieder: Liste mit Filter, Klick öffnet das Profil
 
-const memFilter = { q: "", role: "", path: "" };
+const memFilter = { q: "", role: "" };
 async function viewRoster(view: HTMLElement) {
   view.innerHTML = head(T("mem_title")) + `<div class="mem-filter">
       <input class="input search" placeholder="${esc(T("mem_search"))}" data-q value="${esc(memFilter.q)}">
       <div class="seg-tabs" role="group">${["", ...ROLES].map((r) => `<button type="button" data-role="${r}" aria-pressed="${memFilter.role === r}">${r ? `<span class="role-tag role-${r}">${esc(T("role_" + r))}</span>` : esc(T("mem_all"))}</button>`).join("")}</div>
-      <select class="select" data-path><option value="">${esc(T("mem_all_paths"))}</option>${PATHS.map((p) => `<option value="${p.id}" ${memFilter.path === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
     </div><p class="muted mem-count" data-count></p><div id="rost">${loading}</div>`;
   let list: any[] = [];
   const draw = () => {
     const q = memFilter.q.toLowerCase();
     const items = list.filter((u) => (!q || `${u.display_name} ${u.username}`.toLowerCase().includes(q))
-      && (!memFilter.role || u.main_role === memFilter.role)
-      && (!memFilter.path || u.main_path === memFilter.path || (u.alt_paths || []).includes(memFilter.path)));
+      && (!memFilter.role || u.main_role === memFilter.role));
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
         <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
         <div class="mc-build">${u.main_path ? pathTag(u.main_path, true) : u.main_role ? roleTag(u.main_role) : `<span class="muted">${esc(T("mem_no_build"))}</span>`}
           ${(u.alt_paths || []).length ? `<span class="mc-more">+${u.alt_paths.length}</span>` : ""}</div>
-        ${(u.inner_ways || []).length ? `<div class="mc-iw">${u.inner_ways.slice(0, 8).map((w: string) => iwTile(w, true)).join("")}</div>` : ""}
+        ${pathById(u.main_path) || (u.inner_ways || []).length ? `<div class="mc-meta">${pathById(u.main_path) ? `<span>${esc(pathById(u.main_path)!.weapons.join(" + "))}</span>` : ""}${(u.inner_ways || []).length ? `<span>${u.inner_ways.length} ${esc(T("prof_inner_ways"))}</span>` : ""}</div>` : ""}
       </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   };
   view.querySelector("[data-q]")!.addEventListener("input", (e) => { memFilter.q = (e.target as HTMLInputElement).value; draw(); });
-  view.querySelector("[data-path]")!.addEventListener("change", (e) => { memFilter.path = (e.target as HTMLSelectElement).value; draw(); });
   view.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.addEventListener("click", () => {
     memFilter.role = b.dataset.role || "";
     view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === memFilter.role)));

@@ -57,7 +57,7 @@ const nav = [
         <a href={`/${lang}/`} class="brand" aria-label="JUICED"><Logo /></a>
         <nav class="nav-desktop" aria-label="Main">
           {nav.map((n) => <a href={n.href} class:list={["nav-link", { active: page === n.id }]}>{n.label}</a>)}
-          <a href={`/${lang}/app/#/vods`} class="nav-link nav-vods auth-only"><Icon name="video" />{t("nav_vods")}</a>
+          <a href={`/${lang}/app/#/vods`} class="nav-link auth-only">{t("nav_vods")}</a>
         </nav>
         <div class="header-actions">
           <div class="lang-menu" data-lang-menu>
@@ -157,8 +157,6 @@ const nav = [
   /* nur angemeldet: VODs-Link; abgemeldet: Discord-Login gut sichtbar */
   :global(html:not([data-auth="in"])) .auth-only { display: none; }
   :global(html[data-auth="in"]) .guest-only { display: none; }
-  .nav-vods { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
-  .nav-vods :global(svg) { width: 15px; height: 15px; color: var(--accent); }
   .acc-dc { display: none; }
   .acc-dc :global(svg) { width: 16px; height: 16px; }
   :global(html:not([data-auth="in"])) .acc-link { gap: 7px; color: #fff; background: #5865f2; border-color: #5865f2; }

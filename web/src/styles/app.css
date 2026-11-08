@@ -472,3 +472,15 @@ main.vod-main, .vod-main { max-width: none; }
 .path-roles { margin: 2px 0 10px; }
 .path-roles button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
 .path-chip::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--role); vertical-align: 1px; }
+/* Aufstellung: Zielgruppe, Größe pro Gruppe, Aktionen */
+.ro-col.is-target { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.ro-col[data-target] > header { cursor: pointer; }
+.ro-sz { width: 42px; height: 26px; padding: 0 4px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12px; text-align: center; -moz-appearance: textfield; }
+.ro-sz::-webkit-inner-spin-button { opacity: 1; }
+.ro-p { cursor: pointer; }
+.ro-actions { margin-left: auto; display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.rh-unsigned { border-top-style: dashed; }
+.rh-unsigned .btn { margin-left: auto; }
+.unsigned-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 140px; overflow-y: auto; margin-bottom: 12px; }
+/* Mitgliederkarte: ruhige Zusatzzeile statt Mini-Icons */
+.mc-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--muted); }

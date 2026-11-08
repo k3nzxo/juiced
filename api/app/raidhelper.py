@@ -12,8 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as DbSession
 
-from . import models
-from .config import DISCORD_GUILD_ID, _env
+from . import models, notify
+from .config import DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, PUBLIC_URL, _env
 from .db import get_db
 from .security import require_management, require_member
 
@@ -158,15 +158,24 @@ def events(db: DbSession = Depends(get_db), user: models.User = Depends(require_
     names = {u.id: u.display_name for u in users}
     profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role,
                                "alt_paths": u.alt_path_list} for u in users}
-    return {**data, "can_edit": user.level >= models.RANK_LEVEL["vice"],
+    can_edit = user.level >= models.RANK_LEVEL["vice"]
+    members = [{"id": u.discord_id, "name": u.display_name} for u in sorted(users, key=lambda u: u.display_name.lower())]
+
+    def unsigned(e):
+        signed = {s["user_id"] for s in e["signups"]}
+        return [m for m in members if m["id"] not in signed]
+
+    return {**data, "can_edit": can_edit, "can_dm": bool(DISCORD_BOT_TOKEN) and can_edit,
             "profiles": {d: profiles[d] for e in evs for s in e["signups"] if (d := s["user_id"]) in profiles},
             "events": [{**e, "me": next((s for s in e["signups"] if s["user_id"] == mine), None),
-                        "roster": _roster_out(rosters.get(e["id"]), names)} for e in evs]}
+                        "roster": _roster_out(rosters.get(e["id"]), names),
+                        "unsigned": unsigned(e) if can_edit else []} for e in evs]}
 
 
 class RosterGroup(BaseModel):
     name: str = ""
     members: list[str] = []
+    size: int = 10
 
 
 class RosterIn(BaseModel):
@@ -188,7 +197,7 @@ def save_roster(event_id: str, payload: RosterIn, db: DbSession = Depends(get_db
             if _ID.match(m or "") and m not in seen:  # jeder Spieler höchstens einmal
                 seen.add(m)
                 members.append(m)
-        groups.append({"name": " ".join((g.name or "").split())[:40], "members": members})
+        groups.append({"name": " ".join((g.name or "").split())[:40], "members": members, "size": max(1, min(int(g.size or 10), 40))})
     r = db.get(models.Roster, event_id)
     if not groups:
         if r:
@@ -266,6 +275,7 @@ def create_event(payload: EventIn, user: models.User = Depends(require_managemen
 
 class PushIn(BaseModel):
     announce: bool = False
+    channel_id: Optional[str] = None
     mention: bool = False
     description: str = ""
 
@@ -319,10 +329,48 @@ def push_roster(event_id: str, payload: PushIn, db: DbSession = Depends(get_db),
     _rh("PATCH", f"/comps/{event_id}", body)
     announced = False
     if payload.announce:
-        if not ev.get("channel_id"):
+        channel = payload.channel_id or ev.get("channel_id")
+        if not channel or not _ID.match(channel):
             raise HTTPException(status_code=400, detail="Please choose a channel")
         _rh("POST", f"/comps/{event_id}/announcements", {
-            "channelId": ev["channel_id"], "description": (payload.description or "").strip()[:500],
+            "channelId": channel, "description": (payload.description or "").strip()[:500],
             "mentions": "signed" if payload.mention else "none"})
         announced = True
     return {"ok": True, "announced": announced, "url": f"https://raid-helper.xyz/comp/{event_id}"}
+
+
+
+class RemindIn(BaseModel):
+    channel_id: Optional[str] = None
+    post: bool = True
+    role: str = ""
+    text: str = ""
+    dm: bool = False
+
+
+@router.post("/events/{event_id}/remind")
+def remind(event_id: str, payload: RemindIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    """Mitglieder erinnern, die sich noch nicht angemeldet haben: Post im Kanal (über Raid-Helper) und/oder DM (eigener Bot)."""
+    ev = next((e for e in get_events().get("events", []) if e["id"] == event_id), None) if _ID.match(event_id) else None
+    if not ev:
+        raise HTTPException(status_code=404, detail="Not found")
+    signed = {s["user_id"] for s in ev["signups"]}
+    missing = [u for u in db.query(models.User).filter(models.User.rank != "guest").all() if u.discord_id not in signed]
+    text = (payload.text or "").strip()[:800]
+    link = ev.get("url") or ""
+    if payload.post:
+        channel = payload.channel_id or ev.get("channel_id")
+        if not channel or not _ID.match(channel):
+            raise HTTPException(status_code=400, detail="Please choose a channel")
+        names = " ".join(f"<@{u.discord_id}>" for u in missing)[:3000]
+        body = {"title": {"text": f"⏰ {ev['title']}"[:240]},
+                "description": "\n\n".join(x for x in (text, names, link) if x)[:4000], "color": "#ff7a18"}
+        role = " ".join((payload.role or "").split())[:100]
+        if role:
+            body["mentions"] = role
+        _rh("POST", f"/servers/{SERVER_ID}/channels/{channel}/embed", body)
+    dms = 0
+    if payload.dm and DISCORD_BOT_TOKEN:
+        notify.dm([u.discord_id for u in missing], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
+        dms = len(missing)
+    return {"ok": True, "count": len(missing), "dms": dms}
