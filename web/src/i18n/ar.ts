@@ -655,6 +655,8 @@ const ar: Partial<Dict & ExtraDict> = {
   vod_review_started_toast: "بدأت المراجعة – سيصل إشعار لمن رفع المقطع",
   vod_uploading_by: "{name} يرفع الآن · {pct}%",
   vod_uploading_now: "يتم رفع VOD الآن",
+  att_label: "الحضور (30 يومًا):",
+  att_title: "{a} من {t} فعالية",
 };
 
 export default ar;

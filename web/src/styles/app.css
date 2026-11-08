@@ -627,3 +627,10 @@ a.pp-chip:hover { border-color: var(--accent); }
 .nav-up svg { width: 14px; height: 14px; }
 .nav-up + .nbadge { margin-inline-start: 6px; }
 @keyframes vodPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+/* Anwesenheit */
+.att { flex: none; margin-inline-start: auto; align-self: flex-start; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.mh-att .att { margin-inline-start: 0; align-self: center; }
+.att-good { color: #22c55e; background: color-mix(in srgb, #22c55e 13%, transparent); }
+.att-mid { color: #eab308; background: color-mix(in srgb, #eab308 14%, transparent); }
+.att-low { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.mh-att { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }

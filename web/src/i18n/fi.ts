@@ -655,6 +655,8 @@ const fi: Partial<Dict & ExtraDict> = {
   vod_review_started_toast: "Arviointi aloitettu – lataaja saa viestin",
   vod_uploading_by: "{name} lataa · {pct} %",
   vod_uploading_now: "VODia ladataan juuri nyt",
+  att_label: "Osallistuminen (30 pv):",
+  att_title: "{a}/{t} tapahtumaa",
 };
 
 export default fi;

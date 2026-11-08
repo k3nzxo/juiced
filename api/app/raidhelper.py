@@ -716,3 +716,74 @@ def _save_emotes(emotes: dict):
 def emotes(db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
     """Name (klein) -> Discord-Emote-ID, z. B. {"bellstrike": "123", "bamboocut_wind": "456"}."""
     return {e.name: e.emote_id for e in db.query(models.Emote).all()}
+
+
+# ------------------------------------------------------------------ Anwesenheit (Raid-Helper-Statistik)
+
+_att_cache: dict = {}
+_ATT_KEYS = {
+    "id": ("userId", "user_id", "id", "discordId"),
+    "name": ("name", "userName", "displayName"),
+    "attended": ("attendance", "attended", "eventsAttended", "count", "signups"),
+    "total": ("totalEvents", "total", "events", "possible", "eventCount"),
+    "pct": ("percentage", "percent", "attendancePercentage", "rate"),
+}
+
+
+def _pick(d: dict, key: str):
+    for k in _ATT_KEYS[key]:
+        if k in d and d[k] not in (None, ""):
+            return d[k]
+    return None
+
+
+def _num(v) -> Optional[float]:
+    try:
+        return float(str(v).rstrip("%"))
+    except (TypeError, ValueError):
+        return None
+
+
+def get_attendance(days: int) -> dict:
+    """Discord-ID -> {attended, total, pct} der letzten `days` Tage (geschlossene Events)."""
+    if not API_KEY or not SERVER_ID:
+        return {"configured": False, "members": {}}
+    hit = _att_cache.get(days)
+    if hit and time.time() - hit[0] < 600:
+        return hit[1]
+    now = int(time.time())
+    try:
+        with httpx.Client(timeout=15, headers={"Authorization": API_KEY, "User-Agent": "juiced-site",
+                                               "TimeFilterStart": str(now - days * 86400), "TimeFilterEnd": str(now)}) as c:
+            r = c.get(f"{BASE}/servers/{SERVER_ID}/attendance")
+            r.raise_for_status()
+            data = r.json()
+    except Exception as ex:
+        print(f"[raidhelper] Anwesenheit nicht abrufbar: {type(ex).__name__}")
+        return hit[1] if hit else {"configured": True, "members": {}, "error": "unavailable"}
+    rows = data.get("result") if isinstance(data, dict) else data
+    rows = rows if isinstance(rows, list) else []
+    if rows and isinstance(rows[0], dict) and not _att_cache.get("logged"):
+        print(f"[raidhelper] Anwesenheit: Felder {sorted(rows[0].keys())}")  # einmalig, zum Nachjustieren
+        _att_cache["logged"] = (0, True)
+    members = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        uid = str(_pick(row, "id") or "")
+        if not uid:
+            continue
+        attended, total, pct = _num(_pick(row, "attended")), _num(_pick(row, "total")), _num(_pick(row, "pct"))
+        if pct is None and attended is not None and total:
+            pct = attended / total * 100
+        members[uid] = {"attended": int(attended) if attended is not None else None,
+                        "total": int(total) if total is not None else None,
+                        "pct": round(pct) if pct is not None else None}
+    out = {"configured": True, "days": days, "members": members}
+    _att_cache[days] = (time.time(), out)
+    return out
+
+
+@router.get("/attendance")
+def attendance(days: int = 30, user: models.User = Depends(require_member)):
+    return get_attendance(max(7, min(days, 180)))

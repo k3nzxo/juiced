@@ -940,6 +940,15 @@ const roleOrBuildTag = (u: any, main = false) => u.main_build ? buildTag(u.main_
 // ------------------------------------------------------------------ Mitglieder: Liste mit Filter, Klick öffnet das Profil
 
 const memFilter = { q: "", role: "" };
+// Anwesenheit (Raid-Helper, 30 Tage): Discord-ID -> {attended, total, pct}
+let ATT: Record<string, any> = {};
+const loadAttendance = () => api<any>("/raidhelper/attendance?days=30").then((d) => { ATT = d.members || {}; }).catch(() => {});
+const attClass = (p: number) => (p >= 75 ? "att-good" : p >= 50 ? "att-mid" : "att-low");
+const attBadge = (did: string) => {
+  const a = ATT[did];
+  if (!a || a.pct == null) return "";
+  return `<span class="att ${attClass(a.pct)}" title="${esc(T("att_title", { a: a.attended ?? "?", t: a.total ?? "?" }))}">${a.pct}%</span>`;
+};
 async function viewRoster(view: HTMLElement) {
   view.innerHTML = head(T("mem_title")) + `<div class="mem-filter">
       <input class="input search" placeholder="${esc(T("mem_search"))}" data-q value="${esc(memFilter.q)}">
@@ -953,7 +962,7 @@ async function viewRoster(view: HTMLElement) {
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
-        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
+        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div>${attBadge(u.discord_id)}</div>
         <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
         ${(() => {  // passt nur über eine weitere Kombi? Dann zeigen, welche
@@ -971,7 +980,7 @@ async function viewRoster(view: HTMLElement) {
     view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === memFilter.role)));
     draw();
   }));
-  try { list = await api<any[]>("/members"); draw(); } catch (e) { view.querySelector("#rost")!.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
+  try { [list] = await Promise.all([api<any[]>("/members"), loadAttendance()]); draw(); } catch (e) { view.querySelector("#rost")!.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
 }
 
 function buildBlock(u: any, compact = false) {
@@ -1050,7 +1059,7 @@ async function viewMember(view: HTMLElement, id: number) {
   const el = view.querySelector<HTMLElement>("#mem")!;
   let u: any, vods: any[] = [];
   try {
-    [u, vods] = await Promise.all([api<any>(`/members/${id}`), api<any[]>("/vods").catch(() => [])]);
+    [u, vods] = await Promise.all([api<any>(`/members/${id}`), api<any[]>("/vods").catch(() => []), loadAttendance()]);
   } catch (e) { el.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; return; }
   const own = vods.filter((v) => v.uploader_id === u.id && v.status === "ready");
   const joined = u.joined_at ? new Date(u.joined_at).toLocaleDateString(loc(), { month: "long", year: "numeric" }) : "";
@@ -1058,7 +1067,8 @@ async function viewMember(view: HTMLElement, id: number) {
       ${avatar(u, 72)}
       <div class="mh-main"><h1>${esc(u.display_name)} ${flag(u.country)}</h1>
         <div class="mh-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
-        <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span></div>
+        <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span>
+        ${ATT[u.discord_id]?.pct != null ? `<span class="mh-att">${esc(T("att_label"))} ${attBadge(u.discord_id)} <span class="muted">${esc(T("att_title", { a: ATT[u.discord_id].attended ?? "?", t: ATT[u.discord_id].total ?? "?" }))}</span></span>` : ""}</div>
       ${u.id === me!.id ? `<a class="btn btn-outline btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a>`
         : u.can_edit_build ? `<a class="btn btn-outline btn-sm" href="#/roster/${u.id}/edit">${icon.edit} ${esc(T("dash_build_edit"))}</a>` : ""}
     </section>
