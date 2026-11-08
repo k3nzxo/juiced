@@ -4,22 +4,9 @@ import { useT, DISCORD_INVITE, type Lang } from "../i18n";
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useT(lang);
-// 30v30: zwei Formationen à 6 Reihen x 5 Spalten
-const team = (side: "us" | "them") => Array.from({ length: 30 }, (_, i) => {
-  const col = i % 5, row = Math.floor(i / 5);
-  const x = side === "us" ? 40 + col * 34 : 480 - col * 34;
-  return { x, y: 46 + row * 46, d: ((row * 5 + (side === "us" ? 4 - col : col)) * 97) % 2400 };
-});
-const us = team("us"), them = team("them");
 ---
 <section class="hero">
-  <div class="hero-grid-bg" aria-hidden="true"></div>
-  <svg class="clash" viewBox="0 0 520 330" aria-hidden="true">
-    <line class="mid" x1="260" y1="20" x2="260" y2="310" />
-    <g class="side side-us">{us.map((p) => <circle cx={p.x} cy={p.y} r="7" style={`--d:${p.d}ms`} />)}</g>
-    <g class="side side-them">{them.map((p) => <circle cx={p.x} cy={p.y} r="7" style={`--d:${p.d}ms`} />)}</g>
-    <text x="260" y="326" text-anchor="middle">30 v 30</text>
-  </svg>
+  <canvas class="wind" data-wind aria-hidden="true"></canvas>
   <div class="container hero-inner">
     <div class="hero-copy">
       <p class="kicker reveal">EU · Where Winds Meet</p>
@@ -35,28 +22,12 @@ const us = team("us"), them = team("them");
 
 <style>
   .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--border); }
-  .hero-grid-bg {
-    position: absolute; inset: 0; pointer-events: none;
-    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 56px 56px; opacity: 0.35; animation: grid-drift 30s linear infinite;
-    mask-image: radial-gradient(ellipse 70% 80% at 85% 50%, #000 10%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse 70% 80% at 85% 50%, #000 10%, transparent 70%);
-  }
-  @keyframes grid-drift { to { background-position: 56px 56px, 56px 56px; } }
-  .clash { position: absolute; right: max(24px, calc((100vw - var(--container)) / 2 + 24px)); top: 50%; width: min(460px, 38vw); transform: translateY(-50%); overflow: visible; }
-  .clash .mid { stroke: var(--border-strong); stroke-width: 1.5; stroke-dasharray: 4 7; animation: dash 1.6s linear infinite; }
-  .clash text { font: 600 12px var(--font-sans); letter-spacing: 0.2em; fill: var(--faint); }
-  .side { animation: advance-us 5.5s var(--ease) infinite; }
-  .side-them { animation-name: advance-them; }
-  .side-us circle { fill: var(--accent); }
-  .side-them circle { fill: var(--text); opacity: 0.2; }
-  .side circle { transform-box: fill-box; transform-origin: center; animation: blink 2.4s ease-in-out infinite; animation-delay: var(--d); }
-  .side-them circle { animation-name: blink-them; }
-  @keyframes advance-us { 0%, 100% { transform: translateX(0); } 45%, 55% { transform: translateX(26px); } }
-  @keyframes advance-them { 0%, 100% { transform: translateX(0); } 45%, 55% { transform: translateX(-26px); } }
-  @keyframes blink { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.7); opacity: 0.55; } }
-  @keyframes blink-them { 0%, 100% { transform: scale(1); opacity: 0.22; } 50% { transform: scale(0.7); opacity: 0.1; } }
-  @keyframes dash { to { stroke-dashoffset: -22; } }
+  .wind { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+    mask-image: linear-gradient(90deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.25) 35%, #000 62%), linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+    mask-composite: intersect; -webkit-mask-composite: source-in;
+    -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.25) 35%, #000 62%), linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+    animation: wind-in 1.4s ease both; }
+  @keyframes wind-in { from { opacity: 0; } }
   .wordmark { font-family: var(--font-sans); font-weight: 850; letter-spacing: -0.05em; }
   @media (max-width: 960px) { .clash { display: none; } }
   .hero-inner { position: relative; display: flex; align-items: center; min-height: min(520px, 70vh); padding-top: 64px; padding-bottom: 64px; }
@@ -69,3 +40,9 @@ const us = team("us"), them = team("them");
     .hero-inner { min-height: 0; padding-top: 56px; padding-bottom: 56px; }
   }
 </style>
+
+<script>
+  import { initWind } from "../scripts/wind";
+  const c = document.querySelector<HTMLCanvasElement>("[data-wind]");
+  if (c) initWind(c);
+</script>
