@@ -33,25 +33,43 @@ const L = {
   const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
   const token = location.hash.slice(1);
   const fail = () => { el.innerHTML = `<p class="nf">${esc(L.notfound)}</p>`; };
-  if (!/^[\w-]{16,64}$/.test(token)) fail();
-  else fetch(`/api/scrims/status/${encodeURIComponent(token)}`)
+  // Live: solange noch keine Antwort da ist, alle 15 Sekunden nachsehen (und sofort beim Zurückkehren in den Tab)
+  let lastKey = "", timer = 0;
+  const load = () => fetch(`/api/scrims/status/${encodeURIComponent(token)}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : Promise.reject()))
     .then((d) => {
+      const key = `${d.status}|${d.reply || ""}`;
+      if (key === lastKey) return d;
+      const changed = lastKey !== "";
+      lastKey = key;
       const when = new Date(d.created_at).toLocaleDateString(lang === "pt" ? "pt-BR" : lang, { day: "numeric", month: "long", year: "numeric" });
       el.dataset.state = d.status;
+      el.classList.toggle("flash", changed);
       el.innerHTML = `
         <div class="st-top"><h2>${esc(d.guild_name)} <span class="vs">vs</span> JUICED</h2><span class="pill pill-${esc(d.status)}"><i></i>${esc(L[d.status] || d.status)}</span></div>
         <p class="st-text">${esc(L[d.status + "_b"] || "")}</p>
         ${d.reply ? `<div class="st-reply"><span>${esc(L.reply)}</span><p>${esc(d.reply)}</p></div>` : ""}
         <dl><div><dt>${esc(L.sent.replace("{d}", ""))}</dt><dd>${esc(when)}</dd></div><div><dt>${esc(L.times)}</dt><dd>${esc(d.proposed_times)}</dd></div></dl>`;
-    })
-    .catch(fail);
+      return d;
+    });
+  const poll = () => {
+    window.clearTimeout(timer);
+    load().then((d) => { if (d.status === "pending") timer = window.setTimeout(poll, 15000); })
+      .catch(() => { if (!lastKey) fail(); else timer = window.setTimeout(poll, 30000); });
+  };
+  if (!/^[\w-]{16,64}$/.test(token)) fail();
+  else {
+    poll();
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && (!lastKey || lastKey.startsWith("pending"))) poll(); });
+  }
 </script>
 
 <style>
   .narrow { max-width: 720px; padding-top: 72px; display: flex; flex-direction: column; gap: 14px; }
   h1 { font-size: clamp(34px, 4.4vw, 50px); }
   .status { padding: 28px; display: flex; flex-direction: column; gap: 16px; min-height: 140px; transition: border-color .3s; }
+  .status.flash { animation: st-flash 1.2s var(--ease); }
+  @keyframes st-flash { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
   .status[data-state="accepted"] { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
   .status :global(.st-top) { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   .status :global(h2) { font-size: 22px; }

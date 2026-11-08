@@ -108,7 +108,7 @@ main.vod-main { max-width: 1500px; }
 .vod-link-btn.danger:hover { color: var(--danger); }
 
 @media (max-width: 1000px) {
-  .vod-layout { grid-template-columns: 1fr; }
+  .vod-layout { grid-template-columns: minmax(0, 1fr); }
   .vod-notes-col { position: static; max-height: none; }
   .vod-notes { max-height: 60vh; }
 }
@@ -150,6 +150,17 @@ main.vod-main { max-width: 1500px; }
 
 /* ---------- Große Review-Ansicht */
 .vod-layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; }
-.vod-player-wrap video { max-height: calc(100vh - 230px); min-height: 320px; }
+.vod-player-wrap video { max-height: calc(100vh - 230px); }
+@media (min-width: 1001px) { .vod-player-wrap video { min-height: 320px; } }
 .vod-notes-col { max-height: calc(100vh - 120px); top: 84px; background: var(--surface); border-color: var(--border); }
-@media (max-width: 1100px) { .vod-layout { grid-template-columns: 1fr; } .vod-notes-col { position: static; max-height: none; } }
+@media (max-width: 1100px) { .vod-layout { grid-template-columns: minmax(0, 1fr); } .vod-player-col, .vod-notes-col { min-width: 0; } .vod-notes-col { position: static; max-height: none; } }
+
+@media (max-width: 700px) {
+  .vod-head { align-items: flex-start; }
+  .vod-head h1 { font-size: 1.35rem; }
+  .vod-head-actions { flex-wrap: wrap; }
+  .vod-player-wrap { margin: 0 -16px; border-radius: 0; }
+  .vod-seg button { height: 34px; padding: 0 11px; }
+  .vod-drop { padding: 18px 16px; gap: 12px; }
+  .vod-upload-stats { margin-left: 0; width: 100%; order: 3; }
+}

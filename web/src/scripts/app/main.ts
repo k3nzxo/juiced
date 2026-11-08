@@ -3,6 +3,7 @@ import { api, esc, fmtDate, icon, initI18n, lang, modal, T, timeAgo, toast } fro
 // @ts-ignore -- reines JS-Modul
 import { renderVods, vodCleanup } from "./vods.js";
 import { enhancePicker, closePicker } from "./picker";
+import { timeRange, timeShort } from "../schedule";
 
 type Me = {
   id: number; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
@@ -106,21 +107,27 @@ function renderShell() {
   refreshBadges();
 }
 
-// Offene Punkte als Zahl an den Menüpunkten (gleiche Daten wie die Glocke im Header)
-let badgeTimer = 0;
+// Offene Punkte als Zahl an den Menüpunkten (gleiche Daten wie die Glocke im Header).
+// Die Glocke fragt regelmäßig nach (juiced:bell), hier wird nur direkt nach eigenen Aktionen neu geladen.
+type Counts = { applications: number; matches: number; vods: number; total: number };
+function applyBadges(n: Counts) {
+  const map: Record<string, number> = { applications: n.applications, matches: n.matches, vods: n.vods };
+  root.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
+    const c = map[a.dataset.nav || ""] || 0;
+    const cur = a.querySelector<HTMLElement>(".nbadge");
+    const txt = c > 99 ? "99+" : String(c);
+    if (!c) { cur?.remove(); return; }
+    if (cur) { if (cur.textContent !== txt) cur.textContent = txt; }
+    else a.insertAdjacentHTML("beforeend", `<span class="nbadge">${txt}</span>`);
+  });
+}
+window.addEventListener("juiced:bell", (e) => applyBadges((e as CustomEvent).detail));
 export async function refreshBadges() {
-  window.clearTimeout(badgeTimer);
   try {
-    const n = await api<{ applications: number; matches: number; vods: number; total: number }>("/notifications");
-    const map: Record<string, number> = { applications: n.applications, matches: n.matches, vods: n.vods };
-    root.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
-      a.querySelector(".nbadge")?.remove();
-      const c = map[a.dataset.nav || ""];
-      if (c) a.insertAdjacentHTML("beforeend", `<span class="nbadge">${c > 99 ? "99+" : c}</span>`);
-    });
+    const n = await api<Counts>("/notifications");
+    applyBadges(n);
     window.dispatchEvent(new CustomEvent("juiced:notifications", { detail: n }));
   } catch { /* egal */ }
-  badgeTimer = window.setTimeout(refreshBadges, 60000);
 }
 
 function route() {
@@ -367,11 +374,70 @@ function evRow(e: any, editable: boolean) {
   </div>`;
 }
 
+// "Was ansteht": Agenda nach Tagen, nächster Termin hervorgehoben mit Countdown, laufende Termine "Live"
+let agendaTimer = 0;
 async function loadNextEvents(el: HTMLElement) {
-  try {
-    const list = (await fetchUpcoming(7)).slice(0, 6);
-    el.innerHTML = list.length ? `<div class="table card">${list.map((e) => evRow(e, false)).join("")}</div>` : `<p class="empty">${esc(T("ev_none"))}</p>`;
-  } catch { el.innerHTML = ""; }
+  window.clearInterval(agendaTimer);
+  let list: any[] = [];
+  try { list = (await fetchUpcoming(7)).slice(0, 8); } catch { el.innerHTML = ""; return; }
+  if (!list.length) { el.innerHTML = `<p class="empty">${esc(T("ev_none"))}</p>`; return; }
+  const rel = new Intl.RelativeTimeFormat(loc(), { numeric: "auto" });
+  const relShort = new Intl.RelativeTimeFormat(loc(), { numeric: "always", style: "short" });
+  const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const groups: { date: Date; items: any[] }[] = [];
+  for (const e of list) {
+    const d = new Date(e.starts_at);
+    const g = groups.find((x) => dayKey(x.date) === dayKey(d));
+    if (g) g.items.push(e); else groups.push({ date: d, items: [e] });
+  }
+  const now = Date.now();
+  const live = (e: any) => new Date(e.starts_at).getTime() <= now && (e.open_end || new Date(e.ends_at).getTime() > now);
+  const next = list.find((e) => new Date(e.starts_at).getTime() > now);
+
+  const dayLabel = (d: Date) => {
+    const diff = Math.round((startOf(d).getTime() - startOf(new Date()).getTime()) / 86400000);
+    return diff <= 1 ? cap(rel.format(diff, "day")) : d.toLocaleDateString(loc(), { weekday: "short" }).replace(".", "");
+  };
+  const countdown = (e: any) => {
+    const ms = new Date(e.starts_at).getTime() - Date.now();
+    const min = Math.max(1, Math.round(ms / 60000));
+    if (min < 60) return relShort.format(min, "minute");
+    const h = Math.round(min / 60);
+    return h < 48 ? relShort.format(h, "hour") : relShort.format(Math.round(h / 24), "day");
+  };
+
+  el.innerHTML = `<div class="agenda">${groups.map((g) => `
+    <section class="ag-day">
+      <div class="ag-date">
+        <span class="ag-wd">${esc(dayLabel(g.date))}</span>
+        <span class="ag-num">${g.date.getDate()}</span>
+        <span class="ag-mon">${esc(g.date.toLocaleDateString(loc(), { month: "short" }).replace(".", ""))}</span>
+      </div>
+      <div class="ag-items">${g.items.map((e) => {
+        const s = new Date(e.starts_at), en = new Date(e.ends_at);
+        const isLive = live(e), isNext = !isLive && e === next;
+        const time = e.open_end ? T("sched_from", { t: timeShort(s, lang()) }) : timeRange(s, en, lang());
+        return `<article class="ag-ev kind-${esc(e.kind)} ${isLive ? "is-live" : ""} ${isNext ? "is-next" : ""}" data-start="${esc(e.starts_at)}">
+          <div class="ag-time">${esc(time)}${e.open_end ? `<small>${esc(T("sched_open_end"))}</small>` : ""}</div>
+          <div class="ag-main">
+            <strong>${esc(e.title)}${e.opponent ? ` <span>· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
+            <span class="ag-meta"><i></i>${esc(T("kind_" + e.kind))}${e.repeat_days ? ` · ${esc(repeatLabel(e.repeat_days))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span>
+          </div>
+          ${isLive ? `<span class="ag-live"><b></b>Live</span>` : isNext ? `<span class="ag-in" data-countdown>${esc(countdown(e))}</span>` : ""}
+        </article>`;
+      }).join("")}</div>
+    </section>`).join("")}</div>`;
+
+  // Countdown jede Minute aktualisieren, solange die Übersicht offen ist
+  if (next) agendaTimer = window.setInterval(() => {
+    const c = el.querySelector<HTMLElement>("[data-countdown]");
+    if (!c || !document.body.contains(el)) { window.clearInterval(agendaTimer); return; }
+    if (new Date(next.starts_at).getTime() <= Date.now()) { loadNextEvents(el); return; }
+    c.textContent = countdown(next);
+  }, 30000);
 }
 
 async function viewSchedule(view: HTMLElement) {

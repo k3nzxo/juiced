@@ -248,3 +248,12 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22
 ::-webkit-scrollbar-thumb:active { background-color: var(--accent-hover); }
 ::-webkit-scrollbar-corner { background: transparent; }
 ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+
+/* ---------- Handy */
+@media (max-width: 600px) {
+  /* ab 16px zoomt iOS beim Antippen nicht mehr in die Seite */
+  input, textarea, select, .input, .textarea, .select { font-size: 16px; }
+  .container { padding: 0 16px; }
+  .btn { height: 46px; }
+  .chip { min-height: 38px; }
+}

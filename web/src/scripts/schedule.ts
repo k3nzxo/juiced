@@ -92,6 +92,7 @@ export function renderWeek(el: HTMLElement, events: Ev[] | null, monday: Date, l
     const sec = el.children[i] as HTMLElement;
     sec.classList.toggle("today", sameDay(d, today));
     sec.classList.toggle("past", d < startOfDay(today));
+    sec.classList.toggle("empty", !!events && !events.some((e) => sameDay(new Date(e.starts_at), d)));
     sec.querySelector(".day-name")!.textContent = df.format(d);
     sec.querySelector(".day-date")!.textContent = dtf.format(d);
     const body = sec.querySelector<HTMLElement>(".day-body")!;

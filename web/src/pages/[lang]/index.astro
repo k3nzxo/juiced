@@ -176,6 +176,15 @@ const tiles = [
     .tiles { grid-template-columns: 1fr; }
     .lead-grid { grid-template-columns: 1fr; }
     .cta-card { padding: 26px; }
+    .tile { padding: 20px; gap: 6px; }
+    .tile-ico { margin-bottom: 4px; }
+    .tile h3 { font-size: 18px; }
+    .tile p { font-size: 14.5px; }
+    :global(.person) { flex-direction: row; align-items: center; min-height: 0; padding: 14px 16px; gap: 14px; }
+    :global(.person .avatar), :global(.person .avatar-fallback) { width: 44px; height: 44px; flex: none; }
+    :global(.person.skeleton) { height: 74px; }
+    /* Wochenvorschau: nur Tage mit Terminen, ab heute */
+    :global([data-home-week] .day.empty), :global([data-home-week] .day.past) { display: none; }
   }
 </style>
 <style>

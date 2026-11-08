@@ -163,6 +163,10 @@ const nav = [
   .bell-menu :global(.bm-head) { padding: 8px 10px 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
   .bell-menu :global(a) { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-radius: 8px; font-size: 14px; color: var(--text-2); }
   .bell-menu :global(a:hover) { background: var(--surface-2); color: var(--text); }
+  .bell-menu :global(.bm-ico) { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center; color: var(--accent); background: var(--accent-soft); }
+  .bell-menu :global(.bm-matches) { color: var(--c-violet); background: color-mix(in srgb, var(--c-violet) 14%, transparent); }
+  .bell-menu :global(.bm-vods) { color: var(--c-cyan); background: color-mix(in srgb, var(--c-cyan) 14%, transparent); }
+  .bell-menu :global(.bm-label) { flex: 1; }
   .bell-menu :global(a b) { min-width: 22px; height: 20px; padding: 0 6px; border-radius: 10px; font-size: 12px; line-height: 20px; text-align: center; color: #fff; background: var(--accent); }
   .bell-menu :global(.bm-empty) { padding: 10px; font-size: 14px; color: var(--muted); }
   .lang-list { position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; list-style: none; margin: 0; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); animation: pop 0.18s var(--ease); }
