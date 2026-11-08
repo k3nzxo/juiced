@@ -159,7 +159,9 @@ def events(db: DbSession = Depends(get_db), user: models.User = Depends(require_
     profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role,
                                "alt_paths": u.alt_path_list} for u in users}
     can_edit = user.level >= models.RANK_LEVEL["vice"]
-    return {**data, "can_edit": can_edit, "can_remind": bool(DISCORD_BOT_TOKEN and DISCORD_GUILD_ID) and can_edit,
+    partners = [[m["id"] for m in json.loads(x.members)] for x in db.query(models.Partnership).order_by(models.Partnership.position).all()] if can_edit else []
+    return {**data, "channels": _named_channels(data.get("channels") or []) if can_edit else [],
+            "can_edit": can_edit, "partnerships": partners, "can_remind": bool(DISCORD_BOT_TOKEN and DISCORD_GUILD_ID) and can_edit,
             "profiles": {d: profiles[d] for e in evs for s in e["signups"] if (d := s["user_id"]) in profiles},
             "events": [{**e, "me": next((s for s in e["signups"] if s["user_id"] == mine), None),
                         "roster": _roster_out(rosters.get(e["id"]), names)} for e in evs]}
@@ -366,6 +368,27 @@ def _cached(key: str, ttl: int, fn):
     return val
 
 
+def _guild_channels() -> list:
+    def load():
+        chans = _discord("GET", f"/guilds/{DISCORD_GUILD_ID}/channels") or []
+        chans = [c for c in chans if c.get("type") in (0, 5)]  # Text- und Ankündigungskanäle
+        chans.sort(key=lambda c: int(c.get("position") or 0))
+        return [{"id": str(c["id"]), "name": str(c.get("name") or "")[:80]} for c in chans]
+    return _cached("channels", 300, load)
+
+
+def _named_channels(event_channels: list) -> list:
+    """Kanäle mit Namen (über den Bot): erst die Event-Kanäle, dann alle übrigen Textkanäle."""
+    try:
+        named = _guild_channels() if DISCORD_BOT_TOKEN and DISCORD_GUILD_ID else []
+    except HTTPException:
+        named = []
+    names = {c["id"]: c["name"] for c in named}
+    first = [{"id": c["id"], "name": names.get(c["id"]) or c.get("name") or ""} for c in event_channels]
+    seen = {c["id"] for c in first}
+    return first + [c for c in named if c["id"] not in seen]
+
+
 def _guild_roles() -> list:
     def load():
         roles = _discord("GET", f"/guilds/{DISCORD_GUILD_ID}/roles") or []
@@ -450,3 +473,94 @@ def remind(event_id: str, payload: RemindIn, user: models.User = Depends(require
     if payload.dm and missing:
         notify.dm([m["id"] for m in missing], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
     return {"ok": True, "count": len(missing)}
+
+
+
+# ------------------------------------------------------------------ Partnerschaften (wer zusammen in eine Gruppe soll)
+
+def _norm(v: str) -> str:
+    return re.sub(r"[\W_]+", "", (v or "").lower())
+
+
+def _candidates(db: DbSession) -> dict:
+    """Alle bekannten Namen -> Discord-ID: Discord-Mitglieder (Bot), Website-Profile, Raid-Helper-Anmeldungen."""
+    out: dict = {}  # discord_id -> {"name", "keys": set}
+
+    def add(did: str, name: str, *keys: str):
+        if not did:
+            return
+        c = out.setdefault(did, {"name": name, "keys": set()})
+        c["keys"].update(_norm(k) for k in (name, *keys) if _norm(k))
+
+    try:
+        for m in _guild_members():
+            add(m["id"], m["name"])
+    except HTTPException:
+        pass  # ohne Bot nur Website + Anmeldungen
+    for u in db.query(models.User).all():
+        add(u.discord_id, u.display_name, u.username, u.global_name or "", u.ingame_name or "")
+    for e in get_events().get("events", []):
+        for su in e["signups"]:
+            add(su["user_id"], su["name"])
+    return out
+
+
+def _resolve(name: str, cands: dict) -> dict:
+    """Exakt (ohne Groß/Klein, Sonderzeichen) = sicher; eindeutiger Teil-Treffer = unsicher; sonst nicht gefunden."""
+    n = _norm(name)
+    if not n:
+        return {"input": name, "status": "missing"}
+    exact = [d for d, c in cands.items() if n in c["keys"]]
+    if len(exact) == 1:
+        return {"input": name, "id": exact[0], "name": cands[exact[0]]["name"], "status": "ok"}
+    part = [d for d, c in cands.items() if any(n in k or (len(k) >= 3 and k in n) for k in c["keys"])] if len(n) >= 3 else []
+    if len(exact) > 1:
+        part = exact
+    if len(part) == 1:
+        return {"input": name, "id": part[0], "name": cands[part[0]]["name"], "status": "unsure"}
+    return {"input": name, "status": "ambiguous" if part else "missing",
+            "options": [{"id": d, "name": cands[d]["name"]} for d in part[:5]]}
+
+
+def _parse(text: str) -> list:
+    lines = []
+    for raw in (text or "").splitlines()[:100]:
+        names = [x.strip() for x in re.split(r",|;|\+|&|\band\b|\bund\b|\s/\s", raw) if x.strip()]
+        if names:
+            lines.append(names[:20])
+    return lines
+
+
+class PartnersIn(BaseModel):
+    text: str = ""
+
+
+@router.get("/partnerships")
+def get_partnerships(db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    return [{"id": x.id, "members": json.loads(x.members)} for x in db.query(models.Partnership).order_by(models.Partnership.position).all()]
+
+
+@router.post("/partnerships/check")
+def check_partnerships(payload: PartnersIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    cands = _candidates(db)
+    return [[_resolve(n, cands) for n in line] for line in _parse(payload.text)]
+
+
+@router.put("/partnerships")
+def save_partnerships(payload: PartnersIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    """Ersetzt die Liste. Jede Zeile = eine Partnerschaft; nur gefundene Namen (sicher/unsicher) werden gespeichert."""
+    cands = _candidates(db)
+    report = [[_resolve(n, cands) for n in line] for line in _parse(payload.text)]
+    db.query(models.Partnership).delete()
+    pos = 0
+    for line in report:
+        seen, members = set(), []
+        for r in line:
+            if r.get("id") and r["id"] not in seen:
+                seen.add(r["id"])
+                members.append({"id": r["id"], "name": r["name"]})
+        if len(members) >= 2:
+            db.add(models.Partnership(members=json.dumps(members), position=pos))
+            pos += 1
+    db.commit()
+    return {"saved": pos, "report": report}

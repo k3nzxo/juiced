@@ -299,7 +299,8 @@ async function viewSignups(view: HTMLElement) {
   catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; return; }
   if (!data.configured) { el.innerHTML = `<p class="empty">${esc(T("rh_off"))}</p>`; return; }
   if (data.can_edit) {
-    view.querySelector(".v-head")!.insertAdjacentHTML("beforeend", `<div class="v-actions"><button class="btn btn-primary btn-sm" data-new-ev>${icon.plus} ${esc(T("rh_new"))}</button></div>`);
+    view.querySelector(".v-head")!.insertAdjacentHTML("beforeend", `<div class="v-actions"><button class="btn btn-ghost btn-sm" data-partners>${icon.users} ${esc(T("pt_title"))}</button><button class="btn btn-primary btn-sm" data-new-ev>${icon.plus} ${esc(T("rh_new"))}</button></div>`);
+    view.querySelector("[data-partners]")!.addEventListener("click", () => editPartners(() => viewSignups(view)));
     view.querySelector("[data-new-ev]")!.addEventListener("click", () => newRhEvent(data, () => viewSignups(view)));
   }
   if (data.error) { el.innerHTML = `<p class="empty">${esc(T("rh_error"))}</p>`; return; }
@@ -361,6 +362,40 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
   card.querySelector("[data-img]")?.addEventListener("click", () => rosterImageAction(e, data, false));
   card.querySelector("[data-img-copy]")?.addEventListener("click", () => rosterImageAction(e, data, true));
   card.querySelector("[data-remind]")?.addEventListener("click", () => remindUnsigned(e, data));
+}
+
+// Partnerschaften pflegen: eine Zeile = Spieler, die zusammen in eine Gruppe sollen (Namen dürfen leicht abweichen)
+async function editPartners(done: () => void) {
+  let current: any[] = [];
+  try { current = await api<any[]>("/raidhelper/partnerships"); } catch (x) { toast((x as Error).message); return; }
+  const m = modal(T("pt_title"), `
+    <p class="hint">${esc(T("pt_hint"))}</p>
+    <textarea class="textarea pt-text" id="pt-text" rows="8" placeholder="${esc(T("pt_ph"))}">${esc(current.map((c) => c.members.map((x: any) => x.name).join(", ")).join("\n"))}</textarea>
+    <div class="pt-check" id="pt-check"></div>`,
+    `<button class="btn btn-primary" data-save>${esc(T("save"))}</button>`);
+  const ta = m.el.querySelector<HTMLTextAreaElement>("#pt-text")!;
+  const out = m.el.querySelector<HTMLElement>("#pt-check")!;
+  const render = (rep: any[][]) => {
+    out.innerHTML = rep.map((line) => `<div class="pt-line ${line.filter((r) => r.id).length < 2 ? "is-bad" : ""}">${line.map((r) =>
+      `<span class="pt-n is-${r.status}" title="${esc(r.status === "ok" ? r.name : r.status === "unsure" ? T("pt_unsure", { name: r.name }) : r.status === "ambiguous" ? T("pt_ambiguous", { names: (r.options || []).map((o: any) => o.name).join(", ") }) : T("pt_missing"))}">${esc(r.input)}${r.status === "unsure" ? ` → ${esc(r.name)}` : ""}</span>`).join("")}</div>`).join("");
+  };
+  let timer = 0;
+  const check = () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(async () => {
+      try { render(await api<any[][]>("/raidhelper/partnerships/check", { method: "POST", json: { text: ta.value } })); } catch { /* egal */ }
+    }, 350);
+  };
+  ta.addEventListener("input", check);
+  check();
+  m.el.querySelector<HTMLElement>("[data-save]")!.addEventListener("click", async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement;
+    b.disabled = true;
+    try {
+      const r = await api<any>("/raidhelper/partnerships", { method: "PUT", json: { text: ta.value } });
+      m.close(); toast(T("pt_saved", { n: r.saved })); done();
+    } catch (x) { toast((x as Error).message); b.disabled = false; }
+  });
 }
 
 // Neues Raid-Helper-Event (wie im Raid-Helper-Dashboard), Leader ist man selbst
@@ -433,7 +468,13 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
   const info = (uid: string): RhPlayer => players.get(uid) || { uid, name: data.profiles?.[uid]?.name || "?", path: "", role: data.profiles?.[uid]?.main_role || "dps", playing: false };
   const pool = () => [...players.values()].filter((p) => p.playing && !groups.some((g) => g.members.includes(p.uid)))
     .sort((a, b) => (ROLE_ORDER[a.role] ?? 3) - (ROLE_ORDER[b.role] ?? 3) || a.name.localeCompare(b.name));
-  const chip = (p: RhPlayer) => `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"}" draggable="true" data-uid="${esc(p.uid)}" title="${esc(p.playing ? p.name : T("roster_left"))}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
+  const chip = (p: RhPlayer) => {
+    const mates = partnersOf(p.uid).filter((u) => players.get(u)?.playing);
+    const mine = groups.findIndex((g) => g.members.includes(p.uid));
+    const split = mine >= 0 && mates.some((u) => { const o = groups.findIndex((g) => g.members.includes(u)); return o >= 0 && o !== mine; });
+    const tip = mates.length ? ` · ${T("pt_with", { names: mates.map((u) => info(u).name).join(", ") })}` : "";
+    return `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${split ? "is-split" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc((p.playing ? p.name : T("roster_left")) + tip)}"><b>${esc(p.name)}</b>${mates.length ? `<i class="ro-link">${icon.link}</i>` : ""}${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
+  };
   const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return n ? `<span class="rc role-${r}" title="${esc(T("role_" + r))}"><i></i>${n}</span>` : ""; }).join("");
   const nextOpen = (from: number) => {
     for (let k = 0; k < groups.length; k++) { const i = (from + k) % groups.length; if (groups[i].members.length < groups[i].size) return i; }
@@ -474,16 +515,63 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
     move(uid, i);
     if (groups[i].members.length >= groups[i].size) { const n = nextOpen(i); if (n >= 0) { target = n; draw(); } }
   };
+  // Automatisch verteilen (Regeln wie im Raid-Group-Composer):
+  // Partner zuerst zusammen, 8-10 pro Gruppe ohne Mini-Restgruppe, ein Tank pro Gruppe, Heiler gleichmäßig, Rest DPS.
   const autoFill = () => {
-    for (const p of pool()) {
-      let open = groups.filter((g) => g.members.length < g.size);
-      if (!open.length) { groups.push({ name: "", members: [], size: groups[groups.length - 1]?.size || lastSize() }); open = [groups[groups.length - 1]]; }
-      const n = (g: { members: string[] }) => g.members.filter((u) => info(u).role === p.role).length;
-      open.sort((a, b) => n(a) - n(b) || a.members.length / a.size - b.members.length / b.size);
-      open[0].members.push(p.uid);
+    const all = [...players.values()].filter((p) => p.playing);
+    const ids = new Set(all.map((p) => p.uid));
+    // Partnerschaften: nur Anwesende, überlappende zusammenführen
+    let clusters: string[][] = (data.partnerships || []).map((c: string[]) => c.filter((u) => ids.has(u))).filter((c: string[]) => c.length >= 2);
+    for (let merged = true; merged;) {
+      merged = false;
+      outer: for (let a = 0; a < clusters.length; a++) for (let b = a + 1; b < clusters.length; b++) {
+        if (clusters[a].some((u) => clusters[b].includes(u))) {
+          clusters[a] = [...new Set([...clusters[a], ...clusters[b]])];
+          clusters.splice(b, 1);
+          merged = true;
+          break outer;
+        }
+      }
     }
+    const MIN = 8, MAX = Math.max(MIN, ...groups.map((g) => g.size), 10);
+    const n = all.length;
+    let count = Math.max(1, Math.ceil(n / MAX));
+    while (count > 1 && n / count < MIN) count--;
+    const base = Math.floor(n / count), extra = n % count;
+    const names = groups.map((g) => g.name);
+    groups.length = 0;
+    for (let k = 0; k < count; k++) groups.push({ name: names[k] || "", members: [], size: base + (k < extra ? 1 : 0) });
+    const free = (g: { members: string[]; size: number }) => g.size - g.members.length;
+    const cnt = (g: { members: string[] }, r: string) => g.members.filter((u) => info(u).role === r).length;
+    const warn: string[] = [];
+    // 1) Partner-Gruppen zuerst (größte zuerst), in die Gruppe mit dem meisten Platz
+    clusters.sort((a, b) => b.length - a.length);
+    for (const c of clusters) {
+      const g = [...groups].sort((a, b) => free(b) - free(a))[0];
+      if (c.length > free(g)) { warn.push(T("roster_warn_cluster", { names: c.map((u) => info(u).name).join(", ") })); g.size = Math.max(g.size, g.members.length + c.length); }
+      g.members.push(...c);
+    }
+    const seated = new Set(groups.flatMap((g) => g.members));
+    const rest = all.filter((p) => !seated.has(p.uid));
+    // 2) Tanks, 3) Heiler, 4) DPS: jeweils dorthin, wo die Rolle am seltensten ist und Platz frei ist
+    for (const role of ["tank", "healer", "dps", ""]) {
+      for (const p of rest.filter((x) => (role ? x.role === role : !["tank", "healer", "dps"].includes(x.role)))) {
+        let open = groups.filter((g) => free(g) > 0);
+        if (!open.length) open = groups;
+        open.sort((a, b) => cnt(a, p.role) - cnt(b, p.role) || free(b) - free(a));
+        open[0].members.push(p.uid);
+      }
+    }
+    groups.forEach((g, k) => {
+      if (!cnt(g, "tank") && all.some((p) => p.role === "tank")) warn.push(T("roster_warn_tank", { g: g.name || T("roster_group", { n: k + 1 }) }));
+      if (!cnt(g, "healer") && all.some((p) => p.role === "healer")) warn.push(T("roster_warn_heal", { g: g.name || T("roster_group", { n: k + 1 }) }));
+    });
+    target = 0;
     draw();
+    if (warn.length) toast(warn.join(" · "));
   };
+  // Partner eines Spielers (für Markierung + Warnung "getrennt")
+  const partnersOf = (uid: string) => [...new Set((data.partnerships || []).filter((c: string[]) => c.includes(uid)).flat())].filter((u) => u !== uid) as string[];
 
   card.classList.add("is-editing");
   draw();

@@ -184,3 +184,11 @@ class Roster(Base):
     data = Column(Text, nullable=False)                 # JSON: {"groups": [{"name", "members": [discord_id]}]}
     updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Partnership(Base):
+    """Ingame-Partnerschaft: diese Spieler sollen in dieselbe Gruppe (gepflegt von Leader/Vice)."""
+    __tablename__ = "partnerships"
+    id = Column(Integer, primary_key=True)
+    members = Column(Text, nullable=False)              # JSON: [{"id": discord_id, "name": Anzeigename}]
+    position = Column(Integer, nullable=False, default=0)
