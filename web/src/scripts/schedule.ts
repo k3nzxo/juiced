@@ -3,7 +3,7 @@ import { esc } from "./team";
 
 export type Ev = {
   id: number; title: string; kind: string; starts_at: string; ends_at: string; duration_min: number;
-  opponent: string | null; description: string | null; repeat_weekly: boolean; is_public: boolean; can_edit: boolean;
+  opponent: string | null; description: string | null; repeat_weekly: boolean; open_end?: boolean; is_public: boolean; can_edit: boolean;
 };
 
 export const KINDS = ["gvg", "scrim", "ingame", "friday", "other"] as const;
@@ -41,7 +41,9 @@ export function eventChip(e: Ev, lang: string, L: Record<string, string>): strin
   const s = new Date(e.starts_at), en = new Date(e.ends_at);
   const tf = timeFmt(lang);
   return `<article class="ev kind-${esc(e.kind)}" tabindex="0" title="${esc(e.description || "")}">
-    <div class="ev-time">${tf.format(s)}–${tf.format(en)}</div>
+    <div class="ev-time">${e.open_end
+      ? `${esc((L.sched_from || "{t}").replace("{t}", tf.format(s)))} <span class="ev-open">· ${esc(L.sched_open_end || "")}</span>`
+      : `${tf.format(s)}–${tf.format(en)}`}</div>
     <div class="ev-title">${esc(e.title)}</div>
     ${e.opponent ? `<div class="ev-sub">${esc((L.sched_vs || "vs {name}").replace("{name}", e.opponent))}</div>` : ""}
     <div class="ev-tags"><span class="ev-kind">${esc(L["kind_" + e.kind] || e.kind)}</span>${!e.is_public ? `<span class="ev-int">${esc(L.sched_internal)}</span>` : ""}</div>

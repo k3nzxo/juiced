@@ -86,8 +86,44 @@ export function initChrome() {
         link.prepend(img);
       }
       label.textContent = me.user.display_name;
+      if (me.user.is_member) initBell();
     })
     .catch(() => {});
+}
+
+// Glocke: offene Bewerbungen, Match-Anfragen, VODs ohne Review
+function initBell() {
+  const bell = document.querySelector<HTMLElement>("[data-bell]");
+  if (!bell) return;
+  const L = JSON.parse(bell.dataset.l || "{}");
+  const lang = bell.dataset.lang || "en";
+  const btn = bell.querySelector<HTMLButtonElement>("[data-bell-btn]")!;
+  const menu = bell.querySelector<HTMLElement>("[data-bell-menu]")!;
+  const count = bell.querySelector<HTMLElement>("[data-bell-count]")!;
+  let last = -1;
+  const paint = (n: Record<string, number>) => {
+    const total = n.total || 0;
+    count.hidden = !total;
+    count.textContent = total > 99 ? "99+" : String(total);
+    if (last >= 0 && total > last) { bell.classList.remove("ring"); void bell.offsetWidth; bell.classList.add("ring"); }
+    last = total;
+    const rows = (["applications", "matches", "vods"] as const).filter((k) => n[k] > 0)
+      .map((k) => `<a href="/${lang}/app/#/${k}">${L[k]}<b>${n[k]}</b></a>`).join("");
+    menu.innerHTML = `<div class="bm-head">${L.t}</div>` + (rows || `<div class="bm-empty">${L.empty}</div>`);
+  };
+  const load = () => fetch("/api/notifications", { credentials: "same-origin" })
+    .then((r) => (r.ok ? r.json() : null)).then((n) => n && paint(n)).catch(() => {});
+  bell.hidden = false;
+  load();
+  window.setInterval(() => { if (!document.hidden) load(); }, 90000);
+  window.addEventListener("juiced:notifications", (e) => paint((e as CustomEvent).detail));
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
+    btn.setAttribute("aria-expanded", String(!menu.hidden));
+  });
+  document.addEventListener("click", (e) => { if (!bell.contains(e.target as Node)) menu.hidden = true; });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") menu.hidden = true; });
 }
 
 export function toast(msg: string) {

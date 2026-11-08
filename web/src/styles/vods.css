@@ -114,3 +114,40 @@ main.vod-main { max-width: 1500px; }
   .vod-form-row { grid-template-columns: 1fr; }
   .vod-storage-bar { width: 80px; }
 }
+
+/* ---------- Dropzone */
+.vod-drop { display: flex; align-items: center; gap: 16px; padding: 22px 20px; border: 1.5px dashed var(--border-strong); border-radius: var(--r); background: var(--bg-tint); cursor: pointer; transition: border-color .2s, background-color .2s, transform .2s var(--ease); }
+.vod-drop:hover, .vod-drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.vod-drop.over { transform: scale(1.01); }
+.vod-drop.has-file { border-style: solid; border-color: var(--border); background: var(--surface); }
+.vod-drop-ico { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: var(--accent); background: var(--accent-soft); transition: transform .3s var(--ease); }
+.vod-drop:hover .vod-drop-ico { transform: translateY(-2px); }
+.vod-drop-empty, .vod-drop-file { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vod-drop-empty strong, .vod-drop-file strong { font-size: 15px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vod-drop-empty > span, .vod-drop-file > span { font-size: 13.5px; color: var(--muted); }
+.vod-drop-file u { text-underline-offset: 3px; }
+
+/* ---------- Upload-Zeile */
+.vod-upload-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-bottom: 16px; animation: rise .3s var(--ease); }
+.vod-upload-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.vod-upload-head strong { font-size: 14.5px; }
+.vod-upload-stats { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; margin-left: auto; font-family: inherit; }
+.vod-upload-cancel { color: var(--muted); }
+.vod-upload-cancel:hover { color: var(--danger); }
+.vod-progress span { background: var(--accent); }
+.vod-resume-row { display: flex; gap: 6px; margin-top: 10px; }
+
+/* ---------- Steuerung in einer Zeile */
+.vod-controls { display: flex; flex-wrap: nowrap; gap: 10px; align-items: center; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.vod-seg { display: inline-flex; flex: none; padding: 3px; gap: 2px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.vod-seg button { height: 28px; padding: 0 10px; border-radius: 7px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-2); transition: background-color .15s, color .15s; }
+.vod-seg button:hover { background: var(--surface-2); color: var(--text); }
+.vod-seg button.active { background: var(--accent); color: #fff; }
+.vod-keys { margin-left: auto; flex: none; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+@media (max-width: 1100px) { .vod-keys { display: none; } }
+
+/* ---------- Große Review-Ansicht */
+.vod-layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; }
+.vod-player-wrap video { max-height: calc(100vh - 230px); min-height: 320px; }
+.vod-notes-col { max-height: calc(100vh - 120px); top: 84px; background: var(--surface); border-color: var(--border); }
+@media (max-width: 1100px) { .vod-layout { grid-template-columns: 1fr; } .vod-notes-col { position: static; max-height: none; } }

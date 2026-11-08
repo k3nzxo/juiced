@@ -91,4 +91,23 @@ export function initMotion() {
   document.querySelectorAll<HTMLElement>("[data-split]").forEach(splitWords);
   document.querySelectorAll<HTMLElement>("[data-count-to]").forEach((el) => onVisible(el, () => animateCount(el)));
   document.querySelectorAll<HTMLElement>("[data-tilt]").forEach(tilt);
+  initSpotlight();
+}
+
+// Weicher Lichtkegel unter dem Mauszeiger auf Karten (auch für später eingefügte Karten)
+const SPOT = ".tile, .person, .quick-card, .vod-card, .app-card, .ann, .form-wrap, .status, .cta-card";
+function initSpotlight() {
+  if (!window.matchMedia("(hover: hover)").matches) return;
+  let frame = 0;
+  document.addEventListener("pointermove", (e) => {
+    const el = (e.target as Element | null)?.closest?.<HTMLElement>(SPOT);
+    if (!el || frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      el.classList.add("spot");
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      el.style.setProperty("--my", `${e.clientY - r.top}px`);
+    });
+  }, { passive: true });
 }

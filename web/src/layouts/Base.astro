@@ -19,6 +19,7 @@ const nav = [
   { id: "schedule", href: `/${lang}/schedule/`, label: t("nav_schedule") },
   { id: "team", href: `/${lang}/team/`, label: t("nav_team") },
   { id: "join", href: `/${lang}/join/`, label: t("nav_join") },
+  { id: "app", href: `/${lang}/app/`, label: t("nav_area") },
 ];
 ---
 <!doctype html>
@@ -69,6 +70,13 @@ const nav = [
           <button class="icon-btn" data-theme-toggle aria-label={t("theme_toggle")}>
             <span class="i-sun"><Icon name="sun" /></span><span class="i-moon"><Icon name="moon" /></span>
           </button>
+          <div class="bell" data-bell hidden data-lang={lang}
+            data-l={JSON.stringify({ t: t("notif_title"), empty: t("notif_empty"), applications: t("notif_apps"), matches: t("notif_matches"), vods: t("notif_vods") })}>
+            <button class="icon-btn" data-bell-btn aria-haspopup="true" aria-expanded="false" aria-label={t("notif_title")}>
+              <Icon name="bell" /><span class="bell-count" data-bell-count hidden></span>
+            </button>
+            <div class="bell-menu" data-bell-menu hidden></div>
+          </div>
           <a class="icon-btn hide-sm" href={DISCORD_INVITE} target="_blank" rel="noopener" aria-label="Discord"><Icon name="discord" /></a>
           <a class="btn btn-outline btn-sm hide-sm" href={`/${lang}/app/`} data-account-link>
             <span data-account-label>{t("nav_members")}</span>
@@ -79,7 +87,6 @@ const nav = [
       <div class="mobile-panel" hidden data-mobile-panel>
         <div class="container">
           {nav.map((n) => <a href={n.href} class="m-link">{n.label}</a>)}
-          <a href={`/${lang}/app/`} class="m-link">{t("nav_members")}</a>
           <a href={DISCORD_INVITE} target="_blank" rel="noopener" class="m-link">Discord</a>
         </div>
       </div>
@@ -96,7 +103,6 @@ const nav = [
         <nav class="footer-links" aria-label="Footer">
           {nav.map((n) => <a href={n.href}>{n.label}</a>)}
           <a href={`/${lang}/matches/`}>{t("nav_matches")}</a>
-          <a href={`/${lang}/app/`}>{t("nav_members")}</a>
           <a href={DISCORD_INVITE} target="_blank" rel="noopener">Discord</a>
           <a href={`/${lang}/privacy/`}>{t("footer_privacy")}</a>
         </nav>
@@ -129,7 +135,17 @@ const nav = [
   .icon-btn:hover { color: var(--text); background: var(--surface-2); }
   .lang-code { font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; }
   :global([data-theme="dark"]) .i-sun, :global([data-theme="light"]) .i-moon { display: none; }
-  .lang-menu { position: relative; }
+  .lang-menu, .bell { position: relative; }
+  .bell[hidden] { display: none; }
+  .bell-count { position: absolute; top: 3px; right: 3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 10px; font-weight: 700; line-height: 16px; color: #fff; background: var(--accent); box-shadow: 0 0 0 2px var(--bg); animation: pop 0.25s var(--ease); }
+  .bell.ring svg { animation: ring 0.9s var(--ease); transform-origin: 50% 10%; }
+  @keyframes ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
+  .bell-menu { position: absolute; right: 0; top: calc(100% + 8px); width: 280px; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); animation: pop 0.18s var(--ease); }
+  .bell-menu :global(.bm-head) { padding: 8px 10px 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .bell-menu :global(a) { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-radius: 8px; font-size: 14px; color: var(--text-2); }
+  .bell-menu :global(a:hover) { background: var(--surface-2); color: var(--text); }
+  .bell-menu :global(a b) { min-width: 22px; height: 20px; padding: 0 6px; border-radius: 10px; font-size: 12px; line-height: 20px; text-align: center; color: #fff; background: var(--accent); }
+  .bell-menu :global(.bm-empty) { padding: 10px; font-size: 14px; color: var(--muted); }
   .lang-list { position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; list-style: none; margin: 0; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); animation: pop 0.18s var(--ease); }
   .lang-list a { display: block; padding: 8px 10px; border-radius: 8px; font-size: 14px; color: var(--text-2); }
   .lang-list a:hover { background: var(--surface-2); color: var(--text); }

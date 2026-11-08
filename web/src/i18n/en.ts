@@ -1,19 +1,19 @@
 // Basis-Sprache. Alle anderen Sprachen fallen pro Schlüssel auf Englisch zurück.
 const en = {
-  meta_title: "JUICED · EUW guild · Where Winds Meet",
-  meta_desc: "JUICED is an EUW guild in Where Winds Meet: GvG, custom games against other guilds, in-game and community events and VOD reviews with role coaches.",
+  meta_title: "JUICED · EU guild · Where Winds Meet",
+  meta_desc: "JUICED is an EU guild in Where Winds Meet: GvG, custom games against other guilds, in-game and community events and VOD reviews with role coaches.",
   nav_home: "Home", nav_team: "Team", nav_join: "Join", nav_members: "Members area", nav_login: "Sign in", nav_logout: "Sign out",
   nav_discord: "Discord", nav_menu: "Menu", theme_toggle: "Switch light / dark mode", lang_label: "Language", skip: "Skip to content",
 
-  hero_badge: "Recruiting · EUW · Where Winds Meet",
+  hero_badge: "Recruiting · EU · Where Winds Meet",
   hero_title_1: "Guild vs Guild,",
   hero_title_2: "played to win.",
-  hero_sub: "JUICED is an EUW guild in Where Winds Meet. Every weekend we field a full 30-player roster, review our matches together and come back sharper.",
+  hero_sub: "JUICED is an EU guild in Where Winds Meet. Every weekend we field a full 30-player roster, review our matches together and come back sharper.",
   hero_cta_join: "Join JUICED", hero_cta_discord: "Our Discord",
   float_gvg_t: "GvG weekend", float_gvg_b: "Sat & Sun · 4–6 matches a day",
   float_roster_t: "30 vs 30", float_roster_b: "Full roster, called live on voice",
   float_review_t: "VOD review", float_review_b: "Healer · Tank · Nameless coaches",
-  float_region: "EUW",
+  float_region: "EU",
 
   what_eyebrow: "What we do", what_title: "Built around the weekend",
   what_sub: "No filler. We play GvG seriously, talk about it afterwards and turn it into a plan for the next match.",
@@ -22,14 +22,14 @@ const en = {
   what_structure_t: "Clear structure", what_structure_b: "Leader, Vice and a coach for every role. Everyone knows who to ask.",
 
   loop_eyebrow: "Our week", loop_title: "From match to improvement",
-  loop_1_t: "Play", loop_1_b: "Saturday and Sunday GvG on EUW.",
+  loop_1_t: "Play", loop_1_b: "Saturday and Sunday GvG on EU.",
   loop_2_t: "Record", loop_2_b: "Members record their POV and upload it here: no YouTube, no music claims.",
   loop_3_t: "Review", loop_3_b: "Your role coach marks the key moments. You reply right on the timeline.",
   loop_4_t: "Repeat", loop_4_b: "Takeaways go straight into next weekend's plan.",
 
   lead_eyebrow: "Leadership", lead_title: "The people behind JUICED", lead_cta: "Full roster", lead_empty: "Leadership is being added.",
   cta_title: "Want to fight with us?", cta_body: "Applying takes two minutes. We answer on Discord.",
-  footer_tagline: "EUW guild · Where Winds Meet",
+  footer_tagline: "EU guild · Where Winds Meet",
   footer_legal: "JUICED is a player guild and is not affiliated with the developers or publishers of Where Winds Meet.",
   footer_privacy: "Privacy",
 

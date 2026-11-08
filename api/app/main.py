@@ -15,7 +15,11 @@ Base.metadata.create_all(bind=engine)
 def _add_missing_columns():
     """Neue Spalten in bestehenden Tabellen ergänzen (create_all macht das nicht)."""
     from sqlalchemy import inspect, text
-    wanted = {"applications": {"platforms": "VARCHAR(40)", "vod_links": "TEXT"}}
+    wanted = {
+        "applications": {"platforms": "VARCHAR(40)", "vod_links": "TEXT"},
+        "events": {"open_end": "BOOLEAN NOT NULL DEFAULT false"},
+        "scrim_requests": {"token": "VARCHAR(40)", "reply": "TEXT"},
+    }
     insp = inspect(engine)
     for table, cols in wanted.items():
         have = {c["name"] for c in insp.get_columns(table)}

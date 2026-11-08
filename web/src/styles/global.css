@@ -196,3 +196,37 @@ p { margin: 0; }
 [data-tilt] { transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s, opacity 0.8s var(--ease); will-change: transform; }
 
 .flag { display: inline-block; width: 20px; height: 15px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px var(--border); vertical-align: -2px; }
+
+/* ---------- Lade-Spinner (überall nutzbar) */
+.loader { display: grid; place-items: center; padding: 48px; }
+.spinner { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--border-strong); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Seitenwechsel: weich überblenden, Header bleibt stehen */
+@view-transition { navigation: auto; }
+#site-header { view-transition-name: site-header; }
+::view-transition-old(root) { animation: vt-out 0.16s ease both; }
+::view-transition-new(root) { animation: vt-in 0.32s var(--ease) both; }
+::view-transition-old(site-header), ::view-transition-new(site-header) { animation: none; mix-blend-mode: normal; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(10px); } }
+
+/* ---------- Lichtkegel unter dem Mauszeiger auf Karten */
+.spot { position: relative; isolation: isolate; }
+.spot::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), var(--accent-soft), transparent 60%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.spot:hover::before { opacity: 1; }
+
+/* ---------- Navigation: Strich unter dem aktiven Punkt */
+.nav-link { position: relative; }
+.nav-link::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 2px; height: 2px; border-radius: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--ease); }
+.nav-link.active::after { transform: scaleX(1); }
+.nav-link:hover::after { transform: scaleX(0.4); }
+.nav-link.active:hover::after { transform: scaleX(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

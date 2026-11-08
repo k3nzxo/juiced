@@ -7,9 +7,10 @@ const t = useT(lang);
 ---
 <section class="hero">
   <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
   <div class="container hero-inner">
     <div class="hero-copy">
-      <p class="kicker reveal">EUW · Where Winds Meet</p>
+      <p class="kicker reveal">EU · Where Winds Meet</p>
       <h1 class="wordmark reveal" style="--d:80ms">JUICED</h1>
       <p class="lead reveal" style="--d:160ms">{t("hero2_sub")}</p>
       <div class="cta reveal" style="--d:240ms">
@@ -25,10 +26,17 @@ const t = useT(lang);
   .hero-grid-bg {
     position: absolute; inset: 0; pointer-events: none;
     background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 56px 56px; opacity: 0.35;
+    background-size: 56px 56px; opacity: 0.35; animation: grid-drift 30s linear infinite;
     mask-image: radial-gradient(ellipse 70% 80% at 85% 50%, #000 10%, transparent 70%);
     -webkit-mask-image: radial-gradient(ellipse 70% 80% at 85% 50%, #000 10%, transparent 70%);
   }
+  @keyframes grid-drift { to { background-position: 56px 56px, 56px 56px; } }
+  .hero-glow { position: absolute; width: 520px; height: 520px; right: 6%; top: 50%; margin-top: -260px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%); filter: blur(20px); opacity: 0.55;
+    animation: glow 9s ease-in-out infinite alternate; }
+  @keyframes glow { from { transform: translate(0, 0) scale(1); } to { transform: translate(-60px, 30px) scale(1.15); } }
+  .wordmark { background: linear-gradient(100deg, var(--text) 40%, var(--accent) 50%, var(--text) 60%) 0 0 / 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 7s var(--ease) 1.2s infinite; }
+  @keyframes shine { 0% { background-position: 100% 0; } 35%, 100% { background-position: 0% 0; } }
   .hero-inner { position: relative; display: flex; align-items: center; min-height: min(520px, 70vh); padding-top: 64px; padding-bottom: 64px; }
   .hero-copy { display: flex; flex-direction: column; gap: 20px; }
   .kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }

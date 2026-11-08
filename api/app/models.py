@@ -109,6 +109,7 @@ class Event(Base):
     opponent = Column(String(80), nullable=True)
     description = Column(Text, nullable=True)
     repeat_weekly = Column(Boolean, nullable=False, default=False)
+    open_end = Column(Boolean, nullable=False, default=False)   # z. B. Friday Night: Beginn bekannt, Ende offen
     is_public = Column(Boolean, nullable=False, default=True)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -125,6 +126,8 @@ class ScrimRequest(Base):
     proposed_times = Column(String(300), nullable=False)
     message = Column(Text, nullable=True)
     status = Column(String(12), nullable=False, default="pending")  # pending | accepted | declined
+    token = Column(String(40), nullable=True, index=True)  # privater Status-Link für die anfragende Gilde
+    reply = Column(Text, nullable=True)                    # Antwort der Leitung, sichtbar über den Status-Link
     decided_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decided_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -41,10 +41,10 @@ MAX_PER_USER = int(os.environ.get("VOD_MAX_PER_USER", "0"))  # 0 = kein Limit   
 # und es wird NICHT auf die Server-Platte geschrieben.
 REQUIRE_MARKER = os.environ.get("VOD_REQUIRE_MARKER", "") not in ("", "0", "false")
 MARKER_FILE = ".storagebox"
-CHUNK_SIZE = 32 * 1024 * 1024
+CHUNK_SIZE = 16 * 1024 * 1024  # Stücke werden parallel hochgeladen (Client: 4 gleichzeitig)
 MEDIA_URL_TTL = 12 * 3600
 ALLOWED_EXT = {".mp4", ".mkv", ".mov", ".webm", ".flv", ".ts", ".m4v"}
-VALID_RESULTS = ("win", "loss", "draw")
+VALID_RESULTS = ("win", "loss")
 VALID_CATEGORIES = ("good", "mistake", "info", "question")
 COACH_ROLES = ("healer", "tank", "nameless")
 VOD_ROLES = COACH_ROLES  # (alte Team-VODs bleiben lesbar, neue gibt es nicht mehr)
@@ -109,6 +109,31 @@ except Exception as _e:
 
 
 # ---------------------------------------------------------------- Helpers
+
+_chunk_locks: dict[int, threading.Lock] = {}
+_chunk_locks_guard = threading.Lock()
+
+
+def _chunk_lock(vod_id: int) -> threading.Lock:
+    with _chunk_locks_guard:
+        return _chunk_locks.setdefault(vod_id, threading.Lock())
+
+
+def _chunks_path(v: "Vod") -> str:
+    return os.path.join(VOD_DIR, f"{v.file_key}.chunks")
+
+
+def _chunks_total(v: "Vod") -> int:
+    return max(1, -(-v.size_bytes // CHUNK_SIZE))
+
+
+def _chunks_done(v: "Vod") -> list:
+    try:
+        raw = open(_chunks_path(v), encoding="utf-8").read().strip()
+        return sorted({int(x) for x in raw.split(",") if x.strip().isdigit()})
+    except FileNotFoundError:
+        return []
+
 
 def _part_path(v: Vod) -> str:
     return os.path.join(VOD_DIR, f"{v.file_key}.part")
@@ -185,7 +210,7 @@ def _used_bytes(db: Session) -> int:
 
 
 def _delete_files(v: Vod):
-    for name in (f"{v.file_key}.part", _final_name(v), _thumb_name(v), f"{v.file_key}.remux.mp4"):
+    for name in (f"{v.file_key}.part", f"{v.file_key}.chunks", _final_name(v), _thumb_name(v), f"{v.file_key}.remux.mp4"):
         try:
             os.remove(os.path.join(VOD_DIR, name))
         except FileNotFoundError:
@@ -536,37 +561,49 @@ def create_vod(payload: VodCreateIn, db: Session = Depends(get_db), ctx: VodCtx 
     db.add(v)
     db.commit()
     db.refresh(v)
-    open(_part_path(v), "wb").close()
+    with open(_part_path(v), "wb") as f:  # Datei in voller Größe anlegen, Stücke landen an ihrer Position
+        f.truncate(v.size_bytes)
     out = _vod_out(v, _users_map(db), 0, ctx)
     out["chunk_size"] = CHUNK_SIZE
     return out
 
 
-@router.put("/{vod_id}/upload")
-async def upload_chunk(vod_id: int, offset: int, request: Request, db: Session = Depends(get_db),
+@router.put("/{vod_id}/chunk")
+async def upload_chunk(vod_id: int, index: int, request: Request, db: Session = Depends(get_db),
                        ctx: VodCtx = Depends(vod_ctx)):
+    """Ein Stück (index) hochladen. Stücke dürfen parallel und in beliebiger Reihenfolge kommen."""
     v = _get_vod(db, vod_id)
     if v.uploader_id != ctx.user.id:
-        raise HTTPException(status_code=403, detail="Nur der Uploader kann hochladen")
+        raise HTTPException(status_code=403, detail="Only the uploader can upload")
     if v.status != "uploading":
-        raise HTTPException(status_code=409, detail="Upload ist bereits abgeschlossen")
+        raise HTTPException(status_code=409, detail="Upload already finished")
     _require_storage()
-    path = _part_path(v)
-    current = os.path.getsize(path) if os.path.exists(path) else 0
-    if offset != current:
-        # Client ist aus dem Takt (z.B. Retry) -> sagt ihm, wo es weitergeht
-        raise HTTPException(status_code=409, detail=f"offset:{current}")
-    written = 0
-    with open(path, "ab") as f:
-        async for chunk in request.stream():
-            written += len(chunk)
-            if written > CHUNK_SIZE + 1024 * 1024 or current + written > v.size_bytes:
-                f.truncate(current)
-                raise HTTPException(status_code=400, detail="Chunk zu groß")
-            f.write(chunk)
-    v.received_bytes = current + written
+    total = _chunks_total(v)
+    if index < 0 or index >= total:
+        raise HTTPException(status_code=400, detail="Bad chunk index")
+    start = index * CHUNK_SIZE
+    expected = min(CHUNK_SIZE, v.size_bytes - start)
+    buf = bytearray()
+    async for part in request.stream():
+        buf += part
+        if len(buf) > expected:
+            raise HTTPException(status_code=400, detail="Chunk too large")
+    if len(buf) != expected:
+        raise HTTPException(status_code=400, detail="Chunk incomplete")
+    try:
+        with open(_part_path(v), "r+b") as f:
+            f.seek(start)
+            f.write(buf)
+    except FileNotFoundError:
+        raise HTTPException(status_code=410, detail="Upload was cancelled")
+    with _chunk_lock(v.id):
+        done = set(_chunks_done(v))
+        done.add(index)
+        with open(_chunks_path(v), "w", encoding="utf-8") as f:
+            f.write(",".join(str(x) for x in sorted(done)))
+    v.received_bytes = min(v.size_bytes, len(done) * CHUNK_SIZE)
     db.commit()
-    return {"received_bytes": v.received_bytes, "size_bytes": v.size_bytes}
+    return {"done": len(done), "total": total}
 
 
 @router.post("/{vod_id}/complete")
@@ -576,9 +613,13 @@ def complete_upload(vod_id: int, db: Session = Depends(get_db), ctx: VodCtx = De
         raise HTTPException(status_code=403, detail="Nur der Uploader kann den Upload abschließen")
     if v.status != "uploading":
         return _vod_out(v, _users_map(db), 0, ctx)
-    actual = os.path.getsize(_part_path(v)) if os.path.exists(_part_path(v)) else 0
-    if actual != v.size_bytes:
-        raise HTTPException(status_code=400, detail=f"Upload unvollständig ({actual} / {v.size_bytes} Bytes)")
+    missing = set(range(_chunks_total(v))) - set(_chunks_done(v))
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Upload incomplete ({len(missing)} parts missing)")
+    try:
+        os.remove(_chunks_path(v))
+    except FileNotFoundError:
+        pass
     v.status = "processing"
     db.commit()
     _start_processing(v.id)
@@ -596,6 +637,8 @@ def get_vod(vod_id: int, db: Session = Depends(get_db), ctx: VodCtx = Depends(vo
     out = _vod_out(v, users, len(notes), ctx)
     out["notes"] = [_note_out(n, users, ctx) for n in notes]
     out["chunk_size"] = CHUNK_SIZE
+    if v.status == "uploading":
+        out["chunks_done"] = _chunks_done(v)
     return out
 
 

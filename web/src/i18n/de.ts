@@ -1,15 +1,15 @@
 import type { Dict } from "./en";
 
 const de: Partial<Dict> = {
-  meta_title: "JUICED · EUW-Gilde · Where Winds Meet",
-  meta_desc: "JUICED ist eine EUW-Gilde in Where Winds Meet: GvG, Custom Games gegen andere Gilden, Ingame- und Community-Events und VOD-Reviews mit Rollen-Coaches.",
+  meta_title: "JUICED · EU-Gilde · Where Winds Meet",
+  meta_desc: "JUICED ist eine EU-Gilde in Where Winds Meet: GvG, Custom Games gegen andere Gilden, Ingame- und Community-Events und VOD-Reviews mit Rollen-Coaches.",
   nav_home: "Start", nav_team: "Team", nav_join: "Bewerben", nav_members: "Mitgliederbereich", nav_login: "Anmelden", nav_logout: "Abmelden",
   nav_discord: "Discord", nav_menu: "Menü", theme_toggle: "Hell / Dunkel umschalten", lang_label: "Sprache", skip: "Zum Inhalt springen",
 
-  hero_badge: "Wir suchen Spieler · EUW · Where Winds Meet",
+  hero_badge: "Wir suchen Spieler · EU · Where Winds Meet",
   hero_title_1: "Guild vs Guild,",
   hero_title_2: "gespielt, um zu gewinnen.",
-  hero_sub: "JUICED ist eine EUW-Gilde in Where Winds Meet. Jedes Wochenende stellen wir ein volles 30er-Roster, reviewen unsere Matches gemeinsam und kommen stärker zurück.",
+  hero_sub: "JUICED ist eine EU-Gilde in Where Winds Meet. Jedes Wochenende stellen wir ein volles 30er-Roster, reviewen unsere Matches gemeinsam und kommen stärker zurück.",
   hero_cta_join: "Bei JUICED bewerben", hero_cta_discord: "Unser Discord",
   float_gvg_t: "GvG-Wochenende", float_gvg_b: "Sa & So · 4–6 Matches pro Tag",
   float_roster_t: "30 gegen 30", float_roster_b: "Volles Roster, live im Voice gecallt",
@@ -22,14 +22,14 @@ const de: Partial<Dict> = {
   what_structure_t: "Klare Struktur", what_structure_b: "Leader, Vice und ein Coach für jede Rolle. Jeder weiß, wen er fragen kann.",
 
   loop_eyebrow: "Unsere Woche", loop_title: "Vom Match zur Verbesserung",
-  loop_1_t: "Spielen", loop_1_b: "Samstag und Sonntag GvG auf EUW.",
+  loop_1_t: "Spielen", loop_1_b: "Samstag und Sonntag GvG auf EU.",
   loop_2_t: "Aufnehmen", loop_2_b: "Mitglieder nehmen ihre Sicht auf und laden sie hier hoch: kein YouTube, keine Musik-Sperren.",
   loop_3_t: "Reviewen", loop_3_b: "Dein Rollen-Coach markiert die entscheidenden Momente. Du antwortest direkt in der Timeline.",
   loop_4_t: "Wiederholen", loop_4_b: "Die Erkenntnisse fließen direkt in den Plan fürs nächste Wochenende.",
 
   lead_eyebrow: "Leitung", lead_title: "Die Leute hinter JUICED", lead_cta: "Ganzes Roster", lead_empty: "Die Leitung wird gerade eingetragen.",
   cta_title: "Lust, mit uns zu kämpfen?", cta_body: "Die Bewerbung dauert zwei Minuten. Wir melden uns auf Discord.",
-  footer_tagline: "EUW-Gilde · Where Winds Meet",
+  footer_tagline: "EU-Gilde · Where Winds Meet",
   footer_legal: "JUICED ist eine Spielergilde und steht in keiner Verbindung zu den Entwicklern oder Publishern von Where Winds Meet.",
   footer_privacy: "Datenschutz",
 

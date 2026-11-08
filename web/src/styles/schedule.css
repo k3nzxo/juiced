@@ -43,3 +43,5 @@
   .day-body .ev { flex: 1 1 200px; }
   .day-free { margin: 0; text-align: left; padding: 6px; }
 }
+
+.ev-open { font-weight: 500; opacity: 0.8; }

@@ -2,6 +2,7 @@
 import { api, esc, fmtDate, icon, initI18n, lang, modal, T, timeAgo, toast } from "./core";
 // @ts-ignore -- reines JS-Modul
 import { renderVods, vodCleanup } from "./vods.js";
+import { enhancePicker, closePicker } from "./picker";
 
 type Me = {
   id: number; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
@@ -95,12 +96,30 @@ function renderShell() {
   root.innerHTML = `<div class="app">
     <aside class="side">
       <div class="side-user">${avatar(me!, 40)}<div><strong>${esc(me!.display_name)}</strong>${rankBadge(me!.public_rank)}</div></div>
-      <nav class="side-nav">${navItems().map((n) => `<a href="#/${n.id}" data-nav="${n.id}">${n.ico}<span>${esc(n.label)}</span></a>`).join("")}</nav>
+      <nav class="side-nav">${navItems().map((n) => `<a href="#/${n.id}" data-nav="${n.id}" title="${esc(n.label)}">${n.ico}<span>${esc(n.label)}</span></a>`).join("")}</nav>
       <button class="side-logout" data-logout>${icon.logout} ${esc(T("nav_logout"))}</button>
     </aside>
     <section class="view" id="view"></section>
   </div>`;
   bindLogout();
+  refreshBadges();
+}
+
+// Offene Punkte als Zahl an den Menüpunkten (gleiche Daten wie die Glocke im Header)
+let badgeTimer = 0;
+export async function refreshBadges() {
+  window.clearTimeout(badgeTimer);
+  try {
+    const n = await api<{ applications: number; matches: number; vods: number; total: number }>("/notifications");
+    const map: Record<string, number> = { applications: n.applications, matches: n.matches, vods: n.vods };
+    root.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => {
+      a.querySelector(".nbadge")?.remove();
+      const c = map[a.dataset.nav || ""];
+      if (c) a.insertAdjacentHTML("beforeend", `<span class="nbadge">${c > 99 ? "99+" : c}</span>`);
+    });
+    window.dispatchEvent(new CustomEvent("juiced:notifications", { detail: n }));
+  } catch { /* egal */ }
+  badgeTimer = window.setTimeout(refreshBadges, 60000);
 }
 
 function route() {
@@ -110,6 +129,8 @@ function route() {
   root.querySelectorAll<HTMLElement>("[data-nav]").forEach((a) => a.classList.toggle("active", a.dataset.nav === seg));
   const view = document.getElementById("view")!;
   if (seg !== "vods") vodCleanup();
+  closePicker();
+  document.body.classList.toggle("vod-focus", /^vods\/\d+/.test(h));
   view.classList.remove("in");
   void view.offsetWidth;
   view.classList.add("in");
@@ -229,6 +250,7 @@ async function viewApplications(view: HTMLElement) {
       const id = c.dataset.id;
       c.querySelectorAll<HTMLElement>("[data-s]").forEach((b) => b.addEventListener("click", async () => {
         await api(`/applications/${id}`, { method: "PUT", json: { status: b.dataset.s } }).catch((e) => toast(e.message));
+        refreshBadges();
         viewApplications(view);
       }));
       c.querySelector("[data-del]")!.addEventListener("click", async () => {
@@ -322,6 +344,9 @@ function shortUrl(u: string) {
 const KINDS = ["gvg", "scrim", "ingame", "friday", "other"];
 const loc = () => (lang() === "pt" ? "pt-BR" : lang());
 const fmtWhen = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const fmtWhenEv = (e: any) => e.open_end
+  ? `${new Date(e.starts_at).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })}, ${T("sched_from", { t: new Date(e.starts_at).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" }) })} · ${T("sched_open_end")}`
+  : fmtWhen(e.starts_at);
 
 async function fetchUpcoming(days = 14) {
   const start = new Date(), end = new Date(Date.now() + days * 86400000);
@@ -332,7 +357,7 @@ function evRow(e: any, editable: boolean) {
   return `<div class="tr ev-row kind-${esc(e.kind)}" data-id="${e.id}">
     <span class="ev-dot"></span>
     <div class="tr-main"><strong>${esc(e.title)}${e.opponent ? ` <span class="muted">· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
-      <span class="muted">${esc(fmtWhen(e.starts_at))} · ${esc(T("kind_" + e.kind))}${e.repeat_weekly ? ` · ${esc(T("ev_weekly"))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span></div>
+      <span class="muted">${esc(fmtWhenEv(e))} · ${esc(T("kind_" + e.kind))}${e.repeat_weekly ? ` · ${esc(T("ev_weekly"))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span></div>
     ${editable ? `<div class="row-gap"><button class="btn btn-ghost btn-sm" data-edit>${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button></div>` : ""}
   </div>`;
 }
@@ -374,7 +399,7 @@ function toLocalInput(iso: string | null) {
 }
 
 function editEvent(e: any | null, done: () => void, preset: any = {}) {
-  const v = { title: "", kind: "gvg", duration_min: 90, opponent: "", description: "", repeat_weekly: false, is_public: true, ...preset, ...(e || {}) };
+  const v = { title: "", kind: "gvg", duration_min: 90, opponent: "", description: "", repeat_weekly: false, open_end: false, is_public: true, ...preset, ...(e || {}) };
   const start = e ? (e.first_start || e.starts_at) : preset.starts_at || null;
   const m = modal(e ? T("ev_edit") : T("ev_new"), `
     <div class="field"><label>${esc(T("ev_title"))}</label><input class="input" id="ev-title" maxlength="120" value="${esc(v.title)}"></div>
@@ -383,14 +408,23 @@ function editEvent(e: any | null, done: () => void, preset: any = {}) {
       <div class="field"><label>${esc(T("ev_opponent"))}</label><input class="input" id="ev-opp" maxlength="80" value="${esc(v.opponent || "")}"></div>
     </div>
     <div class="row2">
-      <div class="field"><label>${esc(T("ev_start"))}</label><input class="input" type="datetime-local" id="ev-start" value="${toLocalInput(start)}"></div>
-      <div class="field"><label>${esc(T("ev_duration"))}</label><input class="input" type="number" id="ev-dur" min="10" max="1440" step="5" value="${v.duration_min}"></div>
+      <div class="field"><label>${esc(T("ev_start"))}</label><input id="ev-start" value="${toLocalInput(start)}"></div>
+      <div class="field"><label>${esc(T("ev_duration"))}</label><input class="input" type="number" id="ev-dur" min="10" max="1440" step="5" value="${v.duration_min}" ${v.open_end ? "disabled" : ""}></div>
     </div>
+    <label class="check"><input type="checkbox" id="ev-open" ${v.open_end ? "checked" : ""}> <span>${esc(T("ev_open_end"))}</span></label>
     <div class="field"><label>${esc(T("ev_desc"))}</label><textarea class="textarea" id="ev-desc" rows="3" maxlength="2000">${esc(v.description || "")}</textarea></div>
     <label class="check"><input type="checkbox" id="ev-rep" ${v.repeat_weekly ? "checked" : ""}> <span>${esc(T("ev_repeat"))}</span></label>
     <label class="check"><input type="checkbox" id="ev-pub" ${v.is_public ? "checked" : ""}> <span>${esc(T("ev_public"))}</span></label>`,
     `<button class="btn btn-primary" data-save>${esc(T("save"))}</button>`);
   const q = <T extends HTMLElement>(sel: string) => m.el.querySelector(sel) as T;
+  enhancePicker(q<HTMLInputElement>("#ev-start"), "datetime");
+  const openEnd = q<HTMLInputElement>("#ev-open");
+  const syncOpen = () => { q<HTMLInputElement>("#ev-dur").disabled = openEnd.checked; };
+  openEnd.addEventListener("change", syncOpen);
+  // Friday Night beginnt fest, das Ende ist offen
+  q<HTMLSelectElement>("#ev-kind").addEventListener("change", (x) => {
+    if ((x.target as HTMLSelectElement).value === "friday" && !e) { openEnd.checked = true; syncOpen(); }
+  });
   m.el.querySelector("[data-save]")!.addEventListener("click", async () => {
     const startVal = q<HTMLInputElement>("#ev-start").value;
     if (!startVal) return;
@@ -399,10 +433,11 @@ function editEvent(e: any | null, done: () => void, preset: any = {}) {
       starts_at: new Date(startVal).toISOString(), duration_min: Number(q<HTMLInputElement>("#ev-dur").value) || 90,
       opponent: q<HTMLInputElement>("#ev-opp").value, description: q<HTMLTextAreaElement>("#ev-desc").value,
       repeat_weekly: q<HTMLInputElement>("#ev-rep").checked, is_public: q<HTMLInputElement>("#ev-pub").checked,
+      open_end: openEnd.checked,
     };
     try {
       await api(e ? `/events/${e.id}` : "/events", { method: e ? "PUT" : "POST", json });
-      m.close(); toast(T("saved")); done();
+      closePicker(); m.close(); toast(T("saved")); done();
     } catch (x) { toast((x as Error).message); }
   });
 }
@@ -421,6 +456,7 @@ async function viewMatches(view: HTMLElement) {
         <span class="status status-${r.status === "declined" ? "rejected" : r.status}">${esc(st[r.status])}</span></div>
       <div class="app-tags">${r.format ? `<span class="badge">${esc(r.format)}</span>` : ""}<strong>${esc(r.proposed_times)}</strong></div>
       ${r.message ? `<p class="app-text">${esc(r.message)}</p>` : ""}
+      <textarea class="textarea mt-reply" rows="2" maxlength="1000" placeholder="${esc(T("mt_reply_ph"))}" data-reply>${esc(r.reply || "")}</textarea>
       <div class="row-gap">
         ${r.status !== "accepted" ? `<button class="btn btn-primary btn-sm" data-accept>${icon.check} ${esc(T("mt_accept"))}</button>` : ""}
         ${r.status !== "declined" ? `<button class="btn btn-outline btn-sm" data-decline>${esc(T("mt_decline"))}</button>` : ""}
@@ -428,7 +464,10 @@ async function viewMatches(view: HTMLElement) {
       </div></article>`).join("");
     el.querySelectorAll<HTMLElement>(".app-card").forEach((c) => {
       const r = list.find((x) => x.id === Number(c.dataset.id));
-      const set = (status: string) => api(`/scrims/${r.id}`, { method: "PUT", json: { status } });
+      const set = async (status: string) => {
+        await api(`/scrims/${r.id}`, { method: "PUT", json: { status, reply: c.querySelector<HTMLTextAreaElement>("[data-reply]")!.value } });
+        refreshBadges();
+      };
       c.querySelector("[data-accept]")?.addEventListener("click", async () => {
         try { await set("accepted"); } catch (x) { toast((x as Error).message); return; }
         editEvent(null, () => viewMatches(view), { kind: "scrim", title: T("kind_scrim"), opponent: r.guild_name, description: `${r.proposed_times}${r.format ? " · " + r.format : ""}` });

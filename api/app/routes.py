@@ -1,4 +1,5 @@
 import json
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -286,6 +287,7 @@ class EventIn(BaseModel):
     opponent: Optional[str] = None
     description: Optional[str] = None
     repeat_weekly: bool = False
+    open_end: bool = False
     is_public: bool = True
 
 
@@ -296,7 +298,7 @@ def _aware(dt: datetime) -> datetime:
 def _event_out(e: models.Event, start: datetime, can_edit: bool) -> dict:
     return {"id": e.id, "title": e.title, "kind": e.kind, "starts_at": iso(start),
             "ends_at": iso(start + timedelta(minutes=e.duration_min)), "duration_min": e.duration_min,
-            "opponent": e.opponent, "description": e.description, "repeat_weekly": e.repeat_weekly,
+            "opponent": e.opponent, "description": e.description, "repeat_weekly": e.repeat_weekly, "open_end": bool(e.open_end),
             "is_public": e.is_public, "first_start": iso(e.starts_at), "can_edit": can_edit}
 
 
@@ -336,7 +338,7 @@ def _validate_event(p: EventIn) -> dict:
         raise HTTPException(status_code=400, detail="Missing fields")
     return dict(title=title, kind=p.kind, starts_at=_aware(p.starts_at), duration_min=p.duration_min,
                 opponent=clean(p.opponent, 80), description=clean(p.description, 2000),
-                repeat_weekly=p.repeat_weekly, is_public=p.is_public)
+                repeat_weekly=p.repeat_weekly, open_end=p.open_end, is_public=p.is_public)
 
 
 @router.post("/events")
@@ -387,11 +389,23 @@ def request_scrim(payload: ScrimIn, request: Request, db: DbSession = Depends(ge
     if not guild or not contact or not times:
         raise HTTPException(status_code=400, detail="Missing fields")
     r = models.ScrimRequest(guild_name=guild, contact=contact, server=clean(payload.server, 80),
-                            format=clean(payload.format, 60), proposed_times=times, message=clean(payload.message, 2000))
+                            format=clean(payload.format, 60), proposed_times=times, message=clean(payload.message, 2000),
+                            token=secrets.token_urlsafe(18))
     db.add(r)
     db.commit()
     notify.scrim_webhook(r)
-    return {"ok": True}
+    return {"ok": True, "token": r.token}
+
+
+@router.get("/scrims/status/{token}")
+def scrim_status(token: str, request: Request, db: DbSession = Depends(get_db)):
+    """Öffentlicher Status einer Anfrage, nur mit dem geheimen Link abrufbar."""
+    limiter.check("scrimstatus:" + client_ip(request), 60, 600)
+    r = db.query(models.ScrimRequest).filter(models.ScrimRequest.token == token).first() if len(token) >= 16 else None
+    if not r:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"guild_name": r.guild_name, "status": r.status, "reply": r.reply, "proposed_times": r.proposed_times,
+            "created_at": iso(r.created_at), "decided_at": iso(r.decided_at)}
 
 
 @router.get("/scrims")
@@ -401,12 +415,13 @@ def list_scrims(db: DbSession = Depends(get_db), user: models.User = Depends(req
     db.commit()
     items = db.query(models.ScrimRequest).order_by(models.ScrimRequest.created_at.desc()).limit(200).all()
     return [{"id": r.id, "guild_name": r.guild_name, "contact": r.contact, "server": r.server, "format": r.format,
-             "proposed_times": r.proposed_times, "message": r.message, "status": r.status,
+             "proposed_times": r.proposed_times, "message": r.message, "status": r.status, "reply": r.reply,
              "created_at": iso(r.created_at)} for r in items]
 
 
 class ScrimStatusIn(BaseModel):
     status: str
+    reply: Optional[str] = None
 
 
 @router.put("/scrims/{rid}")
@@ -417,6 +432,8 @@ def set_scrim_status(rid: int, payload: ScrimStatusIn, db: DbSession = Depends(g
     if not r:
         raise HTTPException(status_code=404, detail="Not found")
     r.status, r.decided_by, r.decided_at = payload.status, user.id, datetime.now(timezone.utc)
+    if payload.reply is not None:
+        r.reply = clean(payload.reply, 1000)
     db.commit()
     return {"ok": True}
 
@@ -426,3 +443,24 @@ def delete_scrim(rid: int, db: DbSession = Depends(get_db), user: models.User = 
     db.query(models.ScrimRequest).filter(models.ScrimRequest.id == rid).delete()
     db.commit()
     return {"ok": True}
+
+
+# ------------------------------------------------------------------ Benachrichtigungen (Glocke)
+
+@router.get("/notifications")
+def notifications(db: DbSession = Depends(get_db), user: Optional[models.User] = Depends(current_user_optional)):
+    """Offene Punkte für den eingeloggten Nutzer: Bewerbungen + Match-Anfragen (Leader/Vice),
+    VODs der eigenen Coach-Rollen ohne Notiz."""
+    out = {"applications": 0, "matches": 0, "vods": 0}
+    if not user or user.level < models.RANK_LEVEL["member"]:
+        return {**out, "total": 0}
+    if user.level >= models.RANK_LEVEL["vice"]:
+        out["applications"] = db.query(models.Application).filter(models.Application.status == "pending").count()
+        out["matches"] = db.query(models.ScrimRequest).filter(models.ScrimRequest.status == "pending").count()
+    roles = list(models.COACH_ROLES) if user.level >= models.RANK_LEVEL["vice"] else user.coach_list
+    if roles:
+        from .vods import Vod, VodNote
+        reviewed = {vid for (vid,) in db.query(VodNote.vod_id).distinct().all()}
+        out["vods"] = sum(1 for (vid,) in db.query(Vod.id).filter(Vod.status == "ready", Vod.role.in_(roles),
+                                                                    Vod.uploader_id != user.id).all() if vid not in reviewed)
+    return {**out, "total": sum(out.values())}

@@ -1,6 +1,7 @@
 // VOD-Reviews: Liste, Upload in Stücken, Player mit Zeitstempel-Notizen.
 // Wird vom Router im Mitgliederbereich aufgerufen: renderVods(container, me)
 import { api, toast, esc as escapeHtml, icon, fmtDate as formatDate, timeAgo, closeModal, T } from "./core";
+import { enhancePicker, closePicker } from "./picker";
 
 let $app = null;
 const goTo = (h) => { location.hash = h; };
@@ -65,8 +66,10 @@ function vodCleanup() {
 }
 
 // Router-Einstieg (aus route() in app.js)
-export async function renderVods(container, me) {
+let vodLastMe = null;
+export async function renderVods(container = $app, me = vodLastMe) {
   $app = container;
+  vodLastMe = me;
   vodCleanup();
   vodState.me = { level: me.can_manage ? "admin" : (me.coach_roles.length ? "coach" : "member"), coach_roles: me.coach_roles };
   const m = location.hash.match(/^#\/vods\/(\d+)/);
@@ -174,12 +177,14 @@ function drawVodList() {
           <span>${v.uploader_name ? escapeHtml(vt("by", { name: v.uploader_name })) : ""}</span>
           <span>${vodExpiryLabel(v)} ${vt("notes_n", { n: v.note_count })}</span>
         </div>
-        ${v.status === "uploading" && !vodState.uploads[v.id] ? `<button class="btn btn-sm btn-ghost vod-resume-btn" data-resume-id="${v.id}">${icon.refresh} ${vt("resume")}</button>` : ""}
+        ${v.status === "uploading" && !vodState.uploads[v.id] ? `<div class="vod-resume-row">
+          <button class="btn btn-sm btn-outline" data-resume-id="${v.id}">${icon.refresh} ${vt("resume")}</button>
+          <button class="btn btn-sm btn-ghost" data-discard-id="${v.id}">${icon.x} ${vt("cancel")}</button></div>` : ""}
       </div>
     </div>`).join("")}</div>`;
   el.querySelectorAll(".vod-card").forEach(card => {
     card.addEventListener("click", (e) => {
-      if (e.target.closest("[data-resume-id]")) return;
+      if (e.target.closest("[data-resume-id],[data-discard-id]")) return;
       if (card.dataset.status === "uploading") return;
       goTo(`#/vods/${card.dataset.vodId}`);
     });
@@ -187,13 +192,51 @@ function drawVodList() {
   el.querySelectorAll("[data-resume-id]").forEach(btn => {
     btn.addEventListener("click", () => resumeVodUpload(vodState.list.find(v => v.id === parseInt(btn.dataset.resumeId, 10))));
   });
+  el.querySelectorAll("[data-discard-id]").forEach(btn => {
+    btn.addEventListener("click", () => cancelVodUpload(parseInt(btn.dataset.discardId, 10)));
+  });
 }
 
 // ---------------------------------------------------------------- Upload
 
+const VOD_ACCEPT = "video/*,.mkv,.flv,.ts";
+const VOD_PARALLEL = 4;  // gleichzeitige Stücke
+
+function vodDropzone(id) {
+  return `<label class="vod-drop" id="${id}">
+    <input type="file" accept="${VOD_ACCEPT}" hidden />
+    <span class="vod-drop-ico">${icon.video}</span>
+    <span class="vod-drop-empty"><strong>${vt("drop_t")}</strong><span>${vt("drop_b")}</span></span>
+    <span class="vod-drop-file" hidden><strong data-name></strong><span><span data-size></span> · <u>${vt("drop_change")}</u></span></span>
+  </label>`;
+}
+
+function vodBindDropzone(root, id, onFile) {
+  const zone = root.querySelector(`#${id}`);
+  const input = zone.querySelector("input");
+  const show = (f) => {
+    zone.classList.add("has-file");
+    zone.querySelector(".vod-drop-empty").hidden = true;
+    zone.querySelector(".vod-drop-file").hidden = false;
+    zone.querySelector("[data-name]").textContent = f.name;
+    zone.querySelector("[data-size]").textContent = vodFmtBytes(f.size);
+    onFile(f);
+  };
+  input.addEventListener("change", () => { if (input.files[0]) show(input.files[0]); });
+  ["dragenter", "dragover"].forEach(ev => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.add("over"); }));
+  ["dragleave", "dragend"].forEach(ev => zone.addEventListener(ev, () => zone.classList.remove("over")));
+  zone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    zone.classList.remove("over");
+    const f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) show(f);
+  });
+}
+
 function openVodUploadModal() {
   const maxBytes = vodState.storage ? vodState.storage.max_file_bytes : 0;
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `
@@ -201,56 +244,52 @@ function openVodUploadModal() {
       <div class="modal-head"><h3>${vt("upload_btn")}</h3><button class="close-x">${icon.x}</button></div>
       <div class="modal-body">
         <div class="field">
-          <label>${vt("f_file")}</label>
-          <input type="file" id="vod-f-file" accept="video/*,.mkv,.flv,.ts" />
+          ${vodDropzone("vod-f-drop")}
           <p class="vod-hint">${vt("f_file_hint", { max: vodFmtBytes(maxBytes) })}</p>
         </div>
-        <div class="field"><label>${vt("f_role")}</label>${vodRoleChips("vod-f-role", null)}
-          <p class="vod-hint" id="vod-f-role-hint">${vt("role_hint_member")}</p></div>
-        <div class="field"><label>${vt("f_title")}</label><input id="vod-f-title" maxlength="200" /></div>
+        <div class="field"><label>${vt("f_role")}</label>${vodRoleChips("vod-f-role", null)}</div>
+        <div class="field"><label>${vt("f_title")}</label><input class="input" id="vod-f-title" maxlength="200" /></div>
         <div class="vod-form-row">
-          <div class="field"><label>${vt("f_opponent")}</label><input id="vod-f-opponent" maxlength="120" /></div>
-          <div class="field"><label>${vt("f_date")}</label><input type="date" id="vod-f-date" value="${today}" /></div>
+          <div class="field"><label>${vt("f_opponent")}</label><input class="input" id="vod-f-opponent" maxlength="120" /></div>
+          <div class="field"><label>${vt("f_date")}</label><input id="vod-f-date" value="${today}" /></div>
         </div>
         <div class="field"><label>${vt("f_result")}</label>
           <div class="vod-chip-row" id="vod-f-result">
-            ${["", "win", "loss", "draw"].map(r => `<button type="button" class="cat-tab ${r === "" ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
+            ${["", "win", "loss"].map(r => `<button type="button" class="cat-tab ${r === "" ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
           </div>
         </div>
-        <div class="field"><label>${vt("f_desc")}</label><textarea id="vod-f-desc" rows="3" maxlength="5000"></textarea></div>
+        <div class="field"><label>${vt("f_desc")}</label><textarea class="textarea" id="vod-f-desc" rows="3" maxlength="5000"></textarea></div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-primary" id="vod-f-submit">${vt("start_upload")}</button>
       </div>
     </div>`;
   document.body.appendChild(backdrop);
-  const close = () => closeModal(backdrop);
+  const close = () => { closePicker(); closeModal(backdrop); };
   backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
   backdrop.querySelector(".close-x").addEventListener("click", close);
+  enhancePicker(backdrop.querySelector("#vod-f-date"), "date", { clearable: true });
 
   let result = "";
   let role = null;
-  vodBindRoleChips(backdrop, "vod-f-role", r => {
-    role = r;
-    backdrop.querySelector("#vod-f-role-hint").textContent = vt(r === "team" ? "role_hint_team" : "role_hint_member");
-  });
+  let file = null;
+  vodBindRoleChips(backdrop, "vod-f-role", r => { role = r; });
   backdrop.querySelectorAll("#vod-f-result [data-r]").forEach(b => b.addEventListener("click", () => {
     result = b.dataset.r;
     backdrop.querySelectorAll("#vod-f-result [data-r]").forEach(x => x.classList.toggle("active", x === b));
   }));
-  const fileIn = backdrop.querySelector("#vod-f-file");
   const titleIn = backdrop.querySelector("#vod-f-title");
-  fileIn.addEventListener("change", () => {
-    const f = fileIn.files[0];
-    if (f && !titleIn.value.trim()) titleIn.value = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").slice(0, 200);
+  vodBindDropzone(backdrop, "vod-f-drop", (f) => {
+    file = f;
+    if (!titleIn.value.trim()) titleIn.value = f.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").slice(0, 200);
   });
 
   backdrop.querySelector("#vod-f-submit").addEventListener("click", async (e) => {
-    const file = fileIn.files[0];
+    const btn = e.currentTarget;
     const title = titleIn.value.trim();
     if (!file || !title) { toast(vt("missing_fields")); return; }
     if (!role) { toast(vt("missing_role")); return; }
-    e.currentTarget.disabled = true;
+    btn.disabled = true;
     try {
       const vod = await api("/vods", {
         method: "POST",
@@ -263,10 +302,10 @@ function openVodUploadModal() {
         }),
       });
       close();
-      startVodUpload(vod, file, 0);
+      startVodUpload(vod, file, []);
     } catch (err) {
       toast(err.message);
-      e.currentTarget.disabled = false;
+      btn.disabled = false;
     }
   });
 }
@@ -276,90 +315,130 @@ function resumeVodUpload(vod) {
   toast(vt("resume_pick", { name: vod.original_filename || "" }));
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = "video/*,.mkv,.flv,.ts";
-  input.addEventListener("change", () => {
+  input.accept = VOD_ACCEPT;
+  input.addEventListener("change", async () => {
     const f = input.files[0];
     if (!f) return;
     if (f.size !== vod.size_bytes) { toast(vt("resume_wrong")); return; }
-    startVodUpload(vod, f, vod.received_bytes || 0);
+    try {
+      const fresh = await api(`/vods/${vod.id}`);
+      startVodUpload(fresh, f, fresh.chunks_done || []);
+    } catch (err) { toast(err.message); }
   });
   input.click();
 }
 
-function vodUploadChunk(vodId, offset, blob) {
+function vodPutChunk(up, index, blob) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("PUT", `/api/vods/${vodId}/upload?offset=${offset}`);
+    up.xhrs.add(xhr);
+    const finish = () => { up.xhrs.delete(xhr); delete up.inflight[index]; };
+    xhr.open("PUT", `/api/vods/${up.id}/chunk?index=${index}`);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
-    xhr.upload.onprogress = (e) => { const u = vodState.uploads[vodId]; if (u) { u.inflight = e.loaded; renderUploadProgressPanel(); } };
+    xhr.upload.onprogress = (e) => { up.inflight[index] = e.loaded; renderUploadProgressPanel(); };
     xhr.onload = () => {
+      finish();
       let data = null;
       try { data = JSON.parse(xhr.responseText); } catch (e) {}
-      if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-      else {
-        const err = new Error((data && data.detail) || `HTTP ${xhr.status}`);
-        err.status = xhr.status;
-        reject(err);
-      }
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(data);
+      const err = new Error((data && data.detail) || `HTTP ${xhr.status}`);
+      err.status = xhr.status;
+      reject(err);
     };
-    xhr.onerror = () => { const err = new Error(T("error")); err.status = 0; reject(err); };
+    xhr.onerror = () => { finish(); const err = new Error(T("error")); err.status = 0; reject(err); };
+    xhr.onabort = () => { finish(); const err = new Error("aborted"); err.status = -1; reject(err); };
     xhr.send(blob);
   });
 }
 
-async function startVodUpload(vod, file, startOffset) {
-  const chunk = vod.chunk_size || 32 * 1024 * 1024;
-  const up = { id: vod.id, title: vod.title, size: file.size, done: startOffset, inflight: 0, started: Date.now(), startedBytes: startOffset, error: null };
+async function startVodUpload(vod, file, doneList) {
+  const chunk = vod.chunk_size || 16 * 1024 * 1024;
+  const total = Math.max(1, Math.ceil(file.size / chunk));
+  const sizeOf = (i) => Math.min(chunk, file.size - i * chunk);
+  const done = new Set(doneList || []);
+  const queue = [];
+  for (let i = 0; i < total; i++) if (!done.has(i)) queue.push(i);
+  const doneBytes = [...done].reduce((a, i) => a + (i < total ? sizeOf(i) : 0), 0);
+  const up = { id: vod.id, title: vod.title, size: file.size, done: doneBytes, inflight: {}, xhrs: new Set(),
+               started: Date.now(), startedBytes: doneBytes, stopped: false };
   vodState.uploads[vod.id] = up;
   renderUploadProgressPanel();
-  if (location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash)) loadVodList();
+  if (vodOnList()) loadVodList();
 
-  let offset = startOffset;
-  let retries = 0;
-  try {
-    while (offset < file.size) {
-      try {
-        const res = await vodUploadChunk(vod.id, offset, file.slice(offset, Math.min(offset + chunk, file.size)));
-        offset = res.received_bytes;
-        retries = 0;
-      } catch (err) {
-        const m = /^offset:(\d+)$/.exec(err.message || "");
-        if (err.status === 409 && m) { offset = parseInt(m[1], 10); continue; }
-        if (err.status === 401 || err.status === 403 || err.status === 400 || ++retries > 8) throw err;
-        await new Promise(r => setTimeout(r, Math.min(30000, 1500 * retries)));  // Netz weg -> warten, nochmal
+  const worker = async () => {
+    while (queue.length && !up.stopped) {
+      const i = queue.shift();
+      for (let tries = 0; ; ) {
+        try {
+          await vodPutChunk(up, i, file.slice(i * chunk, i * chunk + sizeOf(i)));
+          up.done += sizeOf(i);
+          renderUploadProgressPanel();
+          break;
+        } catch (err) {
+          if (up.stopped || err.status === -1) return;
+          if ([400, 401, 403, 404, 409, 410].includes(err.status) || ++tries > 8) throw err;
+          await new Promise(r => setTimeout(r, Math.min(30000, 1500 * tries)));  // Netz weg -> warten, nochmal
+        }
       }
-      up.done = offset; up.inflight = 0;
-      renderUploadProgressPanel();
     }
+  };
+
+  try {
+    await Promise.all(Array.from({ length: Math.min(VOD_PARALLEL, Math.max(1, queue.length)) }, worker));
+    if (up.stopped) return;
     await api(`/vods/${vod.id}/complete`, { method: "POST" });
     delete vodState.uploads[vod.id];
     toast(vt("upload_done"));
   } catch (err) {
-    up.error = err.message;
+    if (up.stopped) return;
+    up.stopped = true;
+    up.xhrs.forEach(x => x.abort());
     delete vodState.uploads[vod.id];
     toast(`${vt("upload_failed")} (${err.message})`);
   }
   renderUploadProgressPanel();
-  if (location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash)) { vodCleanup(); loadVodList(); }
+  if (vodOnList()) { vodCleanup(); loadVodList(); }
 }
+
+async function cancelVodUpload(id) {
+  if (!confirm(vt("cancel_confirm"))) return;
+  const up = vodState.uploads[id];
+  if (up) {
+    up.stopped = true;
+    up.xhrs.forEach(x => x.abort());
+    delete vodState.uploads[id];
+    renderUploadProgressPanel();
+  }
+  try {
+    await api(`/vods/${id}`, { method: "DELETE" });
+    toast(vt("cancelled"));
+  } catch (err) { toast(err.message); }
+  if (vodOnList()) { vodCleanup(); loadVodList(); }
+}
+
+const vodOnList = () => location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash);
 
 function renderUploadProgressPanel() {
   const el = document.getElementById("vod-upload-progress");
   if (!el) return;
   const ups = Object.values(vodState.uploads);
   el.innerHTML = ups.map(u => {
-    const cur = u.done + (u.inflight || 0);
+    const cur = Math.min(u.size, u.done + Object.values(u.inflight).reduce((a, b) => a + b, 0));
     const pct = Math.min(100, cur / u.size * 100);
     const secs = (Date.now() - u.started) / 1000;
     const speed = secs > 2 ? (cur - u.startedBytes) / secs : 0;
     const eta = speed > 0 ? (u.size - cur) / speed : 0;
     return `<div class="vod-upload-row">
-      <div class="vod-upload-head"><strong>${escapeHtml(u.title)}</strong>
-        <span>${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)}${speed ? ` · ${(speed / 1024 / 1024).toFixed(1)} MB/s · ~${vodFmtTime(eta)}` : ""}</span></div>
+      <div class="vod-upload-head">
+        <strong>${escapeHtml(u.title)}</strong>
+        <span class="vod-upload-stats">${pct.toFixed(0)}% · ${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)}${speed ? ` · ${(speed / 1024 / 1024).toFixed(1)} MB/s · ~${vodFmtTime(eta)}` : ""}</span>
+        <button class="btn btn-sm btn-ghost vod-upload-cancel" data-cancel-up="${u.id}">${icon.x} ${vt("cancel")}</button>
+      </div>
       <div class="vod-progress"><span style="width:${pct.toFixed(1)}%"></span></div>
       <div class="vod-hint">${vt("keep_open")}</div>
     </div>`;
   }).join("");
+  el.querySelectorAll("[data-cancel-up]").forEach(b => b.addEventListener("click", () => cancelVodUpload(parseInt(b.dataset.cancelUp, 10))));
 }
 
 // ---------------------------------------------------------------- Detail / Review
@@ -419,14 +498,17 @@ async function renderVodDetail(vodId) {
         </div>
         <div class="vod-timeline" id="vod-timeline"><div class="vod-timeline-pos" id="vod-timeline-pos"></div></div>
         <div class="vod-controls">
-          <button class="btn btn-sm btn-ghost" data-seek="-10">-10s</button>
-          <button class="btn btn-sm btn-ghost" data-seek="-5">-5s</button>
-          <button class="btn btn-sm btn-ghost" data-seek="5">+5s</button>
-          <button class="btn btn-sm btn-ghost" data-seek="10">+10s</button>
-          <span class="vod-sep"></span>
-          ${[0.25, 0.5, 1, 1.5, 2].map(r => `<button class="btn btn-sm btn-ghost vod-rate ${r === 1 ? "active" : ""}" data-rate="${r}">${r}x</button>`).join("")}
+          <div class="vod-seg">
+            <button type="button" data-seek="-10">−10s</button>
+            <button type="button" data-seek="-5">−5s</button>
+            <button type="button" data-seek="5">+5s</button>
+            <button type="button" data-seek="10">+10s</button>
+          </div>
+          <div class="vod-seg vod-rates" title="${escapeHtml(vt("speed"))}">
+            ${[0.25, 0.5, 1, 1.5, 2].map(r => `<button type="button" class="${r === 1 ? "active" : ""}" data-rate="${r}">${r}×</button>`).join("")}
+          </div>
+          <span class="vod-keys">${escapeHtml(vt("hotkeys"))}</span>
         </div>
-        <div class="vod-hint">${vt("hotkeys")}</div>
       </div>
       <aside class="vod-notes-col">
         <div class="vod-composer">
@@ -653,19 +735,18 @@ async function renderVodDetail(vodId) {
 
   vodState.keyHandler = (e) => {
     const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "video") e.target.blur();
     if (tag === "input" || tag === "textarea" || e.ctrlKey || e.metaKey || e.altKey) {
       if (e.key === "Escape" && tag === "textarea") e.target.blur();
       return;
     }
     if (document.querySelector(".modal-backdrop")) return;
+    if (tag === "button" && e.key === " ") e.target.blur();
     const k = e.key.toLowerCase();
-    if (k === " " || k === "k") { e.preventDefault(); video.paused ? video.play() : video.pause(); }
-    else if (k === "j") seek(video.currentTime - 5);
-    else if (k === "l") seek(video.currentTime + 5);
-    else if (k === ",") { video.pause(); seek(video.currentTime - 1 / 30); }
-    else if (k === ".") { video.pause(); seek(video.currentTime + 1 / 30); }
+    if (k === " ") { e.preventDefault(); video.paused ? video.play() : video.pause(); }
+    else if (k === "arrowleft") { e.preventDefault(); seek(video.currentTime - 5); }
+    else if (k === "arrowright") { e.preventDefault(); seek(video.currentTime + 5); }
     else if (k === "n") { e.preventDefault(); video.pause(); setComposerTime(video.currentTime); textEl.focus(); }
-    else if (k === "f") { if (document.fullscreenElement) document.exitFullscreen(); else video.requestFullscreen && video.requestFullscreen(); }
   };
   document.addEventListener("keydown", vodState.keyHandler);
 
@@ -681,24 +762,25 @@ function openVodEditModal(vod) {
       <div class="modal-head"><h3>${vt("edit_vod")}</h3><button class="close-x">${icon.x}</button></div>
       <div class="modal-body">
         <div class="field"><label>${vt("f_role")}</label>${vodRoleChips("vod-e-role", vod.role)}</div>
-        <div class="field"><label>${vt("f_title")}</label><input id="vod-e-title" maxlength="200" value="${escapeHtml(vod.title)}" /></div>
+        <div class="field"><label>${vt("f_title")}</label><input class="input" id="vod-e-title" maxlength="200" value="${escapeHtml(vod.title)}" /></div>
         <div class="vod-form-row">
-          <div class="field"><label>${vt("f_opponent")}</label><input id="vod-e-opponent" maxlength="120" value="${escapeHtml(vod.opponent || "")}" /></div>
-          <div class="field"><label>${vt("f_date")}</label><input type="date" id="vod-e-date" value="${escapeHtml(vod.match_date || "")}" /></div>
+          <div class="field"><label>${vt("f_opponent")}</label><input class="input" id="vod-e-opponent" maxlength="120" value="${escapeHtml(vod.opponent || "")}" /></div>
+          <div class="field"><label>${vt("f_date")}</label><input id="vod-e-date" value="${escapeHtml(vod.match_date || "")}" /></div>
         </div>
         <div class="field"><label>${vt("f_result")}</label>
           <div class="vod-chip-row" id="vod-e-result">
-            ${["", "win", "loss", "draw"].map(r => `<button type="button" class="cat-tab ${(vod.result || "") === r ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
+            ${["", "win", "loss"].map(r => `<button type="button" class="cat-tab ${(vod.result || "") === r ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
           </div>
         </div>
-        <div class="field"><label>${vt("f_desc")}</label><textarea id="vod-e-desc" rows="4" maxlength="5000">${escapeHtml(vod.description || "")}</textarea></div>
+        <div class="field"><label>${vt("f_desc")}</label><textarea class="textarea" id="vod-e-desc" rows="4" maxlength="5000">${escapeHtml(vod.description || "")}</textarea></div>
       </div>
       <div class="modal-foot"><button class="btn btn-primary" id="vod-e-save">${vt("save")}</button></div>
     </div>`;
   document.body.appendChild(backdrop);
-  const close = () => closeModal(backdrop);
+  const close = () => { closePicker(); closeModal(backdrop); };
   backdrop.addEventListener("click", (e) => { if (e.target === backdrop) close(); });
   backdrop.querySelector(".close-x").addEventListener("click", close);
+  enhancePicker(backdrop.querySelector("#vod-e-date"), "date", { clearable: true });
   let result = vod.result || "";
   let role = vod.role;
   vodBindRoleChips(backdrop, "vod-e-role", r => { role = r; });
