@@ -52,8 +52,8 @@ const en = {
   join_sent_b: "Thanks! Make sure you're on our Discord so we can reach you.",
   join_err_required: "Please fill in the required fields.", join_err_consent: "Please confirm the storage of your data.",
   join_err_generic: "Something went wrong. Please try again.",
-  join_side_t: "What happens next", join_side_1: "Our leaders review your application.",
-  join_side_2: "We message you on Discord for a short chat.", join_side_3: "You join a weekend and see if it fits.",
+  join_side_t: "What happens next", join_side_1: "Our leaders look at your application.",
+  join_side_2: "We message you on Discord.", join_side_3: "You play with us and we see if it fits.",
 
   privacy_title: "Privacy",
   privacy_p1: "This website is run by the JUICED guild for its members. We only store what we need for it to work.",

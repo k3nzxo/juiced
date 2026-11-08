@@ -53,7 +53,7 @@ const de: Partial<Dict> = {
   join_err_required: "Bitte fülle die Pflichtfelder aus.", join_err_consent: "Bitte bestätige die Speicherung deiner Daten.",
   join_err_generic: "Etwas ist schiefgelaufen. Bitte versuch es nochmal.",
   join_side_t: "So geht's weiter", join_side_1: "Die Leitung sieht sich deine Bewerbung an.",
-  join_side_2: "Wir schreiben dich auf Discord für ein kurzes Gespräch an.", join_side_3: "Du spielst ein Wochenende mit und wir schauen, ob es passt.",
+  join_side_2: "Wir schreiben dich auf Discord an.", join_side_3: "Du spielst mit und wir schauen, ob es passt.",
 
   privacy_title: "Datenschutz",
   privacy_p1: "Diese Website wird von der Gilde JUICED für ihre Mitglieder betrieben. Wir speichern nur, was wir dafür brauchen.",
