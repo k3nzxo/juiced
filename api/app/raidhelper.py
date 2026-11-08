@@ -151,20 +151,33 @@ def _fetch() -> dict:
             "template_id": max(templates, key=templates.get) if templates else ""}
 
 
+_fetch_lock = threading.Lock()
+
+
 def get_events() -> dict:
     if not API_KEY or not SERVER_ID:
         return {"configured": False, "events": []}
     with _lock:
-        if _cache["data"] is not None and time.time() - _cache["at"] < CACHE_SECONDS:
-            return _cache["data"]
+        cached, at = _cache["data"], _cache["at"]
+    if cached is not None and time.time() - at < CACHE_SECONDS:
+        return cached
+    # nur einer lädt neu; die anderen bekommen solange die letzten Daten (sofern vorhanden) statt zu warten
+    if not _fetch_lock.acquire(blocking=cached is None):
+        return cached
+    try:
+        with _lock:  # vielleicht hat inzwischen jemand anderes geladen
+            if _cache["data"] is not None and time.time() - _cache["at"] < CACHE_SECONDS:
+                return _cache["data"]
         try:
             data = _fetch()
         except Exception as ex:  # Raid-Helper nicht erreichbar oder Schlüssel ungültig
             print(f"[raidhelper] Abruf fehlgeschlagen: {type(ex).__name__}")
-            stale = _cache["data"]
-            return {**stale, "stale": True} if stale else {"configured": True, "events": [], "error": "unavailable"}
-        _cache.update(at=time.time(), data=data)
+            return {**cached, "stale": True} if cached else {"configured": True, "events": [], "error": "unavailable"}
+        with _lock:
+            _cache.update(at=time.time(), data=data)
         return data
+    finally:
+        _fetch_lock.release()
 
 
 def _roster_out(r: Optional[models.Roster], names: dict) -> Optional[dict]:
@@ -323,7 +336,7 @@ def push_roster(event_id: str, payload: PushIn, db: DbSession = Depends(get_db),
     signups = {s["user_id"]: s for s in ev["signups"]}
     users = {u.discord_id: u for u in db.query(models.User).filter(models.User.discord_id.in_(
         [m for g in groups for m in g["members"]])).all()} if groups else {}
-    slot_count = max([len(g["members"]) for g in groups] + [1])
+    slot_count = max([max(len(g["members"]), int(g.get("size") or 0)) for g in groups] + [1])
     slots = []
     for gi, g in enumerate(groups):
         for si, uid in enumerate(g["members"]):
@@ -399,6 +412,20 @@ def _cached(key: str, ttl: int, fn):
     val = fn()
     _dc_cache[key] = (time.time(), val)
     return val
+
+
+def _mention_chunks(head: str, ids: list) -> list:
+    """Erwähnungen auf Nachrichten verteilen: max. ~1900 Zeichen und 100 Personen je Nachricht (Discord-Grenzen)."""
+    out, cur, cur_ids = [], head, []
+    for uid in ids:
+        tag = f"<@{uid}> "
+        if cur_ids and (len(cur) + len(tag) > 1900 or len(cur_ids) >= 100):
+            out.append((cur, cur_ids))
+            cur, cur_ids = "", []
+        cur += tag
+        cur_ids.append(uid)
+    out.append((cur, cur_ids))
+    return out
 
 
 def _guild_channels() -> list:
@@ -492,17 +519,9 @@ def remind(event_id: str, payload: RemindIn, user: models.User = Depends(require
             raise HTTPException(status_code=400, detail="Please choose a channel")
         head = "\n".join(x for x in (f"**{ev['title']}**" + (f" · {text}" if text else ""), ev.get("url") or "") if x)
         # Erwähnungen auf mehrere Nachrichten verteilen (max. 2000 Zeichen)
-        chunks, cur = [], head + "\n"
-        for m in missing:
-            tag = f"<@{m['id']}> "
-            if len(cur) + len(tag) > 1900:
-                chunks.append(cur)
-                cur = ""
-            cur += tag
-        chunks.append(cur)
-        for c in chunks:
+        for content, ids in _mention_chunks(head + "\n", [m["id"] for m in missing]):
             _discord("POST", f"/channels/{channel}/messages", json={
-                "content": c, "allowed_mentions": {"parse": [], "users": [m["id"] for m in missing if m["id"] in c][:100]}})
+                "content": content, "allowed_mentions": {"parse": [], "users": ids}})
     if payload.dm and missing:
         notify.dm([m["id"] for m in missing], f"⏰ {ev['title']}", text or "Please sign up in Raid-Helper.", "/en/app/#/signups")
     return {"ok": True, "count": len(missing)}
@@ -618,17 +637,9 @@ def cancel_event(event_id: str, payload: CancelIn, db: DbSession = Depends(get_d
     if payload.ping and DISCORD_BOT_TOKEN and ev.get("channel_id"):
         ids = list(dict.fromkeys(s["user_id"] for s in ev["signups"] if s["user_id"] and s["status"] == "primary" and s["class"].lower() not in ("absence", "absent")))
         head = f"❌ **{_plain_title(ev['title'])}** – cancelled" + (f": {reason}" if reason else "") + (f"\n{ev['url']}" if ev.get("url") else "")
-        chunks, cur = [], head + "\n"
-        for uid in ids:
-            tag = f"<@{uid}> "
-            if len(cur) + len(tag) > 1900:
-                chunks.append(cur)
-                cur = ""
-            cur += tag
-        chunks.append(cur)
-        for c in chunks:
+        for content, chunk_ids in _mention_chunks(head + "\n", ids):
             _discord("POST", f"/channels/{ev['channel_id']}/messages", json={
-                "content": c, "allowed_mentions": {"parse": [], "users": [u for u in ids if u in c][:100]}})
+                "content": content, "allowed_mentions": {"parse": [], "users": chunk_ids}})
         pinged = len(ids)
     return {"ok": True, "pinged": pinged}
 

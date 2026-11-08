@@ -668,7 +668,9 @@ def notifications(db: DbSession = Depends(get_db), user: Optional[models.User] =
         out["vods"] = db.query(Vod).filter(Vod.status == "ready", Vod.role.in_(roles), Vod.reviewed_at.is_(None),
                                            Vod.uploader_id != user.id).count()
     # laufende Uploads (nur Info, zählt nicht zur Glocke)
-    from .vods import Vod as _Vod
+    from .vods import Vod as _Vod, _ctx_for, _can_view
     since = datetime.now(timezone.utc) - timedelta(minutes=15)
-    uploading = db.query(_Vod).filter(_Vod.status == "uploading", _Vod.updated_at >= since).count()
+    ctx = _ctx_for(db, user)
+    uploading = sum(1 for v in db.query(_Vod).filter(_Vod.status == "uploading", _Vod.updated_at >= since).all()
+                    if ctx and _can_view(v, ctx))
     return {**out, "total": sum(out.values()), "uploading": uploading}

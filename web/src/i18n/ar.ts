@@ -657,6 +657,7 @@ const ar: Partial<Dict & ExtraDict> = {
   vod_uploading_now: "يتم رفع VOD الآن",
   att_label: "الحضور (30 يومًا):",
   att_title: "{a} من {t} فعالية",
+  rh_open_web: "لم يتم العثور على تطبيق Discord – انقر مرة أخرى لفتحه في المتصفح.",
 };
 
 export default ar;

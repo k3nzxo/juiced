@@ -657,6 +657,7 @@ const fi: Partial<Dict & ExtraDict> = {
   vod_uploading_now: "VODia ladataan juuri nyt",
   att_label: "Osallistuminen (30 pv):",
   att_title: "{a}/{t} tapahtumaa",
+  rh_open_web: "Discord-sovellusta ei löytynyt – klikkaa uudelleen avataksesi selaimessa.",
 };
 
 export default fi;

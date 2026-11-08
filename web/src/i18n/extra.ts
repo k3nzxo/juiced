@@ -354,6 +354,7 @@ const en = {
   vod_uploading_now: "A VOD is being uploaded right now",
   att_label: "Attendance (30 days):",
   att_title: "{a} of {t} events",
+  rh_open_web: "Discord app not found – click again to open it in the browser.",
 };
 
 export type ExtraDict = typeof en;
@@ -704,6 +705,7 @@ const de: Partial<ExtraDict> = {
   vod_uploading_now: "Gerade wird ein VOD hochgeladen",
   att_label: "Anwesenheit (30 Tage):",
   att_title: "{a} von {t} Events",
+  rh_open_web: "Discord-App nicht gefunden – nochmal klicken für die Browser-Version.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1046,6 +1048,7 @@ const fr: Partial<ExtraDict> = {
   att_label: "Présence (30 jours) :",
   att_title: "{a} sur {t} événements",
   m_friday: "Soirées du vendredi",
+  rh_open_web: "App Discord introuvable – reclique pour l'ouvrir dans le navigateur.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1388,6 +1391,7 @@ const es: Partial<ExtraDict> = {
   att_label: "Asistencia (30 días):",
   att_title: "{a} de {t} eventos",
   m_friday: "Noches de viernes",
+  rh_open_web: "No se encontró la app de Discord: vuelve a hacer clic para abrirlo en el navegador.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1730,6 +1734,7 @@ const pt: Partial<ExtraDict> = {
   att_label: "Presença (30 dias):",
   att_title: "{a} de {t} eventos",
   m_friday: "Sextas à noite",
+  rh_open_web: "App do Discord não encontrado – clique de novo para abrir no navegador.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2072,6 +2077,7 @@ const ru: Partial<ExtraDict> = {
   att_label: "Посещаемость (30 дней):",
   att_title: "{a} из {t} событий",
   m_friday: "Пятничные вечера",
+  rh_open_web: "Приложение Discord не найдено — нажми ещё раз, чтобы открыть в браузере.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2414,6 +2420,7 @@ const tr: Partial<ExtraDict> = {
   att_label: "Katılım (30 gün):",
   att_title: "{t} etkinlikten {a}",
   m_friday: "Cuma Geceleri",
+  rh_open_web: "Discord uygulaması bulunamadı – tarayıcıda açmak için tekrar tıkla.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2756,6 +2763,7 @@ const pl: Partial<ExtraDict> = {
   att_label: "Obecność (30 dni):",
   att_title: "{a} z {t} wydarzeń",
   m_friday: "Piątkowe wieczory",
+  rh_open_web: "Nie znaleziono aplikacji Discord – kliknij ponownie, by otworzyć w przeglądarce.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

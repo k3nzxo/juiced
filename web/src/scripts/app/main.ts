@@ -531,6 +531,8 @@ function pushRoster(e: any, data: any) {
   q<HTMLElement>("[data-save]").addEventListener("click", async (ev) => {
     const b = ev.currentTarget as HTMLButtonElement;
     b.disabled = true;
+    const win = window.open("about:blank", "_blank");  // jetzt öffnen, sonst blockt der Popup-Blocker
+    if (win) win.opener = null;
     try {
       const r = await api<any>(`/raidhelper/rosters/${encodeURIComponent(e.id)}/push`, { method: "POST", json: {
         announce: q<HTMLInputElement>("#rp-ann").checked, mention: q<HTMLInputElement>("#rp-men").checked, channel_id: q<HTMLSelectElement>("#rp-ch").value || null,
@@ -538,8 +540,8 @@ function pushRoster(e: any, data: any) {
       } });
       m.close();
       toast(T("roster_pushed"));
-      if (r.url) window.open(r.url, "_blank", "noopener");
-    } catch (x) { toast((x as Error).message); b.disabled = false; }
+      if (r.url && win) win.location.href = r.url; else win?.close();
+    } catch (x) { win?.close(); toast((x as Error).message); b.disabled = false; }
   });
 }
 
@@ -625,14 +627,21 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
         }
       }
     }
-    const MIN = 8, MAX = Math.max(MIN, ...groups.map((g) => g.size), 10);
     const n = all.length;
-    let count = Math.max(1, Math.ceil(n / MAX));
-    while (count > 1 && n / count < MIN) count--;
-    const base = Math.floor(n / count), extra = n % count;
-    const names = groups.map((g) => g.name);
-    groups.length = 0;
-    for (let k = 0; k < count; k++) groups.push({ name: names[k] || "", members: [], size: base + (k < extra ? 1 : 0) });
+    const capacity = groups.reduce((a, g) => a + g.size, 0);
+    if (groups.length && capacity >= n) {
+      // eingestellte Gruppen und Größen behalten, nur neu befüllen
+      groups.forEach((g) => (g.members = []));
+    } else {
+      // sonst nach Standard: 8-10 pro Gruppe, ohne Mini-Restgruppe
+      const MIN = 8, MAX = 10;
+      let count = Math.max(1, Math.ceil(n / MAX));
+      while (count > 1 && n / count < MIN) count--;
+      const base = Math.floor(n / count), extra = n % count;
+      const names = groups.map((g) => g.name);
+      groups.length = 0;
+      for (let k = 0; k < count; k++) groups.push({ name: names[k] || "", members: [], size: base + (k < extra ? 1 : 0) });
+    }
     const free = (g: { members: string[]; size: number }) => g.size - g.members.length;
     const cnt = (g: { members: string[] }, r: string) => g.members.filter((u) => info(u).role === r).length;
     const warn: string[] = [];
@@ -674,12 +683,6 @@ function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, R
   card.addEventListener("change", (ev) => {
     const t = ev.target as HTMLInputElement;
     if (t.matches("[data-ptoggle]")) { usePartners = t.checked; return draw(); }
-    if (t.dataset.gsize) {
-      const v = Math.max(1, Math.min(40, Math.round(Number(t.value)) || 1));
-      groups[Number(t.dataset.gsize)].size = v;
-      try { sessionStorage.setItem("juiced-roster-size", String(v)); } catch { /* egal */ }
-      draw();
-    }
   });
   card.addEventListener("click", async (ev) => {
     const t = ev.target as HTMLElement;
@@ -871,7 +874,7 @@ async function remindUnsigned(e: any, data: any) {
 // "In Discord öffnen": erst die Discord-App (discord://), nur ohne App die Browser-Version
 document.addEventListener("click", (ev) => {
   const a = (ev.target as HTMLElement).closest<HTMLAnchorElement>("a[data-discord]");
-  if (!a || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+  if (!a || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || a.dataset.web) return;
   const m = a.href.match(/^https:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/(.+)$/);
   if (!m) return;
   ev.preventDefault();
@@ -883,16 +886,13 @@ document.addEventListener("click", (ev) => {
   window.setTimeout(() => {
     window.removeEventListener("blur", gone);
     document.removeEventListener("visibilitychange", gone);
-    if (!left && document.visibilityState === "visible") window.open(a.href, "_blank", "noopener");
+    // App hat nicht übernommen: Browser-Version per echtem Klick (sonst blockt der Popup-Blocker)
+    if (!left && document.visibilityState === "visible") { a.dataset.web = "1"; toast(T("rh_open_web")); }
   }, 1200);
 });
 
 // ------------------------------------------------------------------ Build: Pfade + Inner Ways (Darstellung)
 
-const pathTag = (id: string | null | undefined, main = false) => {
-  const p = pathById(id);
-  return p ? `<span class="path-tag role-${p.role} ${main ? "is-main" : ""}" title="${esc(p.weapons.join(" + "))}"><i></i>${esc(p.name)}</span>` : "";
-};
 const iwTile = (id: string, small = false) => {
   const w = innerWayById(id);
   return w ? `<span class="iw ${small ? "iw-sm" : ""}" title="${esc(w.name)}"><img src="${innerWayImg(id)}" alt="" loading="lazy" width="48" height="64">${small ? "" : `<span>${esc(w.name)}</span>`}</span>` : "";
@@ -934,8 +934,6 @@ const catTag = (u: any) => {
   const c = category(u);
   return c ? `<span class="path-tag cat-tag" style="--role:${CAT_COLOR[c]}"><i></i>${esc(c === "tb" ? "TB" : T("role_" + c))}</span>` : `<span class="path-tag"><i></i>—</span>`;
 };
-const roleOrBuildTag = (u: any, main = false) => u.main_build ? buildTag(u.main_build, main)
-  : u.main_role ? `<span class="path-tag role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : `<span class="path-tag"><i></i>—</span>`;
 
 // ------------------------------------------------------------------ Mitglieder: Liste mit Filter, Klick öffnet das Profil
 
@@ -962,7 +960,7 @@ async function viewRoster(view: HTMLElement) {
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
-        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div>${attBadge(u.discord_id)}</div>
+        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
         <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
         ${(() => {  // passt nur über eine weitere Kombi? Dann zeigen, welche
@@ -980,7 +978,7 @@ async function viewRoster(view: HTMLElement) {
     view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === memFilter.role)));
     draw();
   }));
-  try { [list] = await Promise.all([api<any[]>("/members"), loadAttendance()]); draw(); } catch (e) { view.querySelector("#rost")!.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
+  try { list = await api<any[]>("/members"); draw(); } catch (e) { view.querySelector("#rost")!.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
 }
 
 function buildBlock(u: any, compact = false) {
