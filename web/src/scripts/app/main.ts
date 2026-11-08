@@ -1075,6 +1075,7 @@ function viewProfile(view: HTMLElement) {
   let mainSel: string[] = buildWeapons(me!.main_build).map((w) => w.id);
   const altB = new Set<string>(me!.alt_builds || []);
   const curMain = () => (mainSel.length === 2 ? buildId(mainSel[0], mainSel[1]) : null);
+  let altSel: string[] = [];
   const ways = new Set<string>(me!.inner_ways || []);
   let showAll = false;
   const partners: string[] = [...(me!.partners || [])];
@@ -1092,8 +1093,9 @@ function viewProfile(view: HTMLElement) {
       <div class="bp-current" data-bcur></div></div>
     <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span><p class="hint">${esc(T("prof_alt_hint"))}</p>
       <div class="pp-partners" data-alts></div>
-      <div class="alt-add"><select class="select" data-alt-a>${SCHOOLS.map((sc) => `<optgroup label="${esc(sc.name)}">${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}</optgroup>`).join("")}</select><span>+</span><select class="select" data-alt-b>${SCHOOLS.map((sc) => `<optgroup label="${esc(sc.name)}">${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}</optgroup>`).join("")}</select>
-        <button type="button" class="btn btn-ghost btn-sm" data-alt-add>${icon.plus} ${esc(T("prof_alt_add"))}</button></div>
+      <button type="button" class="btn btn-outline btn-sm alt-open" data-alt-open>${icon.plus} ${esc(T("prof_alt_add"))}</button>
+      <div class="alt-pick" data-alt-pick hidden><p class="hint">${esc(T("prof_alt_pick_hint"))}</p>
+        <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h"><i></i>${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-aw="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div></div>
       <input class="input alt-other" id="p-other" maxlength="40" value="${esc(me!.weapon_other || "")}" placeholder="${esc(T("prof_alt_other_ph"))}"></div>
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
@@ -1182,9 +1184,20 @@ function viewProfile(view: HTMLElement) {
     }
     const un = t.closest<HTMLElement>("[data-unalt]");
     if (un) { altB.delete(un.dataset.unalt!); drawAlts(); drawWays(); return; }
-    if (t.closest("[data-alt-add]")) {
-      const a = view.querySelector<HTMLSelectElement>("[data-alt-a]")!.value, b = view.querySelector<HTMLSelectElement>("[data-alt-b]")!.value;
-      if (a && b && a !== b) { const id = buildId(a, b); if (id !== curMain() && altB.size < 8) altB.add(id); drawAlts(); drawWays(); }
+    // weitere Kombi: Raster aufklappen, zwei Waffen anklicken -> hinzugefügt, Raster bleibt offen für die nächste
+    if (t.closest("[data-alt-open]")) { const box = view.querySelector<HTMLElement>("[data-alt-pick]")!; box.hidden = !box.hidden; return; }
+    const aw = t.closest<HTMLElement>("[data-aw]");
+    if (aw) {
+      const id = aw.dataset.aw!;
+      altSel = altSel.includes(id) ? altSel.filter((x) => x !== id) : [...altSel, id];
+      if (altSel.length === 2) {
+        const b = buildId(altSel[0], altSel[1]);
+        if (b !== curMain() && altB.size < 8) altB.add(b);
+        altSel = [];
+        drawAlts(); drawWays();
+      }
+      view.querySelectorAll<HTMLElement>("[data-aw]").forEach((x) => x.setAttribute("aria-pressed", String(altSel.includes(x.dataset.aw!))));
+      return;
     }
   });
   view.querySelector("form")!.addEventListener("submit", async (e) => {

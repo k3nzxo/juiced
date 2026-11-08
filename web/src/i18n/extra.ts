@@ -342,6 +342,7 @@ const en = {
   prof_pick_two: "Pick two weapons",
   prof_alt_hint: "Other combos you can play.",
   prof_alt_add: "Add combo",
+  prof_alt_pick_hint: "Click two weapons – the combo is added. Then pick the next one.",
 };
 
 export type ExtraDict = typeof en;
@@ -680,6 +681,7 @@ const de: Partial<ExtraDict> = {
   prof_pick_two: "Wähle zwei Waffen",
   prof_alt_hint: "Weitere Kombis, die du spielen kannst.",
   prof_alt_add: "Kombi hinzufügen",
+  prof_alt_pick_hint: "Zwei Waffen anklicken – die Kombi wird hinzugefügt. Danach direkt die nächste wählen.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1009,6 +1011,7 @@ const fr: Partial<ExtraDict> = {
   prof_pick_two: "Choisis deux armes",
   prof_alt_hint: "Autres combos que tu peux jouer.",
   prof_alt_add: "Ajouter",
+  prof_alt_pick_hint: "Clique deux armes – le combo est ajouté. Puis choisis le suivant.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1338,6 +1341,7 @@ const es: Partial<ExtraDict> = {
   prof_pick_two: "Elige dos armas",
   prof_alt_hint: "Otros combos que puedes jugar.",
   prof_alt_add: "Añadir combo",
+  prof_alt_pick_hint: "Haz clic en dos armas: se añade el combo. Luego elige el siguiente.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1667,6 +1671,7 @@ const pt: Partial<ExtraDict> = {
   prof_pick_two: "Escolha duas armas",
   prof_alt_hint: "Outros combos que você joga.",
   prof_alt_add: "Adicionar combo",
+  prof_alt_pick_hint: "Clique em duas armas – o combo é adicionado. Depois escolha o próximo.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1996,6 +2001,7 @@ const ru: Partial<ExtraDict> = {
   prof_pick_two: "Выбери два оружия",
   prof_alt_hint: "Другие комбо, которые ты можешь играть.",
   prof_alt_add: "Добавить комбо",
+  prof_alt_pick_hint: "Нажми два оружия — комбо добавится. Потом выбери следующее.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2325,6 +2331,7 @@ const tr: Partial<ExtraDict> = {
   prof_pick_two: "İki silah seç",
   prof_alt_hint: "Oynayabildiğin diğer kombolar.",
   prof_alt_add: "Kombo ekle",
+  prof_alt_pick_hint: "İki silaha tıkla – kombo eklenir. Sonra sıradakini seç.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2654,6 +2661,7 @@ const pl: Partial<ExtraDict> = {
   prof_pick_two: "Wybierz dwie bronie",
   prof_alt_hint: "Inne kombinacje, którymi grasz.",
   prof_alt_add: "Dodaj kombinację",
+  prof_alt_pick_hint: "Kliknij dwie bronie – kombinacja zostanie dodana. Potem wybierz następną.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

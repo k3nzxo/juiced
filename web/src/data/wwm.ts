@@ -98,7 +98,7 @@ export const WEAPONS: Weapon[] = [
   { id: "heavenquaker_spear", name: "Heavenquaker Spear", school: "bellstrike", short: "HQ" },
   { id: "infernal_twinblades", name: "Infernal Twinblades", school: "bamboocut", short: "TB" },
   { id: "riven_twinblades", name: "Riven Twinblades", school: "bamboocut", short: "Riven" },
-  { id: "mortal_rope_dart", name: "Mortal Rope Dart", school: "bamboocut", short: "Mo" },
+  { id: "mortal_rope_dart", name: "Mortal Rope Dart", school: "bamboocut", short: "Dart" },
   { id: "unfettered_rope_dart", name: "Unfettered Rope Dart", school: "bamboocut", short: "Unfettered" },
   { id: "skygrasp_rope_dart", name: "Skygrasp Rope Dart", school: "bamboocut", short: "Skygrasp" },
   { id: "everspring_umbrella", name: "Everspring Umbrella", school: "bamboocut", short: "Everspring" },
@@ -110,7 +110,7 @@ export const WEAPONS: Weapon[] = [
   { id: "soulshade_umbrella", name: "Soulshade Umbrella", school: "silkbind", short: "Soulshade" },
   { id: "willowbend_fan", name: "Willowbend Fan", school: "silkbind", short: "Willowbend" },
   { id: "museflow_drum", name: "Museflow Waist Drum", school: "silkbind", short: "Drum" },
-  { id: "thundercry_blade", name: "Thundercry Blade", school: "stonesplit", short: "Thundercry" },
+  { id: "thundercry_blade", name: "Thundercry Blade", school: "stonesplit", short: "Mo" },
   { id: "stormbreaker_spear", name: "Stormbreaker Spear", school: "stonesplit", short: "Stormbreaker" },
   { id: "snowparting_blade", name: "Snowparting Blade", school: "stonesplit", short: "Snowparting" },
   { id: "phalanxbane_blade", name: "Phalanxbane Blade", school: "stonesplit", short: "Phalanxbane" },
@@ -119,7 +119,9 @@ export const PRESETS: { name: string; weapons: [string, string]; role: "dps" | "
   { name: "Double Sword", weapons: ["nameless_sword", "strategic_sword"], role: "dps" },
   { name: "Nameless/HQ", weapons: ["nameless_sword", "heavenquaker_spear"], role: "dps" },
   { name: "Full Umbra", weapons: ["strategic_sword", "heavenquaker_spear"], role: "dps" },
-  { name: "Mo/TB", weapons: ["mortal_rope_dart", "infernal_twinblades"], role: "dps" },
+  { name: "Mo/TB", weapons: ["thundercry_blade", "infernal_twinblades"], role: "dps" },
+  { name: "Rats TB", weapons: ["infernal_twinblades", "mortal_rope_dart"], role: "dps" },
+  { name: "Fan/Fan", weapons: ["inkwell_fan", "panacea_fan"], role: "healer" },
   { name: "Drums", weapons: ["willowbend_fan", "museflow_drum"], role: "healer" },
 ];
 export const weaponById = (id: string) => WEAPONS.find((w) => w.id === id);
