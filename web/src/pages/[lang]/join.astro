@@ -6,7 +6,7 @@ import { useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
 export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
-const roles = ["healer", "tank", "nameless"] as const;
+const roles = ["healer", "tank", "nameless", "twinblades"] as const;
 const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods") };
 ---
 <Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>

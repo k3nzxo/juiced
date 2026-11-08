@@ -13,8 +13,8 @@ type Me = {
 
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
-const ROLES = ["healer", "tank", "nameless"];
-const COACH_ROLES = [...ROLES, "twinblades"];
+const ROLES = ["healer", "tank", "nameless", "twinblades"];
+const COACH_ROLES = ROLES;
 const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
 function avatar(u: { avatar_url: string | null; display_name: string }, size = 32) {

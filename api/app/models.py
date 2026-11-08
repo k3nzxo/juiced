@@ -6,7 +6,7 @@ from .db import Base
 RANKS = ("guest", "member", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
 COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe, eigener Coach
-MAIN_ROLES = ("healer", "tank", "nameless")
+MAIN_ROLES = ("healer", "tank", "nameless", "twinblades")
 
 
 class User(Base):
