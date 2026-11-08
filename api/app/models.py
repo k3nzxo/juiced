@@ -9,9 +9,11 @@ COACH_ROLES = ("healer", "tank", "nameless", "twinblades")  # Twinblades: Waffe,
 MAIN_ROLES = ("healer", "tank", "dps")
 # Waffen (Kampfstile) aus Where Winds Meet, je Hauptrolle; weitere per Freitext (weapon_other)
 WEAPONS_BY_ROLE = {
-    "dps": ("nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"),
+    "dps": ("nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "riven_twinblades",
+            "inkwell_fan", "vernal_umbrella", "everspring_umbrella", "mortal_rope_dart", "unfettered_rope_dart", "skygrasp_rope_dart",
+            "heavenwill_gauntlets", "skystrike_gauntlets", "snowparting_blade", "phalanxbane_blade", "ninefold_umbrella"),
     "tank": ("stormbreaker_spear", "thundercry_blade"),
-    "healer": ("panacea_fan", "soulshade_umbrella", "ribbon_drum"),
+    "healer": ("panacea_fan", "soulshade_umbrella", "willowbend_fan", "ribbon_drum"),
 }
 WEAPONS = tuple(w for ws in WEAPONS_BY_ROLE.values() for w in ws)
 OLD_WEAPONS = {"nameless": "nameless_sword", "twinblades": "infernal_twinblades"}
@@ -38,6 +40,9 @@ class User(Base):
     main_role = Column(String, nullable=True)
     weapons = Column(String(80), nullable=True)        # "nameless,twinblades"
     weapon_other = Column(String(40), nullable=True)   # freie Angabe
+    main_path = Column(String(32), nullable=True)      # Haupt-Pfad (Waffenpaar), siehe wwm.py
+    alt_paths = Column(String(240), nullable=True)     # weitere spielbare Pfade, kommagetrennt
+    inner_ways = Column(String(900), nullable=True)    # gewählte Inner Ways, kommagetrennt
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
     lang = Column(String(5), nullable=True)
@@ -47,6 +52,14 @@ class User(Base):
     @property
     def weapon_list(self) -> list[str]:
         return [w for w in (self.weapons or "").split(",") if w]
+
+    @property
+    def alt_path_list(self) -> list[str]:
+        return [p for p in (self.alt_paths or "").split(",") if p]
+
+    @property
+    def inner_way_list(self) -> list[str]:
+        return [w for w in (self.inner_ways or "").split(",") if w]
 
     @property
     def coach_list(self) -> list[str]:
@@ -162,3 +175,12 @@ class ScrimRequest(Base):
     decided_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decided_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Roster(Base):
+    """Aufstellung (Gruppen) für ein Raid-Helper-Event, gepflegt von Leader/Vice."""
+    __tablename__ = "rosters"
+    event_id = Column(String(40), primary_key=True)
+    data = Column(Text, nullable=False)                 # JSON: {"groups": [{"name", "members": [discord_id]}]}
+    updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

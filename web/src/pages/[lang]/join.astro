@@ -7,7 +7,7 @@ export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const roles = ["healer", "tank", "dps"] as const;
-const weaponsByRole = { dps: ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"], tank: ["stormbreaker_spear", "thundercry_blade"], healer: ["panacea_fan", "soulshade_umbrella", "ribbon_drum"] } as const;
+const weaponsByRole = { dps: ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "riven_twinblades", "inkwell_fan", "vernal_umbrella", "everspring_umbrella", "mortal_rope_dart", "unfettered_rope_dart", "skygrasp_rope_dart", "heavenwill_gauntlets", "skystrike_gauntlets", "snowparting_blade", "phalanxbane_blade", "ninefold_umbrella"], tank: ["stormbreaker_spear", "thundercry_blade"], healer: ["panacea_fan", "soulshade_umbrella", "willowbend_fan", "ribbon_drum"] } as const;
 const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods"), weapon: t("join_err_weapon"), build: t("join_err_build"), inner: t("join_err_inner"), img: t("join_err_img"), remove: t("remove"), region: t("join_err_region"), gs: t("join_err_gs"), shots: t("join_err_shots") };
 const errs = Object.fromEntries(Object.entries(dict(lang)).filter(([k]) => k.startsWith("err_")));
 ---

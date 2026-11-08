@@ -1,16 +1,21 @@
 """Raid-Helper: kommende Events des Discord-Servers samt Anmeldungen (nur für Mitglieder).
 Der API-Schlüssel steht nur in der .env (RAIDHELPER_API_KEY) und verlässt den Server nie."""
+import json
+import re
 import threading
 import time
 from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session as DbSession
 
 from . import models
 from .config import DISCORD_GUILD_ID, _env
-from .security import require_member
+from .db import get_db
+from .security import require_management, require_member
 
 router = APIRouter(prefix="/api/raidhelper", tags=["raidhelper"])
 
@@ -67,6 +72,9 @@ def _event(e: dict) -> dict:
         "signups": signups,
         "count": sum(1 for s in signups if s["playing"]),
         "url": f"https://discord.com/channels/{SERVER_ID}/{channel}/{eid}" if channel and eid and SERVER_ID else None,
+        "channel_id": channel,
+        "channel_name": str(e.get("channelName") or "")[:80],
+        "template_id": str(e.get("templateId") or "")[:20],
     }
 
 
@@ -83,6 +91,16 @@ def _fetch() -> dict:
             page += 1
     now = time.time()
     out = []
+    # Kanäle und Vorlagen aus allen Events merken (für "Neues Event")
+    channels: dict = {}
+    templates: dict = {}
+    for e in events:
+        cid = str(e.get("channelId") or "")
+        if cid:
+            channels[cid] = str(e.get("channelName") or channels.get(cid) or "")[:80]
+        tid = str(e.get("templateId") or "")
+        if tid:
+            templates[tid] = templates.get(tid, 0) + 1
     for e in events:
         ev = _event(e)
         try:
@@ -95,7 +113,9 @@ def _fetch() -> dict:
         if end >= now - 3600:  # laufende und kommende Events
             out.append((start, ev))
     out.sort(key=lambda x: x[0])
-    return {"configured": True, "events": [ev for _, ev in out[:20]]}
+    return {"configured": True, "events": [ev for _, ev in out[:20]],
+            "channels": [{"id": k, "name": v} for k, v in channels.items()],
+            "template_id": max(templates, key=templates.get) if templates else ""}
 
 
 def get_events() -> dict:
@@ -114,10 +134,195 @@ def get_events() -> dict:
         return data
 
 
+def _roster_out(r: Optional[models.Roster], names: dict) -> Optional[dict]:
+    if not r:
+        return None
+    try:
+        data = json.loads(r.data)
+    except ValueError:
+        return None
+    at = r.updated_at
+    if at and at.tzinfo is None:  # SQLite speichert ohne Zeitzone (UTC)
+        at = at.replace(tzinfo=timezone.utc)
+    return {**data, "updated_by": names.get(r.updated_by), "updated_at": at.isoformat() if at else None}
+
+
 @router.get("/events")
-def events(user: models.User = Depends(require_member)):
+def events(db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
     data = get_events()
-    # eigene Anmeldung markieren
+    evs = data.get("events", [])
+    # eigene Anmeldung markieren, gespeicherte Aufstellung und Website-Profile (Pfad) dazugeben
     mine = str(user.discord_id or "")
-    return {**data, "events": [{**e, "me": next((s for s in e["signups"] if s["user_id"] == mine), None)}
-                               for e in data.get("events", [])]}
+    rosters = {r.event_id: r for r in db.query(models.Roster).filter(models.Roster.event_id.in_([e["id"] for e in evs])).all()} if evs else {}
+    users = db.query(models.User).filter(models.User.rank != "guest").all()
+    names = {u.id: u.display_name for u in users}
+    profiles = {u.discord_id: {"id": u.id, "name": u.display_name, "main_path": u.main_path, "main_role": u.main_role,
+                               "alt_paths": u.alt_path_list} for u in users}
+    return {**data, "can_edit": user.level >= models.RANK_LEVEL["vice"],
+            "profiles": {d: profiles[d] for e in evs for s in e["signups"] if (d := s["user_id"]) in profiles},
+            "events": [{**e, "me": next((s for s in e["signups"] if s["user_id"] == mine), None),
+                        "roster": _roster_out(rosters.get(e["id"]), names)} for e in evs]}
+
+
+class RosterGroup(BaseModel):
+    name: str = ""
+    members: list[str] = []
+
+
+class RosterIn(BaseModel):
+    groups: list[RosterGroup] = []
+
+
+_ID = re.compile(r"^[0-9A-Za-z_-]{1,40}$")
+
+
+@router.put("/rosters/{event_id}")
+def save_roster(event_id: str, payload: RosterIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    if not _ID.match(event_id):
+        raise HTTPException(status_code=404, detail="Not found")
+    seen: set[str] = set()
+    groups = []
+    for g in payload.groups[:20]:
+        members = []
+        for m in g.members[:60]:
+            if _ID.match(m or "") and m not in seen:  # jeder Spieler höchstens einmal
+                seen.add(m)
+                members.append(m)
+        groups.append({"name": " ".join((g.name or "").split())[:40], "members": members})
+    r = db.get(models.Roster, event_id)
+    if not groups:
+        if r:
+            db.delete(r)
+            db.commit()
+        return {"roster": None}
+    if not r:
+        r = models.Roster(event_id=event_id, data="")
+        db.add(r)
+    r.data = json.dumps({"groups": groups})
+    r.updated_by = user.id
+    db.commit()
+    db.refresh(r)
+    return {"roster": _roster_out(r, {user.id: user.display_name})}
+
+
+
+# ------------------------------------------------------------------ schreiben: Event anlegen, Comp füllen + ankündigen
+
+def _rh(method: str, path: str, body: Optional[dict] = None) -> dict:
+    if not API_KEY or not SERVER_ID:
+        raise HTTPException(status_code=503, detail="Raid-Helper is not configured")
+    try:
+        with httpx.Client(timeout=15, headers={"Authorization": API_KEY, "Content-Type": "application/json; charset=utf-8",
+                                               "User-Agent": "juiced-site"}) as c:
+            r = c.request(method, f"{BASE}{path}", json=body)
+    except httpx.HTTPError as ex:
+        print(f"[raidhelper] {method} {path}: {type(ex).__name__}")
+        raise HTTPException(status_code=502, detail="Raid-Helper is not reachable")
+    try:
+        data = r.json()
+    except ValueError:
+        data = {}
+    if r.status_code >= 400 or (isinstance(data, dict) and data.get("status") == "failed"):
+        reason = str((data or {}).get("reason") or r.status_code)[:200] if isinstance(data, dict) else str(r.status_code)
+        print(f"[raidhelper] {method} {path} -> {r.status_code} {reason}")
+        raise HTTPException(status_code=502, detail=f"Raid-Helper: {reason}")
+    return data if isinstance(data, dict) else {}
+
+
+def _drop_cache():
+    with _lock:
+        _cache.update(at=0.0, data=None)
+
+
+class EventIn(BaseModel):
+    channel_id: str
+    title: str
+    description: str = ""
+    start: datetime
+    template_id: Optional[str] = None
+
+
+@router.post("/events")
+def create_event(payload: EventIn, user: models.User = Depends(require_management)):
+    if not _ID.match(payload.channel_id or ""):
+        raise HTTPException(status_code=400, detail="Please choose a channel")
+    title = " ".join((payload.title or "").split())[:100]
+    if not title:
+        raise HTTPException(status_code=400, detail="Title is required")
+    start = payload.start if payload.start.tzinfo else payload.start.replace(tzinfo=timezone.utc)
+    if start.timestamp() < time.time() - 300:
+        raise HTTPException(status_code=400, detail="The start must be in the future")
+    ts = str(int(start.timestamp()))
+    body = {"leaderId": str(user.discord_id), "date": ts, "time": ts, "title": title,
+            "description": (payload.description or "").strip()[:1500]}
+    tid = payload.template_id or (get_events().get("template_id") if API_KEY else "")
+    if tid and re.fullmatch(r"[0-9A-Za-z_-]{1,20}", tid):
+        body["templateId"] = tid
+    data = _rh("POST", f"/servers/{SERVER_ID}/channels/{payload.channel_id}/event", body)
+    _drop_cache()
+    ev = data.get("event") or {}
+    return {"ok": True, "id": str(ev.get("id") or "")}
+
+
+class PushIn(BaseModel):
+    announce: bool = False
+    mention: bool = False
+    description: str = ""
+
+
+@router.post("/rosters/{event_id}/push")
+def push_roster(event_id: str, payload: PushIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_management)):
+    """Gespeicherte Aufstellung ins Comp-Tool von Raid-Helper übertragen (Comp-ID = Event-ID), optional ankündigen."""
+    if not _ID.match(event_id):
+        raise HTTPException(status_code=404, detail="Not found")
+    r = db.get(models.Roster, event_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="Not found")
+    groups = json.loads(r.data).get("groups") or []
+    ev = next((e for e in get_events().get("events", []) if e["id"] == event_id), None)
+    if not ev:
+        raise HTTPException(status_code=404, detail="Not found")
+    signups = {s["user_id"]: s for s in ev["signups"]}
+    users = {u.discord_id: u for u in db.query(models.User).filter(models.User.discord_id.in_(
+        [m for g in groups for m in g["members"]])).all()} if groups else {}
+    slot_count = max([len(g["members"]) for g in groups] + [1])
+    slots = []
+    for gi, g in enumerate(groups):
+        for si, uid in enumerate(g["members"]):
+            s = signups.get(uid) or {}
+            u = users.get(uid)
+            slot = {"userId": uid, "name": s.get("name") or (u.display_name if u else uid),
+                    "groupNumber": gi + 1, "slotNumber": si + 1}
+            if s.get("class"):
+                slot["className"] = s["class"]
+            if s.get("spec"):
+                slot["specName"] = s["spec"]
+            slots.append(slot)
+    body = {"groupCount": max(len(groups), 1), "slotCount": slot_count, "slots": slots}
+    # Gruppennamen: Form der vorhandenen Gruppen übernehmen (Raid-Helper liefert sie beim Abruf mit)
+    try:
+        current = httpx.get(f"{BASE}/comps/{event_id}", timeout=10, headers={"User-Agent": "juiced-site"}).json()
+        cur_groups = current.get("groups") if isinstance(current, dict) else None
+    except (httpx.HTTPError, ValueError):
+        cur_groups = None
+    if isinstance(cur_groups, list) and cur_groups and isinstance(cur_groups[0], dict) and any(g.get("name") for g in groups):
+        key = "name" if "name" in cur_groups[0] else "groupName" if "groupName" in cur_groups[0] else None
+        if key:
+            out = []
+            for gi, g in enumerate(groups):
+                base = dict(cur_groups[gi]) if gi < len(cur_groups) else {k: v for k, v in cur_groups[0].items() if k != key}
+                base[key] = g.get("name") or f"Group {gi + 1}"
+                if "groupNumber" in base:
+                    base["groupNumber"] = gi + 1
+                out.append(base)
+            body["groups"] = out
+    _rh("PATCH", f"/comps/{event_id}", body)
+    announced = False
+    if payload.announce:
+        if not ev.get("channel_id"):
+            raise HTTPException(status_code=400, detail="Please choose a channel")
+        _rh("POST", f"/comps/{event_id}/announcements", {
+            "channelId": ev["channel_id"], "description": (payload.description or "").strip()[:500],
+            "mentions": "signed" if payload.mention else "none"})
+        announced = True
+    return {"ok": True, "announced": announced, "url": f"https://raid-helper.xyz/comp/{event_id}"}

@@ -47,6 +47,11 @@ _RULES = [
     (r"^Image too large$", "image_too_large", "An image is too large."),
     (r"^Invalid link$", "invalid_link", "Please check your links: they need to start with https://"),
     (r"^Too many requests", "too_many", "Too many requests. Please wait a moment."),
+    (r"^Please choose a channel$", "rh_channel", "Please choose a channel."),
+    (r"^Title is required$", "title_missing", "Please enter a title."),
+    (r"^The start must be in the future$", "start_past", "The start must be in the future."),
+    (r"^Raid-Helper is not (reachable|configured)$", "rh_unreachable", "Raid-Helper can't be reached right now."),
+    (r"^Raid-Helper: (?P<reason>.+)$", "rh_failed", "Raid-Helper refused: {reason}"),
 ]
 _COMPILED = [(re.compile(p), c, e) for p, c, e in _RULES]
 

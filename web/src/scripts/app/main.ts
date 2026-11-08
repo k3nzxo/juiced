@@ -4,18 +4,18 @@ import { api, esc, fmtDate, icon, initI18n, lang, modal, T, timeAgo, toast } fro
 import { renderVods, vodCleanup } from "./vods.js";
 import { enhancePicker, closePicker } from "./picker";
 import { timeRange, timeShort } from "../schedule";
+import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText } from "../../data/wwm";
 
 type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
-  weapons: string[]; weapon_other: string | null;
+  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[];
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; rank_manual: boolean;
 };
 
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
 const ROLES = ["healer", "tank", "dps"];                       // Hauptrollen
-const WEAPONS_BY_ROLE: Record<string, string[]> = { dps: ["nameless_sword", "strategic_sword", "nameless_spear", "heavenquaker_spear", "infernal_twinblades", "inkwell_fan", "vernal_umbrella", "mortal_rope_dart", "ninefold_umbrella"], tank: ["stormbreaker_spear", "thundercry_blade"], healer: ["panacea_fan", "soulshade_umbrella", "ribbon_drum"] };
 const COACH_ROLES = ["healer", "tank", "nameless", "twinblades"]; // Coaches sind auf Waffen spezialisiert
 const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
@@ -158,7 +158,7 @@ function route() {
   view.classList.add("in");
   switch (seg) {
     case "vods": return renderVods(view, me);
-    case "roster": return viewRoster(view);
+    case "roster": { const id = Number(h.split("/")[1]); return id ? viewMember(view, id) : viewRoster(view); }
     case "signups": return viewSignups(view);
     case "applications": return me.can_manage ? viewApplications(view) : viewDashboard(view);
     case "schedule": return me.is_admin ? viewSchedule(view) : viewDashboard(view);
@@ -178,14 +178,34 @@ const loading = `<div class="loader"><span class="spinner"></span></div>`;
 async function viewDashboard(view: HTMLElement) {
   view.innerHTML = head(T("dash_hello", { name: me!.display_name }), T("dash_sub"),
     me!.can_manage ? `<button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ann_new"))}</button>` : "") +
-    `<div class="quick">
-      <a class="quick-card card" href="#/vods">${icon.video}<span>${esc(T("app_nav_vods"))}</span></a>
-      <a class="quick-card card" href="#/roster">${icon.users}<span>${esc(T("app_nav_members"))}</span></a>
-      <a class="quick-card card" href="#/profile">${icon.settings}<span>${esc(T("app_nav_profile"))}</span></a>
+    `<div class="dash-top">
+      <section class="card dash-card dash-build">
+        <header><h2>${esc(T("prof_build"))}</h2><a class="btn btn-ghost btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a></header>
+        ${hasBuild(me) ? buildBlock(me, true) : `<p class="muted">${esc(T("dash_build_empty"))}</p>`}
+      </section>
+      <section class="card dash-card dash-next">
+        <header><h2>${esc(T("dash_next"))}</h2><button class="btn btn-ghost btn-sm" data-week aria-expanded="false">${icon.calendar} ${esc(T("dash_week"))}</button></header>
+        <div id="next-one">${loading}</div>
+      </section>
     </div>
-    <h2 class="v-sub">${esc(T("week_title"))}</h2><div id="next-ev">${loading}</div>
-    <h2 class="v-sub">${esc(T("ann_title"))}</h2><div id="ann">${loading}</div>`;
-  loadNextEvents(view.querySelector("#next-ev")!);
+    <div id="next-ev" hidden></div>
+    <h2 class="v-sub">${esc(T("ann_title"))}</h2><div id="ann">${loading}</div>
+    <h2 class="v-sub v-sub-link"><span>${esc(T("app_nav_members"))}</span><a href="#/roster">${esc(T("mem_back"))} →</a></h2><div id="dash-mem">${loading}</div>`;
+  loadNextOne(view.querySelector("#next-one")!);
+  const week = view.querySelector<HTMLElement>("#next-ev")!;
+  view.querySelector<HTMLElement>("[data-week]")!.addEventListener("click", (e) => {
+    const b = e.currentTarget as HTMLElement;
+    week.hidden = !week.hidden;
+    b.setAttribute("aria-expanded", String(!week.hidden));
+    if (!week.hidden && !week.childElementCount) { week.innerHTML = loading; loadNextEvents(week); }
+  });
+  api<any[]>("/members").then((list) => {
+    const el = view.querySelector<HTMLElement>("#dash-mem");
+    if (!el) return;
+    el.innerHTML = list.length ? `<div class="mem-strip">${list.slice(0, 18).map((u) => `<a class="ms card" href="#/roster/${u.id}" title="${esc(u.display_name)}">
+      ${avatar(u, 40)}<strong>${esc(u.display_name)}</strong>${u.main_path ? pathTag(u.main_path) : u.main_role ? roleTag(u.main_role) : `<span class="muted">—</span>`}</a>`).join("")}</div>`
+      : `<p class="empty">${esc(T("mem_empty"))}</p>`;
+  }).catch(() => { view.querySelector("#dash-mem")?.remove(); });
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
   try {
     const list = await api<any[]>("/announcements");
@@ -231,9 +251,27 @@ function editAnnouncement(a: any | null, done: () => void) {
   });
 }
 
-// ------------------------------------------------------------------ Anmeldungen aus Raid-Helper
+// ------------------------------------------------------------------ Anmeldungen aus Raid-Helper + Aufstellung (Leader/Vice)
 
 const RH_CLASS_COLORS: Record<string, string> = { tank: "#ca8a04", healer: "#16a34a", dps: "#dc2626", melee: "#dc2626", ranged: "#ea580c", support: "#0891b2" };
+const ROLE_ORDER: Record<string, number> = { tank: 0, healer: 1, dps: 2 };
+// "Bamboocut_Wind" -> Pfad aus unseren Spieldaten, sonst lesbarer Text
+const rhLabel = (s: string) => pathFromText(s)?.name || String(s || "").replace(/_/g, " ");
+const rhColor = (cls: string) => { const p = pathFromText(cls); return RH_CLASS_COLORS[(p?.role || cls).toLowerCase()] || "var(--accent)"; };
+
+type RhPlayer = { uid: string; name: string; path: string; role: string; playing: boolean };
+function rhPlayers(e: any, profiles: Record<string, any>): Map<string, RhPlayer> {
+  const m = new Map<string, RhPlayer>();
+  for (const s of e.signups) {
+    if (!s.user_id) continue;
+    const p = pathFromText(s.spec) || pathFromText(s.class) || pathById(profiles[s.user_id]?.main_path);
+    const role = p?.role || (ROLE_ORDER[s.class.toLowerCase()] !== undefined ? s.class.toLowerCase() : profiles[s.user_id]?.main_role || "dps");
+    m.set(s.user_id, { uid: s.user_id, name: profiles[s.user_id]?.name || s.name, path: p?.name || (s.spec && s.spec.toLowerCase() !== s.class.toLowerCase() ? s.spec.replace(/_/g, " ") : ""), role, playing: s.playing });
+  }
+  return m;
+}
+const rhChip = (p: RhPlayer, extra = "") => `<span class="rh-p role-${esc(p.role)} ${p.uid === me!.discord_id ? "is-me" : ""} ${extra}" title="${esc(p.name)}${p.path ? ` · ${esc(p.path)}` : ""}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</span>`;
+
 async function viewSignups(view: HTMLElement) {
   view.innerHTML = head(T("rh_title"), T("rh_sub")) + `<div id="rh">${loading}</div>`;
   const el = view.querySelector<HTMLElement>("#rh")!;
@@ -241,55 +279,324 @@ async function viewSignups(view: HTMLElement) {
   try { data = await api<any>("/raidhelper/events"); }
   catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; return; }
   if (!data.configured) { el.innerHTML = `<p class="empty">${esc(T("rh_off"))}</p>`; return; }
+  if (data.can_edit) {
+    view.querySelector(".v-head")!.insertAdjacentHTML("beforeend", `<div class="v-actions"><button class="btn btn-primary btn-sm" data-new-ev>${icon.plus} ${esc(T("rh_new"))}</button></div>`);
+    view.querySelector("[data-new-ev]")!.addEventListener("click", () => newRhEvent(data, () => viewSignups(view)));
+  }
   if (data.error) { el.innerHTML = `<p class="empty">${esc(T("rh_error"))}</p>`; return; }
   if (!data.events.length) { el.innerHTML = `<p class="empty">${esc(T("rh_empty"))}</p>`; return; }
-  const when = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  const person = (s: any) => `<span class="rh-p ${s.user_id === me!.discord_id ? "is-me" : ""}">${esc(s.name)}${s.spec && s.spec.toLowerCase() !== s.class.toLowerCase() ? `<small>${esc(s.spec)}</small>` : ""}</span>`;
-  el.innerHTML = `${data.stale ? `<p class="hint rh-stale">${esc(T("rh_error"))}</p>` : ""}<div class="rh-list">${data.events.map((e: any) => {
-    const groups = new Map<string, any[]>();
-    for (const s of e.signups.filter((x: any) => x.playing)) {
-      const k = s.class || "—";
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k)!.push(s);
-    }
-    const out = e.signups.filter((x: any) => !x.playing);
-    return `<article class="card rh-ev">
-      <header class="rh-head">
-        <div><h3>${esc(e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
-        <div class="rh-side">
-          <span class="rh-count"><b>${e.count}</b> ${esc(T("rh_signed"))}</span>
-          ${e.me ? `<span class="rh-me ok">${icon.check} ${esc(T("rh_you", { cls: e.me.class || "" }))}</span>` : `<span class="rh-me">${esc(T("rh_not_you"))}</span>`}
-          ${e.url ? `<a class="btn btn-ghost btn-sm" href="${esc(e.url)}" target="_blank" rel="noopener">${icon.external} ${esc(T("rh_open"))}</a>` : ""}
-        </div>
-      </header>
-      ${groups.size ? `<div class="rh-groups">${[...groups.entries()].map(([cls, list]) => `
-        <div class="rh-group" style="--c:${RH_CLASS_COLORS[cls.toLowerCase()] || "var(--accent)"}">
-          <div class="rh-gh"><i></i>${esc(cls)}<span>${list.length}</span></div>
-          <div class="rh-people">${list.map(person).join("")}</div>
-        </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
-      ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p">${esc(s.name)}<small>${esc(s.status !== "primary" ? s.status : s.class)}</small></span>`).join("")}</div>` : ""}
-    </article>`;
-  }).join("")}</div>`;
+  el.innerHTML = `${data.stale ? `<p class="hint rh-stale">${esc(T("rh_error"))}</p>` : ""}<div class="rh-list">${data.events.map((e: any) => `<article class="card rh-ev" data-ev="${esc(e.id)}"></article>`).join("")}</div>`;
+  for (const e of data.events) drawSignupEvent(el.querySelector<HTMLElement>(`[data-ev="${CSS.escape(e.id)}"]`)!, e, data);
 }
 
-// ------------------------------------------------------------------ Roster (intern)
+function drawSignupEvent(card: HTMLElement, e: any, data: any) {
+  const when = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const players = rhPlayers(e, data.profiles || {});
+  const groups = new Map<string, any[]>();
+  for (const s of e.signups.filter((x: any) => x.playing)) {
+    const k = s.class || "—";
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(s);
+  }
+  const chipFor = (s: any) => players.get(s.user_id) ? rhChip(players.get(s.user_id)!) : rhChip({ uid: "", name: s.name, path: "", role: "", playing: s.playing });
+  const out = e.signups.filter((x: any) => !x.playing);
+  const roster = e.roster;
+  const myGroup = roster?.groups.find((g: any) => g.members.includes(me!.discord_id));
+  const gName = (g: any, i: number) => g.name || T("roster_group", { n: i + 1 });
+  card.innerHTML = `
+    <header class="rh-head">
+      <div><h3>${esc(e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
+      <div class="rh-side">
+        <span class="rh-count"><b>${e.count}</b> ${esc(T("rh_signed"))}</span>
+        ${e.me ? `<span class="rh-me ok">${icon.check} ${esc(T("rh_you", { cls: rhLabel(e.me.spec || e.me.class || "") }))}</span>` : `<span class="rh-me">${esc(T("rh_not_you"))}</span>`}
+        ${data.can_edit ? `<button class="btn btn-primary btn-sm" data-plan>${icon.users} ${esc(T(roster ? "roster_edit" : "roster_plan"))}</button>` : ""}
+        ${e.url ? `<a class="btn btn-ghost btn-sm" href="${esc(e.url)}" target="_blank" rel="noopener">${icon.external} ${esc(T("rh_open"))}</a>` : ""}
+      </div>
+    </header>
+    ${roster ? `<section class="ro-view">
+      <div class="ro-vhead"><h4>${esc(T("roster_title"))}</h4>${myGroup ? `<span class="rh-me ok">${esc(T("roster_you", { group: gName(myGroup, roster.groups.indexOf(myGroup)) }))}</span>` : ""}
+        ${roster.updated_by ? `<span class="muted">${esc(T("roster_by", { name: roster.updated_by, when: roster.updated_at ? timeAgo(roster.updated_at) : "" }))}</span>` : ""}
+        ${data.can_edit ? `<button class="btn btn-outline btn-sm ro-push" data-push>${icon.external} ${esc(T("roster_push"))}</button>` : ""}</div>
+      <div class="rh-groups">${roster.groups.map((g: any, i: number) => `<div class="rh-group ro-g">
+        <div class="rh-gh"><i></i>${esc(gName(g, i))}<span>${g.members.length}</span></div>
+        <div class="rh-people">${g.members.map((uid: string) => {
+          const p = players.get(uid);
+          const prof = data.profiles?.[uid];
+          return p ? rhChip(p, p.playing ? "" : "is-left") : rhChip({ uid, name: prof?.name || "?", path: "", role: prof?.main_role || "", playing: false }, "is-left");
+        }).join("")}</div></div>`).join("")}</div>
+    </section>` : ""}
+    <details class="rh-signups" ${roster ? "" : "open"}>
+      <summary>${esc(T("rh_nav"))} <span class="muted">${e.count}</span></summary>
+      ${groups.size ? `<div class="rh-groups">${[...groups.entries()].map(([cls, list]) => `
+        <div class="rh-group" style="--c:${rhColor(cls)}">
+          <div class="rh-gh"><i></i><span class="rh-gname">${esc(rhLabel(cls))}</span><span>${list.length}</span></div>
+          <div class="rh-people">${list.map(chipFor).join("")}</div>
+        </div>`).join("")}</div>` : `<p class="muted rh-none">${esc(T("rh_nobody"))}</p>`}
+      ${out.length ? `<div class="rh-out"><span>${esc(T("rh_other"))}</span>${out.map((s: any) => `<span class="rh-p"><b>${esc(s.name)}</b><small>${esc(s.status !== "primary" ? s.status : rhLabel(s.class))}</small></span>`).join("")}</div>` : ""}
+    </details>`;
+  card.querySelector("[data-plan]")?.addEventListener("click", () => editRoster(card, e, data, players));
+  card.querySelector("[data-push]")?.addEventListener("click", () => pushRoster(e));
+}
 
+// Neues Raid-Helper-Event (wie im Raid-Helper-Dashboard), Leader ist man selbst
+function newRhEvent(data: any, done: () => void) {
+  const chans: { id: string; name: string }[] = data.channels || [];
+  const m = modal(T("rh_new"), `
+    <p class="hint">${esc(T("rh_f_hint"))}</p>
+    <div class="field"><label>${esc(T("rh_channel"))}</label><select class="select" id="rh-ch">${chans.map((c) => `<option value="${esc(c.id)}">#${esc(c.name || c.id)}</option>`).join("")}</select></div>
+    <div class="field"><label>${esc(T("rh_f_start"))}</label><input id="rh-start" value=""></div>
+    <div class="field"><label>${esc(T("rh_f_title"))}</label><input class="input" id="rh-title" maxlength="100"></div>
+    <div class="field"><label>${esc(T("rh_f_desc"))}</label><textarea class="textarea" id="rh-desc" rows="3" maxlength="1500"></textarea></div>`,
+    `<button class="btn btn-primary" data-save>${esc(T("rh_create"))}</button>`);
+  const q = <X extends HTMLElement>(sel: string) => m.el.querySelector(sel) as X;
+  enhancePicker(q<HTMLInputElement>("#rh-start"), "datetime");
+  q<HTMLElement>("[data-save]").addEventListener("click", async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement;
+    const start = q<HTMLInputElement>("#rh-start").value;
+    if (!start) { toast(T("err_start_past")); return; }
+    b.disabled = true;
+    try {
+      await api("/raidhelper/events", { method: "POST", json: {
+        channel_id: q<HTMLSelectElement>("#rh-ch").value, title: q<HTMLInputElement>("#rh-title").value,
+        description: q<HTMLTextAreaElement>("#rh-desc").value, start: new Date(start).toISOString(),
+      } });
+      m.close(); toast(T("rh_created")); done();
+    } catch (x) { toast((x as Error).message); b.disabled = false; }
+  });
+}
+
+// gespeicherte Aufstellung ins Comp-Tool von Raid-Helper übertragen, optional im Kanal posten
+function pushRoster(e: any) {
+  const m = modal(T("roster_push"), `
+    <p class="hint">${esc(T("roster_push_hint"))}</p>
+    <label class="check"><input type="checkbox" id="rp-ann"> <span>${esc(T("roster_announce"))}</span></label>
+    <label class="check"><input type="checkbox" id="rp-men" disabled> <span>${esc(T("roster_mention"))}</span></label>
+    <div class="field"><label>${esc(T("roster_note"))}</label><textarea class="textarea" id="rp-note" rows="2" maxlength="500" disabled></textarea></div>`,
+    `<button class="btn btn-primary" data-save>${esc(T("roster_push"))}</button>`);
+  const q = <X extends HTMLElement>(sel: string) => m.el.querySelector(sel) as X;
+  q<HTMLInputElement>("#rp-ann").addEventListener("change", (x) => {
+    const on = (x.target as HTMLInputElement).checked;
+    q<HTMLInputElement>("#rp-men").disabled = !on;
+    q<HTMLTextAreaElement>("#rp-note").disabled = !on;
+  });
+  q<HTMLElement>("[data-save]").addEventListener("click", async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement;
+    b.disabled = true;
+    try {
+      const r = await api<any>(`/raidhelper/rosters/${encodeURIComponent(e.id)}/push`, { method: "POST", json: {
+        announce: q<HTMLInputElement>("#rp-ann").checked, mention: q<HTMLInputElement>("#rp-men").checked,
+        description: q<HTMLTextAreaElement>("#rp-note").value,
+      } });
+      m.close();
+      toast(T("roster_pushed"));
+      if (r.url) window.open(r.url, "_blank", "noopener");
+    } catch (x) { toast((x as Error).message); b.disabled = false; }
+  });
+}
+
+// Aufstellung bearbeiten: Spieler per Ziehen oder Antippen in Gruppen verteilen
+function editRoster(card: HTMLElement, e: any, data: any, players: Map<string, RhPlayer>) {
+  let size = Number(sessionStorage.getItem("juiced-roster-size")) || 10;
+  const groups: { name: string; members: string[] }[] = e.roster
+    ? e.roster.groups.map((g: any) => ({ name: g.name, members: [...g.members] }))
+    : [{ name: "", members: [] }, { name: "", members: [] }];
+  let selected: string | null = null;
+  const info = (uid: string): RhPlayer => players.get(uid) || { uid, name: data.profiles?.[uid]?.name || "?", path: "", role: data.profiles?.[uid]?.main_role || "dps", playing: false };
+  const pool = () => [...players.values()].filter((p) => p.playing && !groups.some((g) => g.members.includes(p.uid)))
+    .sort((a, b) => (ROLE_ORDER[a.role] ?? 3) - (ROLE_ORDER[b.role] ?? 3) || a.name.localeCompare(b.name));
+  const chip = (p: RhPlayer) => `<button type="button" class="rh-p ro-p role-${esc(p.role)} ${p.playing ? "" : "is-left"} ${selected === p.uid ? "sel" : ""}" draggable="true" data-uid="${esc(p.uid)}" title="${esc(p.playing ? p.name : T("roster_left"))}"><b>${esc(p.name)}</b>${p.path ? `<small>${esc(p.path)}</small>` : ""}</button>`;
+  const roleCount = (ids: string[]) => ["tank", "healer", "dps"].map((r) => { const n = ids.filter((u) => info(u).role === r).length; return n ? `<span class="rc role-${r}" title="${esc(T("role_" + r))}"><i></i>${n}</span>` : ""; }).join("");
+
+  const draw = () => {
+    const free = pool();
+    card.innerHTML = `<header class="rh-head"><div><h3>${esc(e.title)}</h3><span class="muted">${esc(T("roster_hint"))}</span></div>
+      <div class="rh-side">
+        <label class="ro-size">${esc(T("roster_size"))} <select class="select" data-size>${[5, 6, 8, 10, 12, 15].map((n) => `<option ${n === size ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <button class="btn btn-ghost btn-sm" data-auto>${esc(T("roster_auto"))}</button>
+        <button class="btn btn-ghost btn-sm" data-reset>${esc(T("roster_reset"))}</button>
+      </div></header>
+      <div class="ro-board">
+        <section class="ro-col ro-pool" data-drop="-1"><header><strong>${esc(T("roster_pool"))}</strong><span>${free.length}</span></header>
+          <div class="ro-list">${free.map(chip).join("")}</div></section>
+        <div class="ro-groups">${groups.map((g, i) => `<section class="ro-col ${g.members.length > size ? "over" : ""}" data-drop="${i}">
+          <header><input class="ro-name" data-gname="${i}" maxlength="40" value="${esc(g.name)}" placeholder="${esc(T("roster_group", { n: i + 1 }))}">
+            <span class="ro-rc">${roleCount(g.members)}</span><span class="ro-n">${g.members.length}/${size}</span>
+            <button type="button" class="btn btn-ghost btn-sm" data-rm="${i}" title="${esc(T("roster_remove_group"))}">${icon.x}</button></header>
+          <div class="ro-list">${g.members.map((u) => chip(info(u))).join("") || `<span class="ro-empty">${esc(T("roster_drop"))}</span>`}</div></section>`).join("")}
+          <button type="button" class="ro-add" data-add>${icon.plus} ${esc(T("roster_add_group"))}</button></div>
+      </div>
+      <footer class="ro-foot"><button class="btn btn-ghost" data-cancel>${esc(T("cancel"))}</button><button class="btn btn-primary" data-save>${esc(T("save"))}</button></footer>`;
+  };
+  const move = (uid: string, to: number) => {
+    for (const g of groups) g.members = g.members.filter((u) => u !== uid);
+    if (to >= 0 && groups[to]) groups[to].members.push(uid);
+    selected = null;
+    draw();
+  };
+  const autoFill = () => {
+    for (const p of pool()) {
+      let open = groups.filter((g) => g.members.length < size);
+      if (!open.length) { groups.push({ name: "", members: [] }); open = [groups[groups.length - 1]]; }
+      const n = (g: { members: string[] }) => g.members.filter((u) => info(u).role === p.role).length;
+      open.sort((a, b) => n(a) - n(b) || a.members.length - b.members.length);
+      open[0].members.push(p.uid);
+    }
+    draw();
+  };
+
+  card.classList.add("is-editing");
+  draw();
+  card.addEventListener("input", (ev) => {
+    const t = ev.target as HTMLInputElement;
+    if (t.dataset.gname) groups[Number(t.dataset.gname)].name = t.value;
+  });
+  card.addEventListener("change", (ev) => {
+    const t = ev.target as HTMLSelectElement;
+    if (t.matches("[data-size]")) { size = Number(t.value); try { sessionStorage.setItem("juiced-roster-size", String(size)); } catch { /* egal */ } draw(); }
+  });
+  card.addEventListener("click", async (ev) => {
+    const t = ev.target as HTMLElement;
+    if (!card.classList.contains("is-editing")) return;
+    const chipEl = t.closest<HTMLElement>("[data-uid]");
+    const col = t.closest<HTMLElement>("[data-drop]");
+    if (t.closest("[data-auto]")) return autoFill();
+    if (t.closest("[data-reset]")) { groups.forEach((g) => (g.members = [])); return draw(); }
+    if (t.closest("[data-add]")) { groups.push({ name: "", members: [] }); return draw(); }
+    const rm = t.closest<HTMLElement>("[data-rm]");
+    if (rm) { groups.splice(Number(rm.dataset.rm), 1); return draw(); }
+    if (t.closest("[data-cancel]")) { card.classList.remove("is-editing"); card.replaceWith(card.cloneNode()); return redraw(); }
+    if (t.closest("[data-save]")) {
+      try {
+        const r = await api<any>(`/raidhelper/rosters/${encodeURIComponent(e.id)}`, { method: "PUT", json: { groups } });
+        e.roster = r.roster;
+        toast(T("roster_saved"));
+        card.classList.remove("is-editing");
+        card.replaceWith(card.cloneNode());
+        redraw();
+      } catch (x) { toast((x as Error).message); }
+      return;
+    }
+    if (t.closest("input, select, button:not([data-uid])")) return;
+    if (chipEl && (!selected || selected === chipEl.dataset.uid)) {
+      selected = selected === chipEl.dataset.uid ? null : chipEl.dataset.uid!;
+      return draw();
+    }
+    if (selected && col) move(selected, Number(col.dataset.drop));
+  });
+  card.addEventListener("dragstart", (ev) => {
+    const c = (ev.target as HTMLElement).closest<HTMLElement>("[data-uid]");
+    if (!c || !ev.dataTransfer) return;
+    ev.dataTransfer.setData("text/plain", c.dataset.uid!);
+    ev.dataTransfer.effectAllowed = "move";
+    c.classList.add("dragging");
+  });
+  card.addEventListener("dragover", (ev) => {
+    const col = (ev.target as HTMLElement).closest<HTMLElement>("[data-drop]");
+    if (!col) return;
+    ev.preventDefault();
+    card.querySelectorAll(".ro-col.hover").forEach((x) => x !== col && x.classList.remove("hover"));
+    col.classList.add("hover");
+  });
+  card.addEventListener("dragleave", (ev) => {
+    const col = (ev.target as HTMLElement).closest<HTMLElement>("[data-drop]");
+    if (col && !col.contains(ev.relatedTarget as Node)) col.classList.remove("hover");
+  });
+  card.addEventListener("drop", (ev) => {
+    const col = (ev.target as HTMLElement).closest<HTMLElement>("[data-drop]");
+    const uid = ev.dataTransfer?.getData("text/plain");
+    if (!col || !uid) return;
+    ev.preventDefault();
+    move(uid, Number(col.dataset.drop));
+  });
+  // nach Speichern/Abbrechen: Karte neu aufbauen (alte Listener hängen an der ersetzten Karte)
+  function redraw() {
+    const fresh = document.querySelector<HTMLElement>(`[data-ev="${CSS.escape(e.id)}"]`);
+    if (fresh) drawSignupEvent(fresh, e, data);
+  }
+}
+
+// ------------------------------------------------------------------ Build: Pfade + Inner Ways (Darstellung)
+
+const pathTag = (id: string | null | undefined, main = false) => {
+  const p = pathById(id);
+  return p ? `<span class="path-tag role-${p.role} ${main ? "is-main" : ""}" title="${esc(p.weapons.join(" + "))}"><i></i>${esc(p.name)}</span>` : "";
+};
+const iwTile = (id: string, small = false) => {
+  const w = innerWayById(id);
+  return w ? `<span class="iw ${small ? "iw-sm" : ""}" title="${esc(w.name)}"><img src="${innerWayImg(id)}" alt="" loading="lazy" width="48" height="64">${small ? "" : `<span>${esc(w.name)}</span>`}</span>` : "";
+};
+const hasBuild = (u: any) => !!(u.main_path || (u.alt_paths || []).length || (u.inner_ways || []).length);
+
+// ------------------------------------------------------------------ Mitglieder: Liste mit Filter, Klick öffnet das Profil
+
+const memFilter = { q: "", role: "", path: "" };
 async function viewRoster(view: HTMLElement) {
-  view.innerHTML = head(T("mem_title")) + `<input class="input search" placeholder="${esc(T("mem_search"))}" data-q><div id="rost">${loading}</div>`;
+  view.innerHTML = head(T("mem_title")) + `<div class="mem-filter">
+      <input class="input search" placeholder="${esc(T("mem_search"))}" data-q value="${esc(memFilter.q)}">
+      <div class="seg-tabs" role="group">${["", ...ROLES].map((r) => `<button type="button" data-role="${r}" aria-pressed="${memFilter.role === r}">${r ? `<span class="role-tag role-${r}">${esc(T("role_" + r))}</span>` : esc(T("mem_all"))}</button>`).join("")}</div>
+      <select class="select" data-path><option value="">${esc(T("mem_all_paths"))}</option>${PATHS.map((p) => `<option value="${p.id}" ${memFilter.path === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
+    </div><p class="muted mem-count" data-count></p><div id="rost">${loading}</div>`;
   let list: any[] = [];
   const draw = () => {
-    const q = (view.querySelector("[data-q]") as HTMLInputElement).value.toLowerCase();
-    const items = list.filter((u) => !q || `${u.display_name} ${u.username}`.toLowerCase().includes(q));
-    view.querySelector("#rost")!.innerHTML = items.length ? `<div class="table card">${items.map((u) => `
-      <div class="tr">${avatar(u, 34)}<div class="tr-main"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)}</span></div>
-      <div class="tr-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")} ${roleWeapons(u.main_role, u.weapons, u.weapon_other)} <span>${flag(u.country)}</span></div></div>`).join("")}</div>`
-      : `<p class="empty">${esc(T("mem_empty"))}</p>`;
+    const q = memFilter.q.toLowerCase();
+    const items = list.filter((u) => (!q || `${u.display_name} ${u.username}`.toLowerCase().includes(q))
+      && (!memFilter.role || u.main_role === memFilter.role)
+      && (!memFilter.path || u.main_path === memFilter.path || (u.alt_paths || []).includes(memFilter.path)));
+    view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
+    view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
+      <a class="mcard card" href="#/roster/${u.id}">
+        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
+        <div class="mc-build">${u.main_path ? pathTag(u.main_path, true) : u.main_role ? roleTag(u.main_role) : `<span class="muted">${esc(T("mem_no_build"))}</span>`}
+          ${(u.alt_paths || []).length ? `<span class="mc-more">+${u.alt_paths.length}</span>` : ""}</div>
+        ${(u.inner_ways || []).length ? `<div class="mc-iw">${u.inner_ways.slice(0, 8).map((w: string) => iwTile(w, true)).join("")}</div>` : ""}
+      </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_empty"))}</p>`;
   };
-  view.querySelector("[data-q]")!.addEventListener("input", draw);
-  try { list = await api<any[]>("/members"); draw(); } catch (e) { toast((e as Error).message); }
+  view.querySelector("[data-q]")!.addEventListener("input", (e) => { memFilter.q = (e.target as HTMLInputElement).value; draw(); });
+  view.querySelector("[data-path]")!.addEventListener("change", (e) => { memFilter.path = (e.target as HTMLSelectElement).value; draw(); });
+  view.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.addEventListener("click", () => {
+    memFilter.role = b.dataset.role || "";
+    view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === memFilter.role)));
+    draw();
+  }));
+  try { list = await api<any[]>("/members"); draw(); } catch (e) { view.querySelector("#rost")!.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
 }
 
-// ------------------------------------------------------------------ Bewerbungen (Leader / Vice)
+function buildBlock(u: any, compact = false) {
+  const main = pathById(u.main_path);
+  const alt = (u.alt_paths || []).filter((p: string) => pathById(p));
+  const ways = (u.inner_ways || []).filter((w: string) => innerWayById(w));
+  if (!main && !alt.length && !ways.length) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
+  return `${main ? `<div class="path-main role-${main.role}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${esc(main.name)}</strong>
+      <span class="pm-weapons">${esc(main.weapons.join(" + "))}</span>${roleTag(main.role)}</div>` : ""}
+    ${alt.length ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((p: string) => pathTag(p)).join("")}</div></div>` : ""}
+    ${ways.length ? `<div class="build-row"><span class="label">${esc(T("prof_inner_ways"))}</span><div class="iw-grid ${compact ? "small" : ""}">${ways.map((w: string) => iwTile(w, compact)).join("")}</div></div>` : ""}`;
+}
+
+async function viewMember(view: HTMLElement, id: number) {
+  view.innerHTML = `<a class="back-link" href="#/roster">← ${esc(T("mem_back"))}</a><div id="mem">${loading}</div>`;
+  const el = view.querySelector<HTMLElement>("#mem")!;
+  let u: any, vods: any[] = [];
+  try {
+    [u, vods] = await Promise.all([api<any>(`/members/${id}`), api<any[]>("/vods").catch(() => [])]);
+  } catch (e) { el.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; return; }
+  const own = vods.filter((v) => v.uploader_id === u.id && v.status === "ready");
+  const joined = u.joined_at ? new Date(u.joined_at).toLocaleDateString(loc(), { month: "long", year: "numeric" }) : "";
+  el.innerHTML = `<section class="card mem-hero">
+      ${avatar(u, 72)}
+      <div class="mh-main"><h1>${esc(u.display_name)} ${flag(u.country)}</h1>
+        <div class="mh-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
+        <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span></div>
+      ${u.id === me!.id ? `<a class="btn btn-outline btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a>` : ""}
+    </section>
+    <h2 class="v-sub">Build</h2>
+    <section class="card build-card">${buildBlock(u)}</section>
+    <h2 class="v-sub">${esc(T("mem_vods"))} <span class="muted">${own.length || ""}</span></h2>
+    ${own.length ? `<div class="table card">${own.map((v) => `<a class="tr mem-vod" href="#/vods/${v.id}">
+        <span class="mv-ico">${icon.play}</span>
+        <div class="tr-main"><strong>${esc(v.title)}</strong><span class="muted">${v.match_date ? esc(fmtDate(v.match_date)) : ""}${v.opponent ? ` · vs ${esc(v.opponent)}` : ""}${v.note_count ? ` · ${v.note_count} ✎` : ""}</span></div>
+        ${v.reviewed ? `<span class="mv-ok">${icon.check}</span>` : ""}
+      </a>`).join("")}</div>` : `<p class="empty">${esc(T("mem_no_vods"))}</p>`}`;
+}
 
 async function viewApplications(view: HTMLElement) {
   view.innerHTML = head(T("apps_title")) + `<div id="apps">${loading}</div>`;
@@ -376,40 +683,69 @@ const COUNTRIES = ["AE", "AL", "AM", "AR", "AT", "AU", "AZ", "BA", "BE", "BG", "
 function viewProfile(view: HTMLElement) {
   const regionName = (() => { try { return new Intl.DisplayNames([lang()], { type: "region" }); } catch { return null; } })();
   const opts = COUNTRIES.map((c) => ({ c, n: regionName?.of(c) || c })).sort((a, b) => a.n.localeCompare(b.n));
+  let mainPath: string | null = me!.main_path || null;
+  const alt = new Set<string>(me!.alt_paths || []);
+  const ways = new Set<string>(me!.inner_ways || []);
+  let showAll = false;
   view.innerHTML = head(T("prof_title")) + `<form class="profile card" novalidate>
-    <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div></div>
+    <div class="prof-top">${avatar(me!, 56)}<div><strong>${esc(me!.username)}</strong>${rankBadge(me!.public_rank)}</div>
+      <a class="btn btn-ghost btn-sm prof-view" href="#/roster/${me!.id}">${icon.user}</a></div>
     <div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
-    <div class="field"><span class="label">${esc(T("prof_role"))}</span><div class="chips">${ROLES.map((r) => `<button type="button" class="chip role-${r}" aria-pressed="${me!.main_role === r}" data-role="${r}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
-    <div class="field" data-weapons-field ${me!.main_role ? "" : "hidden"}><span class="label">${esc(T("prof_weapons"))}</span><div class="chips">${Object.entries(WEAPONS_BY_ROLE).map(([r, ws]) => ws.map((w) => `<button type="button" class="chip" aria-pressed="${(me!.weapons || []).includes(w)}" data-weapon="${w}" data-for="${r}" ${me!.main_role === r ? "" : "hidden"}>${esc(T("weapon_" + w))}</button>`).join("")).join("")}
-      <input class="input weapon-other" id="p-wother" maxlength="40" placeholder="${esc(T("join_weapon_other"))}" value="${esc(me!.weapon_other || "")}"></div></div>
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
+    <h2 class="prof-sec">${esc(T("prof_build"))}</h2>
+    <div class="field"><span class="label">${esc(T("prof_main_path"))}</span><p class="hint">${esc(T("prof_main_hint"))}</p>
+      <div class="path-pick">${PATHS.map((p) => `<button type="button" class="pp role-${p.role}" data-main="${p.id}" aria-pressed="${mainPath === p.id}">
+        <strong>${esc(p.name)}</strong><span>${esc(p.weapons.join(" + "))}</span>${roleTag(p.role)}</button>`).join("")}</div></div>
+    <div class="field"><span class="label">${esc(T("prof_alt_paths"))}</span>
+      <div class="chips">${PATHS.map((p) => `<button type="button" class="chip" data-alt="${p.id}" aria-pressed="${alt.has(p.id)}" ${mainPath === p.id ? "hidden" : ""}>${esc(p.name)}</button>`).join("")}</div></div>
+    <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
+      <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
+      <p class="hint">${esc(T("prof_iw_hint"))}</p><div data-iw></div></div>
     <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>
     <button class="btn btn-primary" type="submit">${esc(T("save"))}</button>
   </form>`;
-  let role = me!.main_role;
-  const weapons = new Set<string>(me!.weapons || []);
-  view.querySelectorAll<HTMLElement>("[data-weapon]").forEach((b) => b.addEventListener("click", () => {
-    const w = b.dataset.weapon!;
-    weapons.has(w) ? weapons.delete(w) : weapons.add(w);
-    b.setAttribute("aria-pressed", String(weapons.has(w)));
+
+  // Inner Ways: nach Pfad gruppiert; ohne "Alle zeigen" nur eigene Pfade + allgemeine (+ schon gewählte)
+  const drawWays = () => {
+    const mine = new Set([mainPath, ...alt].filter(Boolean) as string[]);
+    const groups = [...PATHS.map((p) => ({ id: p.id, name: p.name })), { id: "general", name: T("iw_general") }]
+      .map((g) => ({ ...g, items: INNER_WAYS.filter((w) => w.path === g.id && (showAll || mine.has(g.id) || g.id === "general" || ways.has(w.id))) }))
+      .filter((g) => g.items.length)
+      .sort((a, b) => Number(b.id === mainPath) - Number(a.id === mainPath));
+    view.querySelector("[data-iw]")!.innerHTML = groups.map((g) => `<div class="iw-group"><span class="iw-gname">${esc(g.name)}</span>
+      <div class="iw-grid pick">${g.items.map((w) => `<button type="button" class="iw" data-way="${w.id}" aria-pressed="${ways.has(w.id)}" title="${esc(w.name)}">
+        <img src="${innerWayImg(w.id)}" alt="" loading="lazy" width="48" height="64"><span>${esc(w.name)}</span></button>`).join("")}</div></div>`).join("");
+    view.querySelector("[data-iw-count]")!.textContent = ways.size ? `(${ways.size})` : "";
+  };
+  drawWays();
+  view.querySelector("[data-iw]")!.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-way]");
+    if (!b) return;
+    const id = b.dataset.way!;
+    ways.has(id) ? ways.delete(id) : ways.add(id);
+    b.setAttribute("aria-pressed", String(ways.has(id)));
+    view.querySelector("[data-iw-count]")!.textContent = ways.size ? `(${ways.size})` : "";
+  });
+  view.querySelector<HTMLInputElement>("[data-iw-all]")!.addEventListener("change", (e) => { showAll = (e.target as HTMLInputElement).checked; drawWays(); });
+  view.querySelectorAll<HTMLElement>("[data-main]").forEach((b) => b.addEventListener("click", () => {
+    mainPath = mainPath === b.dataset.main ? null : b.dataset.main!;
+    if (mainPath) alt.delete(mainPath);
+    view.querySelectorAll<HTMLElement>("[data-main]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.main === mainPath)));
+    view.querySelectorAll<HTMLElement>("[data-alt]").forEach((x) => { x.hidden = x.dataset.alt === mainPath; x.setAttribute("aria-pressed", String(alt.has(x.dataset.alt!))); });
+    drawWays();
   }));
-  view.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.addEventListener("click", () => {
-    role = role === b.dataset.role ? null : b.dataset.role!;
-    view.querySelector<HTMLElement>("[data-weapons-field]")!.hidden = !role;
-    view.querySelectorAll<HTMLElement>("[data-weapon]").forEach((x) => {
-      const mine = x.dataset.for === role;
-      x.hidden = !mine;
-      if (!mine && weapons.delete(x.dataset.weapon!)) x.setAttribute("aria-pressed", "false");
-    });
-    view.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.role === role)));
+  view.querySelectorAll<HTMLElement>("[data-alt]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.alt!;
+    alt.has(id) ? alt.delete(id) : alt.add(id);
+    b.setAttribute("aria-pressed", String(alt.has(id)));
+    drawWays();
   }));
   view.querySelector("form")!.addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
-        main_role: role, weapons: role ? [...weapons] : [],
-        weapon_other: role ? (view.querySelector("#p-wother") as HTMLInputElement).value : "",
+        main_path: mainPath, alt_paths: [...alt], inner_ways: [...ways],
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });
@@ -450,6 +786,28 @@ function evRow(e: any, editable: boolean) {
     <div class="tr-main"><strong>${esc(e.title)}${e.opponent ? ` <span class="muted">· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
       <span class="muted">${esc(fmtWhenEv(e))} · ${esc(T("kind_" + e.kind))}${e.repeat_days ? ` · ${esc(repeatLabel(e.repeat_days))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span></div>
     ${editable ? `<div class="row-gap"><button class="btn btn-ghost btn-sm" data-edit>${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button></div>` : ""}
+  </div>`;
+}
+
+// "Als Nächstes": der laufende oder nächste Termin als große Karte
+async function loadNextOne(el: HTMLElement) {
+  let list: any[] = [];
+  try { list = await fetchUpcoming(14); } catch { el.innerHTML = ""; return; }
+  const now = Date.now();
+  const isLive = (e: any) => new Date(e.starts_at).getTime() <= now && (e.open_end || new Date(e.ends_at).getTime() > now);
+  const e = list.find(isLive) || list.find((x) => new Date(x.starts_at).getTime() > now);
+  if (!e) { el.innerHTML = `<p class="muted">${esc(T("dash_nothing"))}</p>`; return; }
+  const s = new Date(e.starts_at);
+  const day = s.toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" });
+  const time = e.open_end ? T("sched_from", { t: timeShort(s, lang()) }) : timeRange(s, new Date(e.ends_at), lang());
+  const min = Math.max(1, Math.round((s.getTime() - now) / 60000));
+  const rel = new Intl.RelativeTimeFormat(loc(), { numeric: "always", style: "short" });
+  const inTxt = min < 60 ? rel.format(min, "minute") : min < 2880 ? rel.format(Math.round(min / 60), "hour") : rel.format(Math.round(min / 1440), "day");
+  el.innerHTML = `<div class="next-one kind-${esc(e.kind)}">
+    <span class="ag-meta"><i></i>${esc(T("kind_" + e.kind))}</span>
+    <strong>${esc(e.title)}${e.opponent ? ` <span>· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
+    <span class="muted">${esc(day)} · ${esc(time)}</span>
+    ${isLive(e) ? `<span class="ag-live"><b></b>Live</span>` : `<span class="ag-in">${esc(inTxt)}</span>`}
   </div>`;
 }
 

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session as DbSession
 
 from fastapi.responses import FileResponse
 
-from . import appimages, models, notify
+from . import appimages, models, notify, wwm
 from .auth import user_out
 from .db import get_db
 from .security import client_ip, current_user_optional, limiter, require_admin, require_management, require_member, require_user
@@ -134,6 +134,9 @@ class ProfileIn(BaseModel):
     main_role: Optional[str] = None
     weapons: Optional[list[str]] = None
     weapon_other: Optional[str] = None
+    main_path: Optional[str] = None
+    alt_paths: Optional[list[str]] = None
+    inner_ways: Optional[list[str]] = None
     country: Optional[str] = None
     show_on_team: Optional[bool] = None
     lang: Optional[str] = None
@@ -150,6 +153,18 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
         user.weapons = models.clean_weapons(data["weapons"], user.main_role) or None
     if "weapon_other" in data:
         user.weapon_other = clean(data["weapon_other"], 40)
+    if "main_path" in data:
+        user.main_path = data["main_path"] if data["main_path"] in wwm.PATHS else None
+        if user.main_path:  # Rolle folgt dem Haupt-Pfad
+            user.main_role = wwm.PATHS[user.main_path]
+    if "alt_paths" in data:
+        alt = [p for p in dict.fromkeys(data["alt_paths"] or []) if p in wwm.PATHS and p != user.main_path]
+        user.alt_paths = ",".join(alt[:10]) or None
+    elif user.main_path and user.main_path in user.alt_path_list:
+        user.alt_paths = ",".join(p for p in user.alt_path_list if p != user.main_path) or None
+    if "inner_ways" in data:
+        ways = [w for w in dict.fromkeys(data["inner_ways"] or []) if w in wwm.INNER_WAYS]
+        user.inner_ways = ",".join(ways[:24]) or None
     if not user.main_role:
         user.weapons, user.weapon_other = None, None
     elif user.weapons:  # nach Rollenwechsel nur passende Waffen behalten
@@ -169,9 +184,22 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
 def members(db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
     users = db.query(models.User).filter(models.User.rank != "guest").all()
     users.sort(key=lambda u: (RANK_ORDER.get(u.public_rank, 9), u.display_name.lower()))
-    return [{"id": u.id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
-             "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list,
-             "weapon_other": u.weapon_other, "country": u.country, "last_login_at": iso(u.last_login_at)} for u in users]
+    return [member_out(u) for u in users]
+
+
+def member_out(u: models.User) -> dict:
+    return {"id": u.id, "discord_id": u.discord_id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
+            "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list,
+            "weapon_other": u.weapon_other, "main_path": u.main_path, "alt_paths": u.alt_path_list, "inner_ways": u.inner_way_list,
+            "country": u.country, "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
+
+
+@router.get("/members/{uid}")
+def member(uid: int, db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
+    u = db.get(models.User, uid)
+    if not u or u.rank == "guest":
+        raise HTTPException(status_code=404, detail="Not found")
+    return member_out(u)
 
 
 # ------------------------------------------------------------------ Ankündigungen

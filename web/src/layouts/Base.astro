@@ -45,6 +45,8 @@ const nav = [
         try { s = localStorage.getItem("juiced-theme"); } catch (e) {}
         var dark = s ? s === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
         document.documentElement.dataset.theme = dark ? "dark" : "light";
+        // angemeldet (vom letzten Aufruf)? Dann VODs-Link statt Login-Knopf, ohne Aufblitzen
+        try { if (JSON.parse(sessionStorage.getItem("juiced-me") || "null")) document.documentElement.dataset.auth = "in"; } catch (e) {}
       })();
     </script>
   </head>
@@ -55,6 +57,7 @@ const nav = [
         <a href={`/${lang}/`} class="brand" aria-label="JUICED"><Logo /></a>
         <nav class="nav-desktop" aria-label="Main">
           {nav.map((n) => <a href={n.href} class:list={["nav-link", { active: page === n.id }]}>{n.label}</a>)}
+          <a href={`/${lang}/app/#/vods`} class="nav-link nav-vods auth-only"><Icon name="video" />{t("nav_vods")}</a>
         </nav>
         <div class="header-actions">
           <div class="lang-menu" data-lang-menu>
@@ -78,8 +81,9 @@ const nav = [
             <div class="bell-menu" data-bell-menu hidden></div>
           </div>
           <a class="icon-btn hide-sm" href={DISCORD_INVITE} target="_blank" rel="noopener" aria-label="Discord"><Icon name="discord" /></a>
-          <a class="btn btn-outline btn-sm hide-sm" href={`/${lang}/app/`} data-account-link>
-            <span data-account-label data-default={t("nav_members")}>{t("nav_members")}</span>
+          <a class="btn btn-outline btn-sm hide-sm acc-link" href={`/${lang}/app/`} data-account-link>
+            <span class="acc-dc" aria-hidden="true"><Icon name="discord" /></span>
+            <span data-account-label data-default={t("nav_login_discord")}>{t("nav_login_discord")}</span>
           </a>
           <button class="icon-btn show-sm" data-menu-btn aria-expanded="false" aria-label={t("nav_menu")}><Icon name="menu" /></button>
         </div>
@@ -87,7 +91,9 @@ const nav = [
       <div class="mobile-panel" hidden data-mobile-panel>
         <div class="container">
           {nav.map((n) => <a href={n.href} class="m-link">{n.label}</a>)}
+          <a href={`/${lang}/app/#/vods`} class="m-link auth-only">{t("nav_vods")}</a>
           <a href={DISCORD_INVITE} target="_blank" rel="noopener" class="m-link">Discord</a>
+          <a href={`/${lang}/app/`} class="btn btn-sm m-login guest-only"><Icon name="discord" />{t("nav_login_discord")}</a>
         </div>
       </div>
     </header>
@@ -148,6 +154,18 @@ const nav = [
   .nav-link { padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 500; color: var(--muted); transition: color 0.15s, background-color 0.15s; }
   .nav-link:hover { color: var(--text); background: var(--surface-2); }
   .nav-link.active { color: var(--text); }
+  /* nur angemeldet: VODs-Link; abgemeldet: Discord-Login gut sichtbar */
+  :global(html:not([data-auth="in"])) .auth-only { display: none; }
+  :global(html[data-auth="in"]) .guest-only { display: none; }
+  .nav-vods { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
+  .nav-vods :global(svg) { width: 15px; height: 15px; color: var(--accent); }
+  .acc-dc { display: none; }
+  .acc-dc :global(svg) { width: 16px; height: 16px; }
+  :global(html:not([data-auth="in"])) .acc-link { gap: 7px; color: #fff; background: #5865f2; border-color: #5865f2; }
+  :global(html:not([data-auth="in"])) .acc-link:hover { background: #4752c4; border-color: #4752c4; }
+  :global(html:not([data-auth="in"])) .acc-dc { display: inline-flex; }
+  .m-login { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; color: #fff; background: #5865f2; }
+  .m-login :global(svg) { width: 16px; height: 16px; }
   .header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
   .icon-btn { height: 36px; min-width: 36px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; color: var(--muted); transition: color 0.15s, background-color 0.15s; }
   .icon-btn:hover { color: var(--text); background: var(--surface-2); }

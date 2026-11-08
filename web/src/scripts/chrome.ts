@@ -77,6 +77,7 @@ export function initChrome() {
     .then((me) => {
       const label = document.querySelector<HTMLElement>("[data-account-label]");
       const link = document.querySelector<HTMLElement>("[data-account-link]");
+      document.documentElement.dataset.auth = me && me.user ? "in" : "out";
       if (!me || !me.user) {
         // abgemeldet: Zwischenspeicher und evtl. schon gezeigten Namen zurücksetzen
         try { sessionStorage.removeItem("juiced-me"); } catch { /* egal */ }
