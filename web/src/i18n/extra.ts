@@ -1051,6 +1051,7 @@ const fr: Partial<ExtraDict> = {
   att_title: "{a} sur {t} événements",
   vod_my_reviews: "Mes revues",
   vod_waiting_since: "attend depuis {n} j",
+  m_friday: "Soirées du vendredi",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1394,6 +1395,7 @@ const es: Partial<ExtraDict> = {
   att_title: "{a} de {t} eventos",
   vod_my_reviews: "Mis revisiones",
   vod_waiting_since: "espera {n} d",
+  m_friday: "Noches de viernes",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1737,6 +1739,7 @@ const pt: Partial<ExtraDict> = {
   att_title: "{a} de {t} eventos",
   vod_my_reviews: "Minhas revisões",
   vod_waiting_since: "espera há {n} d",
+  m_friday: "Sextas à noite",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2080,6 +2083,7 @@ const ru: Partial<ExtraDict> = {
   att_title: "{a} из {t} событий",
   vod_my_reviews: "Мои разборы",
   vod_waiting_since: "ждёт {n} дн.",
+  m_friday: "Пятничные вечера",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2423,6 +2427,7 @@ const tr: Partial<ExtraDict> = {
   att_title: "{t} etkinlikten {a}",
   vod_my_reviews: "İncelemelerim",
   vod_waiting_since: "{n} gündür bekliyor",
+  m_friday: "Cuma Geceleri",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2766,6 +2771,7 @@ const pl: Partial<ExtraDict> = {
   att_title: "{a} z {t} wydarzeń",
   vod_my_reviews: "Moje recenzje",
   vod_waiting_since: "czeka {n} dni",
+  m_friday: "Piątkowe wieczory",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

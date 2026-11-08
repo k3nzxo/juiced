@@ -84,5 +84,7 @@ const pl: Partial<Dict> = {
   vod_expires_in: "usunięcie za {n} dni", vod_expires_today: "usunięcie dziś",
   vod_retention_hint: "VOD są usuwane po {n} dniach, chyba że zostaną zachowane.",
   vod_storage_down: "Magazyn VOD jest teraz niepodłączony: wysyłanie wstrzymane.",
+  rank_management: "Zarząd",
+  rank_leader: "Lider",
 };
 export default pl;

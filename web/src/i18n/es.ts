@@ -84,5 +84,10 @@ const es: Partial<Dict> = {
   vod_expires_in: "se borra en {n} d", vod_expires_today: "se borra hoy",
   vod_retention_hint: "Los VOD se borran tras {n} días salvo que se guarden.",
   vod_storage_down: "El almacenamiento de VOD no está conectado: las subidas están en pausa.",
+  role_healer: "Sanador",
+  role_tank: "Tanque",
+  rank_vice: "Vicelíder",
+  rank_management: "Dirección",
+  rank_coach: "Entrenador",
 };
 export default es;

@@ -85,5 +85,7 @@ const ru: Partial<Dict> = {
   vod_expires_in: "удалится через {n} д", vod_expires_today: "удалится сегодня",
   vod_retention_hint: "VOD удаляются через {n} дн., если их не оставить.",
   vod_storage_down: "Хранилище VOD сейчас не подключено: загрузки приостановлены.",
+  role_healer: "Хилер",
+  role_tank: "Танк",
 };
 export default ru;

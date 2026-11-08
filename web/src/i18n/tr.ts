@@ -85,5 +85,7 @@ const tr: Partial<Dict> = {
   vod_expires_in: "{n} g sonra silinir", vod_expires_today: "bugün silinir",
   vod_retention_hint: "VOD'lar saklanmadıkça {n} gün sonra silinir.",
   vod_storage_down: "VOD depolaması şu an bağlı değil: yüklemeler durduruldu.",
+  role_healer: "Şifacı",
+  rank_leader: "Lider",
 };
 export default tr;

@@ -85,5 +85,7 @@ const fr: Partial<Dict> = {
   vod_expires_in: "supprimée dans {n} j", vod_expires_today: "supprimée aujourd'hui",
   vod_retention_hint: "Les VOD sont supprimées après {n} jours sauf si elles sont gardées.",
   vod_storage_down: "Le stockage VOD n'est pas connecté: les envois sont en pause.",
+  role_healer: "Soigneur",
+  rank_management: "Direction",
 };
 export default fr;
