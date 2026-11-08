@@ -210,18 +210,31 @@ async function viewDashboard(view: HTMLElement) {
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
   try {
     const list = await api<any[]>("/announcements");
-    // neueste (bzw. angepinnte) Ankündigung als Vorschau neben "Als Nächstes"
-    const top = list[0];
-    const prev = view.querySelector<HTMLElement>("#dash-ann");
-    if (prev && top) {
-      prev.innerHTML = `<button type="button" class="dash-ann">
+    // neueste (bzw. angepinnte) Ankündigung steht oben in der Karte, unten nur die übrigen (nichts doppelt)
+    const [top, ...rest] = list;
+    const reload = () => viewDashboard(view);
+    const del = async (x: any) => {
+      if (!confirm(T("ann_delete_confirm"))) return;
+      await api(`/announcements/${x.id}`, { method: "DELETE" }).catch((err) => toast(err.message));
+      reload();
+    };
+    const prev = view.querySelector<HTMLElement>("#dash-ann")!;
+    prev.innerHTML = top ? `<button type="button" class="dash-ann">
         <span class="da-label">${top.pinned ? icon.pin : ""}${esc(T("ann_title"))}<em>${esc(timeAgo(top.created_at))}</em></span>
-        <strong>${esc(top.title)}</strong><span class="da-body">${esc(top.body)}</span></button>`;
-      prev.querySelector("button")!.addEventListener("click", () => view.querySelector("#ann-head")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-    }
-    const el = view.querySelector("#ann")!;
-    if (!list.length) { el.innerHTML = `<p class="empty">${esc(T("ann_empty"))}</p>`; return; }
-    el.innerHTML = list.map((a) => `<article class="ann card ${a.pinned ? "pinned" : ""}" data-id="${a.id}">
+        <strong>${esc(top.title)}</strong><span class="da-body">${esc(top.body)}</span></button>`
+      : `<p class="muted da-none">${esc(T("ann_empty"))}</p>`;
+    prev.querySelector("button")?.addEventListener("click", () => {
+      const m = modal(top.title, `<div class="ann-body">${esc(top.body).replace(/\n/g, "<br>")}</div>
+        <div class="ann-meta">${top.author_avatar ? `<img src="${esc(top.author_avatar)}" alt="" width="18" height="18">` : ""}${esc(top.author || "")} · ${esc(timeAgo(top.created_at))}</div>`,
+        top.can_edit ? `<button class="btn btn-ghost" data-del>${icon.trash} ${esc(T("delete"))}</button><button class="btn btn-primary" data-edit>${icon.edit} ${esc(T("edit"))}</button>` : "");
+      m.el.querySelector("[data-edit]")?.addEventListener("click", () => { m.close(); editAnnouncement(top, reload); });
+      m.el.querySelector("[data-del]")?.addEventListener("click", () => { m.close(); del(top); });
+    });
+    const el = view.querySelector<HTMLElement>("#ann")!;
+    const headEl = view.querySelector<HTMLElement>("#ann-head")!;
+    headEl.textContent = T("ann_more");
+    headEl.hidden = el.hidden = !rest.length;
+    el.innerHTML = rest.map((a) => `<article class="ann card ${a.pinned ? "pinned" : ""}" data-id="${a.id}">
       <div class="ann-head">
         ${a.pinned ? `<span class="badge badge-leader">${icon.pin} ${esc(T("ann_pinned"))}</span>` : ""}
         <h3>${esc(a.title)}</h3>
@@ -231,13 +244,9 @@ async function viewDashboard(view: HTMLElement) {
       <div class="ann-meta">${a.author_avatar ? `<img src="${esc(a.author_avatar)}" alt="" width="18" height="18">` : ""}${esc(a.author || "")} · ${esc(timeAgo(a.created_at))}</div>
     </article>`).join("");
     el.querySelectorAll<HTMLElement>(".ann").forEach((card) => {
-      const a = list.find((x) => x.id === Number(card.dataset.id));
-      card.querySelector("[data-edit]")?.addEventListener("click", () => editAnnouncement(a, () => viewDashboard(view)));
-      card.querySelector("[data-del]")?.addEventListener("click", async () => {
-        if (!confirm(T("ann_delete_confirm"))) return;
-        await api(`/announcements/${a.id}`, { method: "DELETE" }).catch((e) => toast(e.message));
-        viewDashboard(view);
-      });
+      const a = rest.find((x) => x.id === Number(card.dataset.id));
+      card.querySelector("[data-edit]")?.addEventListener("click", () => editAnnouncement(a, reload));
+      card.querySelector("[data-del]")?.addEventListener("click", () => del(a));
     });
   } catch (e) { view.querySelector("#ann")!.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
 }

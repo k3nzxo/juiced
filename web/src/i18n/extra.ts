@@ -294,6 +294,7 @@ const en = {
   rh_remind_text: "Message",
   rh_remind_default: "Please sign up for {title}!",
   rh_reminded: "Reminder sent",
+  ann_more: "More announcements",
 };
 
 export type ExtraDict = typeof en;
@@ -584,6 +585,7 @@ const de: Partial<ExtraDict> = {
   rh_remind_text: "Nachricht",
   rh_remind_default: "Bitte meldet euch für {title} an!",
   rh_reminded: "Erinnerung gesendet",
+  ann_more: "Weitere Ankündigungen",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -865,6 +867,7 @@ const fr: Partial<ExtraDict> = {
   rh_remind_text: "Message",
   rh_remind_default: "Inscrivez-vous pour {title} !",
   rh_reminded: "Rappel envoyé",
+  ann_more: "Autres annonces",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1146,6 +1149,7 @@ const es: Partial<ExtraDict> = {
   rh_remind_text: "Mensaje",
   rh_remind_default: "¡Apuntaos a {title}!",
   rh_reminded: "Recordatorio enviado",
+  ann_more: "Más anuncios",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1427,6 +1431,7 @@ const pt: Partial<ExtraDict> = {
   rh_remind_text: "Mensagem",
   rh_remind_default: "Inscrevam-se para {title}!",
   rh_reminded: "Lembrete enviado",
+  ann_more: "Mais avisos",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -1708,6 +1713,7 @@ const ru: Partial<ExtraDict> = {
   rh_remind_text: "Сообщение",
   rh_remind_default: "Запишитесь на {title}!",
   rh_reminded: "Напоминание отправлено",
+  ann_more: "Другие объявления",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -1989,6 +1995,7 @@ const tr: Partial<ExtraDict> = {
   rh_remind_text: "Mesaj",
   rh_remind_default: "Lütfen {title} için kaydolun!",
   rh_reminded: "Hatırlatma gönderildi",
+  ann_more: "Diğer duyurular",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2270,6 +2277,7 @@ const pl: Partial<ExtraDict> = {
   rh_remind_text: "Wiadomość",
   rh_remind_default: "Zapiszcie się na {title}!",
   rh_reminded: "Przypomnienie wysłane",
+  ann_more: "Więcej ogłoszeń",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };
