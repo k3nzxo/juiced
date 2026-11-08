@@ -145,9 +145,10 @@ async function renderVodList() {
   await loadVodList();
 }
 
-async function loadVodList() {
+async function loadVodList(quiet = false) {
   try {
-    const [list, storage] = await Promise.all([api("/vods"), api("/vods/storage")]);
+    // beim automatischen Nachfragen nur die Liste, die Speicherinfo bleibt von vorher
+    const [list, storage] = await Promise.all([api("/vods"), quiet && vodState.storage ? vodState.storage : api("/vods/storage")]);
     vodState.list = list;
     vodState.storage = storage;
   } catch (err) {
@@ -158,7 +159,9 @@ async function loadVodList() {
   drawVodList();
   // Solange etwas verarbeitet wird, regelmäßig neu laden
   if (vodState.list.some(v => v.status === "processing" || (v.status === "uploading" && !v.is_mine)) && location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash)) {
-    vodState.pollTimer = setTimeout(loadVodList, 5000);
+    // eigenes VOD in Verarbeitung: schnell aktualisieren; nur fremde Uploads anzeigen: gemütlich
+    const mineBusy = vodState.list.some(v => v.status === "processing" && v.is_mine);
+    vodState.pollTimer = setTimeout(() => loadVodList(true), mineBusy ? 5000 : 15000);
   }
 }
 
@@ -229,7 +232,7 @@ function drawVodList() {
 // ---------------------------------------------------------------- Upload
 
 const VOD_ACCEPT = "video/*,.mkv,.flv,.ts";
-const VOD_PARALLEL = 6;  // gleichzeitige Stücke
+const VOD_PARALLEL = 4;  // gleichzeitige Stücke (4 lässt der Leitung Luft für den Rest der Seite)
 
 function vodDropzone(id) {
   return `<label class="vod-drop" id="${id}">

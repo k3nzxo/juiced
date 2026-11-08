@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from . import models, notify
 from .config import SECRET_KEY
 from .db import Base, engine, get_db, SessionLocal
-from .security import require_user
+from .security import require_user, current_user_optional
 
 router = APIRouter(prefix="/api/vods", tags=["vods"])
 
@@ -241,8 +241,23 @@ def _delete_files(v: Vod):
                 print(f"[vod] Konnte {name} nicht löschen: {e}")
 
 
+_storage_cache = {"at": 0.0, "ok": True, "free": 0}
+
+
 def _storage_ok() -> bool:
-    return (not REQUIRE_MARKER) or os.path.exists(os.path.join(VOD_DIR, MARKER_FILE))
+    """Ist die Storage Box da? Ergebnis 15 s merken: die Abfrage geht übers Netz und kann bei Last Sekunden dauern."""
+    if not REQUIRE_MARKER:
+        return True
+    if time.time() - _storage_cache["at"] > 15:
+        _storage_cache.update(at=time.time(), ok=os.path.exists(os.path.join(VOD_DIR, MARKER_FILE)))
+    return _storage_cache["ok"]
+
+
+def _vod_free_bytes() -> int:
+    """Freier Platz im VOD-Ordner, 30 s gemerkt (gleicher Grund)."""
+    if time.time() - _storage_cache.get("free_at", 0) > 30:
+        _storage_cache.update(free_at=time.time(), free=shutil.disk_usage(VOD_DIR).free)
+    return _storage_cache["free"]
 
 
 def _require_storage():
@@ -279,7 +294,7 @@ def _cleanup_stale(db: Session):
 
 def _probe(path: str) -> dict:
     out = subprocess.run(
-        ["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", path],
+        ["nice", "-n", "15", "ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", path],
         capture_output=True, text=True, timeout=120,
     )
     if out.returncode != 0:
@@ -288,14 +303,49 @@ def _probe(path: str) -> dict:
 
 
 def _run_ffmpeg(args: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
-    return subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args],
+    # "nice": ffmpeg bekommt nur übrige Rechenzeit, die Website bleibt flüssig
+    return subprocess.run(["nice", "-n", "15", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args],
                           capture_output=True, text=True, timeout=timeout)
+
+
+MOVE_MBPS = float(os.environ.get("VOD_MOVE_MBPS", "40"))  # Kopiertempo auf die Storage Box (0 = ungebremst)
+
+
+def _move(src: str, dst: str):
+    """Datei auf die Storage Box verschieben, gedrosselt (sonst ist Leitung/CPU minutenlang dicht)."""
+    if MOVE_MBPS <= 0 or os.stat(src).st_dev == os.stat(os.path.dirname(dst) or ".").st_dev:
+        shutil.move(src, dst)
+        return
+    tmp = dst + ".copying"
+    block, per_sec = 8 * 1024 * 1024, MOVE_MBPS * 1024 * 1024
+    t0, done = time.monotonic(), 0
+    with open(src, "rb") as fi, open(tmp, "wb") as fo:
+        while True:
+            b = fi.read(block)
+            if not b:
+                break
+            fo.write(b)
+            done += len(b)
+            ahead = done / per_sec - (time.monotonic() - t0)
+            if ahead > 0:
+                time.sleep(ahead)
+    os.replace(tmp, dst)
+    os.remove(src)
+
+
+def _low_priority():
+    """Diesen Hilfs-Thread (Verarbeitung) niedriger einstufen; nur Linux."""
+    try:
+        os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), 15)
+    except (AttributeError, OSError):
+        pass
 
 
 _processing_lock = threading.Lock()  # immer nur ein ffmpeg gleichzeitig (nur 2 CPUs auf dem Server)
 
 
 def _process_vod(vod_id: int):
+    _low_priority()
     with _processing_lock:
         db = SessionLocal()
         try:
@@ -321,7 +371,7 @@ def _process_vod(vod_id: int):
 
                 if is_webm:
                     v.file_ext = ".webm"
-                    shutil.move(src, os.path.join(VOD_DIR, _final_name(v)))
+                    _move(src, os.path.join(VOD_DIR, _final_name(v)))
                 else:
                     v.file_ext = ".mp4"
                     dst = os.path.join(VOD_DIR, _final_name(v))
@@ -337,13 +387,13 @@ def _process_vod(vod_id: int):
                     if res.returncode != 0:
                         if is_mp4:
                             # Remux fehlgeschlagen, aber MP4 spielt der Browser trotzdem meist ab
-                            shutil.move(src, dst)
+                            _move(src, dst)
                             try: os.remove(tmp)
                             except FileNotFoundError: pass
                         else:
                             raise RuntimeError(f"ffmpeg: {res.stderr.strip()[-400:]}")
                     else:
-                        shutil.move(tmp, dst)
+                        _move(tmp, dst)
                         os.remove(src)
 
                 final = os.path.join(VOD_DIR, _final_name(v))
@@ -535,9 +585,8 @@ def media_auth(request: Request):
 
 @router.get("/storage")
 def storage_info(db: Session = Depends(get_db), ctx: VodCtx = Depends(vod_ctx)):
-    du = shutil.disk_usage(VOD_DIR)
     return {"used_bytes": _used_bytes(db), "limit_bytes": MAX_TOTAL_BYTES,
-            "max_file_bytes": MAX_FILE_BYTES, "disk_free_bytes": du.free,
+            "max_file_bytes": MAX_FILE_BYTES, "disk_free_bytes": _vod_free_bytes(),
             "retention_days": int(RETENTION_DAYS) if float(RETENTION_DAYS).is_integer() else RETENTION_DAYS,
             "max_per_user": MAX_PER_USER, "storage_ok": _storage_ok()}
 
@@ -610,15 +659,30 @@ def create_vod(payload: VodCreateIn, db: Session = Depends(get_db), ctx: VodCtx 
 
 
 @router.put("/{vod_id}/chunk")
-async def upload_chunk(vod_id: int, index: int, request: Request, db: Session = Depends(get_db),
-                       ctx: VodCtx = Depends(vod_ctx)):
-    """Ein Stück (index) hochladen. Stücke dürfen parallel und in beliebiger Reihenfolge kommen."""
-    v = _get_vod(db, vod_id)
-    if v.uploader_id != ctx.user.id:
-        raise HTTPException(status_code=403, detail="Only the uploader can upload")
-    if v.status != "uploading":
-        raise HTTPException(status_code=409, detail="Upload already finished")
-    _require_storage()
+async def upload_chunk(vod_id: int, index: int, request: Request):
+    """Ein Stück (index) hochladen. Stücke dürfen parallel und in beliebiger Reihenfolge kommen.
+    WICHTIG: keine Datenbank-Verbindung halten, während die (langsamen) 16 MB hereinkommen -- sonst sind
+    bei mehreren Uploads alle Verbindungen belegt und die ganze Seite hängt. Datenbank nur kurz davor und danach."""
+    def check():
+        db = SessionLocal()
+        try:
+            user = current_user_optional(request, db)
+            if not user:
+                raise HTTPException(status_code=401, detail="Not signed in")
+            ctx = _ctx_for(db, user)
+            if not ctx:
+                raise HTTPException(status_code=403, detail="Members only")
+            v = _get_vod(db, vod_id)
+            if v.uploader_id != user.id:
+                raise HTTPException(status_code=403, detail="Only the uploader can upload")
+            if v.status != "uploading":
+                raise HTTPException(status_code=409, detail="Upload already finished")
+            _require_storage()
+            return v  # bleibt nach close() mit den geladenen Werten nutzbar
+        finally:
+            db.close()
+
+    v = await run_in_threadpool(check)
     total = _chunks_total(v)
     if index < 0 or index >= total:
         raise HTTPException(status_code=400, detail="Bad chunk index")
@@ -649,8 +713,18 @@ async def upload_chunk(vod_id: int, index: int, request: Request, db: Session = 
         done = await run_in_threadpool(_write)
     except FileNotFoundError:
         raise HTTPException(status_code=410, detail="Upload was cancelled")
-    v.received_bytes = min(v.size_bytes, len(done) * CHUNK_SIZE)
-    db.commit()
+    received = min(v.size_bytes, len(done) * CHUNK_SIZE)
+
+    def save():
+        db = SessionLocal()
+        try:
+            db.query(Vod).filter(Vod.id == vod_id, Vod.status == "uploading").update(
+                {Vod.received_bytes: received, Vod.updated_at: func.now()}, synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
+
+    await run_in_threadpool(save)
     return {"done": len(done), "total": total}
 
 
