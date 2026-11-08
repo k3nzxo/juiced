@@ -12,7 +12,7 @@ type Me = {
 const root = document.getElementById("app-root")!;
 let me: Me | null = null;
 const ROLES = ["healer", "tank", "nameless"];
-const RANK_KEYS: Record<string, string> = { leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
+const RANK_KEYS: Record<string, string> = { developer: "rank_developer", leader: "rank_leader", vice: "rank_vice", management: "rank_management", coach: "rank_coach", member: "rank_member", guest: "rank_guest" };
 
 function avatar(u: { avatar_url: string | null; display_name: string }, size = 32) {
   return u.avatar_url
@@ -83,6 +83,8 @@ function navItems() {
     { id: "vods", label: T("app_nav_vods"), ico: icon.video },
     { id: "roster", label: T("app_nav_members"), ico: icon.users },
   ];
+  if (me!.is_admin) items.push({ id: "schedule", label: T("app_nav_schedule"), ico: icon.calendar });
+  if (me!.is_admin) items.push({ id: "matches", label: T("app_nav_matches"), ico: icon.swords });
   if (me!.can_manage) items.push({ id: "applications", label: T("app_nav_apps"), ico: icon.inbox });
   if (me!.is_admin) items.push({ id: "admin", label: T("app_nav_admin"), ico: icon.shield });
   items.push({ id: "profile", label: T("app_nav_profile"), ico: icon.settings });
@@ -115,6 +117,8 @@ function route() {
     case "vods": return renderVods(view, me);
     case "roster": return viewRoster(view);
     case "applications": return me.can_manage ? viewApplications(view) : viewDashboard(view);
+    case "schedule": return me.is_admin ? viewSchedule(view) : viewDashboard(view);
+    case "matches": return me.is_admin ? viewMatches(view) : viewDashboard(view);
     case "admin": return me.is_admin ? viewAdmin(view) : viewDashboard(view);
     case "profile": return viewProfile(view);
     default: return viewDashboard(view);
@@ -135,7 +139,9 @@ async function viewDashboard(view: HTMLElement) {
       <a class="quick-card card" href="#/roster">${icon.users}<span>${esc(T("app_nav_members"))}</span></a>
       <a class="quick-card card" href="#/profile">${icon.settings}<span>${esc(T("app_nav_profile"))}</span></a>
     </div>
+    <h2 class="v-sub">${esc(T("week_title"))}</h2><div id="next-ev">${loading}</div>
     <h2 class="v-sub">${esc(T("ann_title"))}</h2><div id="ann">${loading}</div>`;
+  loadNextEvents(view.querySelector("#next-ev")!);
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
   try {
     const list = await api<any[]>("/announcements");
@@ -211,7 +217,9 @@ async function viewApplications(view: HTMLElement) {
       <div class="app-top"><div><h3>${esc(a.ingame)}</h3><span class="muted">${esc(a.discord)} · ${esc(a.country)} · ${esc(timeAgo(a.created_at))}</span></div>
         <span class="status status-${a.status}">${esc(st[a.status])}</span></div>
       <div class="app-tags">${roleTag(a.main_role)}<span class="muted">${esc(a.times)}</span>${a.lang ? `<span class="badge">${esc(a.lang)}</span>` : ""}</div>
+      ${a.platforms && a.platforms.length ? `<div class="app-tags"><span class="muted">${esc(T("apps_platforms"))}:</span>${a.platforms.map((p: string) => `<span class="badge">${esc(T("plat_" + p))}</span>`).join("")}</div>` : ""}
       <p class="app-text">${esc(a.experience)}</p>${a.why ? `<p class="app-text muted">${esc(a.why)}</p>` : ""}
+      ${a.vod_links && a.vod_links.length ? `<div class="vod-links"><span class="muted">${esc(T("apps_vods"))}:</span>${a.vod_links.map((u: string) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${esc(shortUrl(u))}</a>`).join("")}</div>` : ""}
       <div class="row-gap">
         ${a.status !== "accepted" ? `<button class="btn btn-primary btn-sm" data-s="accepted">${icon.check} ${esc(T("apps_accept"))}</button>` : ""}
         ${a.status !== "rejected" ? `<button class="btn btn-outline btn-sm" data-s="rejected">${esc(T("apps_reject"))}</button>` : ""}
@@ -237,7 +245,7 @@ async function viewApplications(view: HTMLElement) {
 async function viewAdmin(view: HTMLElement) {
   view.innerHTML = head(T("admin_title"), T("admin_sub")) + `<input class="input search" placeholder="${esc(T("admin_search"))}" data-q><div id="adm">${loading}</div>`;
   let list: any[] = [];
-  const ranks = ["guest", "member", "vice", "leader"];
+  const ranks = ["guest", "member", "vice", "leader", ...(me!.rank === "developer" ? ["developer"] : [])];
   const draw = () => {
     const q = (view.querySelector("[data-q]") as HTMLInputElement).value.toLowerCase();
     const items = list.filter((u) => !q || `${u.display_name} ${u.username}`.toLowerCase().includes(q));
@@ -303,4 +311,134 @@ function viewProfile(view: HTMLElement) {
   });
 }
 
-export { fmtDate };
+
+
+// ------------------------------------------------------------------ Termine
+
+function shortUrl(u: string) {
+  try { const x = new URL(u); return (x.hostname.replace(/^www\./, "") + x.pathname).slice(0, 48); } catch { return u.slice(0, 48); }
+}
+
+const KINDS = ["gvg", "scrim", "ingame", "friday", "other"];
+const loc = () => (lang() === "pt" ? "pt-BR" : lang());
+const fmtWhen = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+async function fetchUpcoming(days = 14) {
+  const start = new Date(), end = new Date(Date.now() + days * 86400000);
+  return api<any[]>(`/events?start=${encodeURIComponent(start.toISOString())}&end=${encodeURIComponent(end.toISOString())}`);
+}
+
+function evRow(e: any, editable: boolean) {
+  return `<div class="tr ev-row kind-${esc(e.kind)}" data-id="${e.id}">
+    <span class="ev-dot"></span>
+    <div class="tr-main"><strong>${esc(e.title)}${e.opponent ? ` <span class="muted">· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
+      <span class="muted">${esc(fmtWhen(e.starts_at))} · ${esc(T("kind_" + e.kind))}${e.repeat_weekly ? ` · ${esc(T("ev_weekly"))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span></div>
+    ${editable ? `<div class="row-gap"><button class="btn btn-ghost btn-sm" data-edit>${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button></div>` : ""}
+  </div>`;
+}
+
+async function loadNextEvents(el: HTMLElement) {
+  try {
+    const list = (await fetchUpcoming(7)).slice(0, 6);
+    el.innerHTML = list.length ? `<div class="table card">${list.map((e) => evRow(e, false)).join("")}</div>` : `<p class="empty">${esc(T("ev_none"))}</p>`;
+  } catch { el.innerHTML = ""; }
+}
+
+async function viewSchedule(view: HTMLElement) {
+  view.innerHTML = head(T("app_nav_schedule"), T("ev_upcoming"), `<a class="btn btn-ghost btn-sm" href="/${lang()}/schedule/" target="_blank">${esc(T("week_cta"))}</a><button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ev_new"))}</button>`) + `<div id="evs">${loading}</div>`;
+  view.querySelector("[data-new]")!.addEventListener("click", () => editEvent(null, () => viewSchedule(view)));
+  const el = view.querySelector("#evs")!;
+  try {
+    const list = await fetchUpcoming(14);
+    // wöchentliche Termine nur einmal auflisten (nächstes Vorkommen)
+    const seen = new Set<number>();
+    const items = list.filter((e) => (seen.has(e.id) ? false : (seen.add(e.id), true)));
+    el.innerHTML = items.length ? `<div class="table card">${items.map((e) => evRow(e, true)).join("")}</div>` : `<p class="empty">${esc(T("ev_none"))}</p>`;
+    el.querySelectorAll<HTMLElement>(".ev-row").forEach((row) => {
+      const e = items.find((x) => x.id === Number(row.dataset.id));
+      row.querySelector("[data-edit]")!.addEventListener("click", () => editEvent(e, () => viewSchedule(view)));
+      row.querySelector("[data-del]")!.addEventListener("click", async () => {
+        if (!confirm(T("ev_delete_confirm"))) return;
+        await api(`/events/${e.id}`, { method: "DELETE" }).catch((x) => toast(x.message));
+        viewSchedule(view);
+      });
+    });
+  } catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; }
+}
+
+function toLocalInput(iso: string | null) {
+  const d = iso ? new Date(iso) : new Date(Date.now() + 86400000);
+  if (!iso) d.setHours(20, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function editEvent(e: any | null, done: () => void, preset: any = {}) {
+  const v = { title: "", kind: "gvg", duration_min: 90, opponent: "", description: "", repeat_weekly: false, is_public: true, ...preset, ...(e || {}) };
+  const start = e ? (e.first_start || e.starts_at) : preset.starts_at || null;
+  const m = modal(e ? T("ev_edit") : T("ev_new"), `
+    <div class="field"><label>${esc(T("ev_title"))}</label><input class="input" id="ev-title" maxlength="120" value="${esc(v.title)}"></div>
+    <div class="row2">
+      <div class="field"><label>${esc(T("ev_kind"))}</label><select class="select" id="ev-kind">${KINDS.map((k) => `<option value="${k}" ${v.kind === k ? "selected" : ""}>${esc(T("kind_" + k))}</option>`).join("")}</select></div>
+      <div class="field"><label>${esc(T("ev_opponent"))}</label><input class="input" id="ev-opp" maxlength="80" value="${esc(v.opponent || "")}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>${esc(T("ev_start"))}</label><input class="input" type="datetime-local" id="ev-start" value="${toLocalInput(start)}"></div>
+      <div class="field"><label>${esc(T("ev_duration"))}</label><input class="input" type="number" id="ev-dur" min="10" max="1440" step="5" value="${v.duration_min}"></div>
+    </div>
+    <div class="field"><label>${esc(T("ev_desc"))}</label><textarea class="textarea" id="ev-desc" rows="3" maxlength="2000">${esc(v.description || "")}</textarea></div>
+    <label class="check"><input type="checkbox" id="ev-rep" ${v.repeat_weekly ? "checked" : ""}> <span>${esc(T("ev_repeat"))}</span></label>
+    <label class="check"><input type="checkbox" id="ev-pub" ${v.is_public ? "checked" : ""}> <span>${esc(T("ev_public"))}</span></label>`,
+    `<button class="btn btn-primary" data-save>${esc(T("save"))}</button>`);
+  const q = <T extends HTMLElement>(sel: string) => m.el.querySelector(sel) as T;
+  m.el.querySelector("[data-save]")!.addEventListener("click", async () => {
+    const startVal = q<HTMLInputElement>("#ev-start").value;
+    if (!startVal) return;
+    const json = {
+      title: q<HTMLInputElement>("#ev-title").value, kind: q<HTMLSelectElement>("#ev-kind").value,
+      starts_at: new Date(startVal).toISOString(), duration_min: Number(q<HTMLInputElement>("#ev-dur").value) || 90,
+      opponent: q<HTMLInputElement>("#ev-opp").value, description: q<HTMLTextAreaElement>("#ev-desc").value,
+      repeat_weekly: q<HTMLInputElement>("#ev-rep").checked, is_public: q<HTMLInputElement>("#ev-pub").checked,
+    };
+    try {
+      await api(e ? `/events/${e.id}` : "/events", { method: e ? "PUT" : "POST", json });
+      m.close(); toast(T("saved")); done();
+    } catch (x) { toast((x as Error).message); }
+  });
+}
+
+// ------------------------------------------------------------------ Match-Anfragen
+
+async function viewMatches(view: HTMLElement) {
+  view.innerHTML = head(T("mt_title")) + `<div id="mts">${loading}</div>`;
+  const el = view.querySelector("#mts")!;
+  try {
+    const list = await api<any[]>("/scrims");
+    if (!list.length) { el.innerHTML = `<p class="empty">${esc(T("mt_empty"))}</p>`; return; }
+    const st: Record<string, string> = { pending: T("mt_pending"), accepted: T("mt_accepted"), declined: T("mt_declined") };
+    el.innerHTML = list.map((r) => `<article class="app-card card" data-id="${r.id}" data-status="${r.status === "declined" ? "rejected" : r.status}">
+      <div class="app-top"><div><h3>${esc(r.guild_name)}</h3><span class="muted">${esc(r.contact)}${r.server ? ` · ${esc(r.server)}` : ""} · ${esc(timeAgo(r.created_at))}</span></div>
+        <span class="status status-${r.status === "declined" ? "rejected" : r.status}">${esc(st[r.status])}</span></div>
+      <div class="app-tags">${r.format ? `<span class="badge">${esc(r.format)}</span>` : ""}<strong>${esc(r.proposed_times)}</strong></div>
+      ${r.message ? `<p class="app-text">${esc(r.message)}</p>` : ""}
+      <div class="row-gap">
+        ${r.status !== "accepted" ? `<button class="btn btn-primary btn-sm" data-accept>${icon.check} ${esc(T("mt_accept"))}</button>` : ""}
+        ${r.status !== "declined" ? `<button class="btn btn-outline btn-sm" data-decline>${esc(T("mt_decline"))}</button>` : ""}
+        <button class="btn btn-ghost btn-sm" data-del>${icon.trash}</button>
+      </div></article>`).join("");
+    el.querySelectorAll<HTMLElement>(".app-card").forEach((c) => {
+      const r = list.find((x) => x.id === Number(c.dataset.id));
+      const set = (status: string) => api(`/scrims/${r.id}`, { method: "PUT", json: { status } });
+      c.querySelector("[data-accept]")?.addEventListener("click", async () => {
+        try { await set("accepted"); } catch (x) { toast((x as Error).message); return; }
+        editEvent(null, () => viewMatches(view), { kind: "scrim", title: T("kind_scrim"), opponent: r.guild_name, description: `${r.proposed_times}${r.format ? " · " + r.format : ""}` });
+      });
+      c.querySelector("[data-decline]")?.addEventListener("click", async () => { await set("declined").catch((x) => toast(x.message)); viewMatches(view); });
+      c.querySelector("[data-del]")!.addEventListener("click", async () => {
+        if (!confirm(T("mt_delete_confirm"))) return;
+        await api(`/scrims/${r.id}`, { method: "DELETE" }).catch((x) => toast(x.message));
+        viewMatches(view);
+      });
+    });
+  } catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; }
+}

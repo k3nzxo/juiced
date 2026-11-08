@@ -43,7 +43,7 @@ def user_out(u: models.User) -> dict:
 def apply_discord_roles(u: models.User, role_ids: list[str] | None):
     """Rang + Coach-Rollen aus den Discord-Rollen ableiten (nur wenn nicht manuell überschrieben)."""
     if u.discord_id in OWNER_DISCORD_IDS:
-        u.rank = "leader"
+        u.rank = "developer"
         if role_ids is not None:
             u.coach_roles = ",".join(r for r in models.COACH_ROLES
                                      if any(ROLE_MAP.get(i) == f"coach_{r}" for i in role_ids)) or u.coach_roles

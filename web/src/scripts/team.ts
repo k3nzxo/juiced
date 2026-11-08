@@ -3,13 +3,13 @@
 export type PublicMember = {
   display_name: string;
   avatar_url: string | null;
-  rank: "leader" | "vice" | "management" | "coach" | "member";
+  rank: "developer" | "leader" | "vice" | "coach" | "member";
   coach_roles: string[];
   main_role: string | null;
   country: string | null;
 };
 
-export const RANK_ORDER = ["leader", "vice", "management", "coach", "member"];
+export const RANK_ORDER = ["developer", "leader", "vice", "coach", "member"];
 
 export function esc(s: unknown): string {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -52,7 +52,7 @@ export async function renderLeadership(grid: HTMLElement) {
   const labels = JSON.parse(grid.dataset.ranks || "{}");
   try {
     const all = await fetchTeam();
-    const lead = all.filter((m) => ["leader", "vice", "management"].includes(m.rank)).slice(0, 8);
+    const lead = all.filter((m) => ["developer", "leader", "vice"].includes(m.rank)).slice(0, 8);
     if (!lead.length) {
       grid.innerHTML = `<p class="lead-empty">${esc(grid.dataset.empty)}</p>`;
       return;

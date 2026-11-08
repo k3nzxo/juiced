@@ -1,7 +1,7 @@
 // Basis-Sprache. Alle anderen Sprachen fallen pro Schlüssel auf Englisch zurück.
 const en = {
-  meta_title: "JUICED — EUW GvG guild · Where Winds Meet",
-  meta_desc: "JUICED is a competitive EUW guild in Where Winds Meet. 30v30 GvG every weekend, structured VOD reviews and role coaches.",
+  meta_title: "JUICED — EUW guild · Where Winds Meet",
+  meta_desc: "JUICED is an EUW guild in Where Winds Meet: GvG, custom games against other guilds, in-game events, Friday Nights and VOD reviews with role coaches.",
   nav_home: "Home", nav_team: "Team", nav_join: "Join", nav_members: "Members area", nav_login: "Sign in", nav_logout: "Sign out",
   nav_discord: "Discord", nav_menu: "Menu", theme_toggle: "Switch light / dark mode", lang_label: "Language", skip: "Skip to content",
 

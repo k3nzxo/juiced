@@ -6,6 +6,7 @@ import pt from "./pt";
 import ru from "./ru";
 import tr from "./tr";
 import pl from "./pl";
+import extraEn, { extra, type ExtraDict } from "./extra";
 
 export const LOCALES = [
   { code: "en", name: "English", html: "en" },
@@ -19,12 +20,13 @@ export const LOCALES = [
 ] as const;
 
 export type Lang = (typeof LOCALES)[number]["code"];
-export type Key = keyof Dict;
+export type FullDict = Dict & ExtraDict;
+export type Key = keyof FullDict;
 
 const partials: Record<Lang, Partial<Dict>> = { en, de, fr, es, pt, ru, tr, pl };
 
-export function dict(lang: Lang): Dict {
-  return { ...en, ...partials[lang] } as Dict;
+export function dict(lang: Lang): FullDict {
+  return { ...en, ...extraEn, ...partials[lang], ...extra[lang] } as FullDict;
 }
 
 export function fmt(s: string, vars?: Record<string, string | number>): string {
@@ -34,7 +36,7 @@ export function fmt(s: string, vars?: Record<string, string | number>): string {
 
 export function useT(lang: Lang) {
   const d = dict(lang);
-  return (key: Key, vars?: Record<string, string | number>) => fmt(d[key] ?? en[key] ?? String(key), vars);
+  return (key: Key, vars?: Record<string, string | number>) => fmt((d[key] as string) ?? String(key), vars);
 }
 
 export const langPaths = () => LOCALES.map((l) => ({ params: { lang: l.code } }));

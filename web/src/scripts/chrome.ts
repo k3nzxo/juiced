@@ -1,4 +1,5 @@
 // Gemeinsames Verhalten aller Seiten: Theme, Sprache, Mobile-Menü, Header, Scroll-Reveal.
+import { initMotion } from "./motion";
 
 function safeSet(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* privater Modus */ }
@@ -67,6 +68,8 @@ export function initChrome() {
     );
     items.forEach((el) => io.observe(el));
   } else items.forEach((el) => el.classList.add("in"));
+
+  initMotion();
 
   // Angemeldet? Dann Avatar + Name im Header zeigen
   fetch("/api/auth/me", { credentials: "same-origin" })

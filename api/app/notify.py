@@ -39,6 +39,26 @@ def _post_webhook(payload: dict):
         print(f"[notify] Webhook fehlgeschlagen: {e}")
 
 
+def scrim_webhook(r) -> None:
+    if not APPLY_WEBHOOK_URL:
+        return
+    fields = [
+        {"name": "Guild", "value": r.guild_name[:100], "inline": True},
+        {"name": "Contact", "value": r.contact[:100], "inline": True},
+        {"name": "Server", "value": (r.server or "—")[:100], "inline": True},
+        {"name": "Format", "value": (r.format or "—")[:100], "inline": True},
+        {"name": "When", "value": r.proposed_times[:300]},
+    ]
+    if r.message:
+        fields.append({"name": "Message", "value": r.message[:1000]})
+    _bg(_post_webhook, {
+        "username": "juiced.team",
+        "allowed_mentions": {"parse": []},
+        "embeds": [{"title": "Custom game request", "url": f"{PUBLIC_URL}/en/app/#/matches",
+                    "color": 0xFF7A18, "fields": fields}],
+    })
+
+
 def application_webhook(a) -> None:
     if not APPLY_WEBHOOK_URL:
         return

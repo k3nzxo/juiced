@@ -7,7 +7,7 @@ export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const roles = ["healer", "tank", "nameless"] as const;
-const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic") };
+const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform") };
 ---
 <Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>
   <section class="container join">
@@ -38,11 +38,27 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
             {roles.map((r) => <button type="button" class={`chip role-${r}`} aria-pressed="false" data-role={r}>{t(`role_${r}`)}</button>)}
           </div>
         </div>
+        <div class="field">
+          <span class="label">{t("join_platform")} *</span>
+          <div class="chips" data-plat-chips>
+            {(["pc", "ps", "mobile"] as const).map((p) => <button type="button" class="chip" aria-pressed="false" data-plat={p}>{t(`plat_${p}`)}</button>)}
+          </div>
+        </div>
         <div class="row2">
           <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
           <div class="field"><label for="f-times">{t("join_times")} *</label><input class="input" id="f-times" name="times" required maxlength="120" placeholder={t("join_times_ph")} /></div>
         </div>
         <div class="field"><label for="f-exp">{t("join_exp")} *</label><textarea class="textarea" id="f-exp" name="experience" required maxlength="2000" placeholder={t("join_exp_ph")}></textarea></div>
+        <div class="field">
+          <span class="label">{t("join_vods")}</span>
+          <div class="links" data-links>
+            <input class="input" type="url" inputmode="url" maxlength="300" placeholder="https://" data-link />
+          </div>
+          <div class="links-foot">
+            <span class="hint">{t("join_vods_hint")}</span>
+            <button type="button" class="add-link" data-add-link>+ {t("join_vods_add")}</button>
+          </div>
+        </div>
         <div class="field"><label for="f-why">{t("join_why")}</label><textarea class="textarea" id="f-why" name="why" maxlength="2000" placeholder={t("join_why_ph")} rows="3"></textarea></div>
         <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
         <label class="check"><input type="checkbox" name="consent" /> <span>{t("join_consent")}</span></label>
@@ -70,18 +86,42 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       form.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     }),
   );
+  const platforms = new Set<string>();
+  form.querySelectorAll<HTMLButtonElement>("[data-plat]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const p = b.dataset.plat!;
+      platforms.has(p) ? platforms.delete(p) : platforms.add(p);
+      b.setAttribute("aria-pressed", String(platforms.has(p)));
+    }),
+  );
+  const links = form.querySelector<HTMLElement>("[data-links]")!;
+  const addBtn = form.querySelector<HTMLButtonElement>("[data-add-link]")!;
+  addBtn.addEventListener("click", () => {
+    const n = links.querySelectorAll("[data-link]").length;
+    if (n >= 5) return;
+    const inp = document.createElement("input");
+    inp.className = "input link-in"; inp.type = "url"; inp.inputMode = "url"; inp.maxLength = 300; inp.placeholder = "https://";
+    inp.setAttribute("data-link", "");
+    links.appendChild(inp);
+    inp.focus();
+    if (n + 1 >= 5) addBtn.hidden = true;
+  });
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     err.hidden = true;
     const fd = new FormData(form);
     const val = (k: string) => String(fd.get(k) || "").trim();
+    const vodLinks = [...links.querySelectorAll<HTMLInputElement>("[data-link]")].map((i) => i.value.trim()).filter(Boolean);
     const payload = {
       discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"), times: val("times"),
       experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
+      platforms: [...platforms], vod_links: vodLinks,
     };
     if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.times || !payload.experience) {
       err.textContent = msgs.required; err.hidden = false; return;
     }
+    if (!platforms.size) { err.textContent = msgs.platform; err.hidden = false; return; }
+    if (vodLinks.some((u) => !/^https?:\/\/[^\s<>"']+$/i.test(u))) { err.textContent = msgs.url; err.hidden = false; return; }
     if (!fd.get("consent")) { err.textContent = msgs.consent; err.hidden = false; return; }
     const btn = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
     btn.disabled = true;
@@ -115,7 +155,15 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   .err { color: var(--danger); font-size: 14px; font-weight: 500; }
   form .btn { align-self: flex-start; }
-  .chip[aria-pressed="true"] { background: var(--role); border-color: var(--role); color: #fff; }
+  .chip[aria-pressed="true"] { background: var(--role, var(--text)); border-color: var(--role, var(--text)); color: var(--bg); }
+  .chip[class*="role-"][aria-pressed="true"] { color: #fff; }
+  .links { display: flex; flex-direction: column; gap: 8px; }
+  :global(.link-in) { animation: link-in 0.35s var(--ease); }
+  @keyframes link-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .links-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .hint { font-size: 12.5px; color: var(--muted); }
+  .add-link { font-size: 13.5px; font-weight: 600; color: var(--c-pink); }
+  .add-link:hover { text-decoration: underline; }
   .done { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
   .done-ico { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--ok); animation: pop-in 0.5s var(--ease); }
   @keyframes pop-in { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }

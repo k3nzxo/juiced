@@ -1,8 +1,8 @@
 import type { Dict } from "./en";
 
 const de: Partial<Dict> = {
-  meta_title: "JUICED — EUW-GvG-Gilde · Where Winds Meet",
-  meta_desc: "JUICED ist eine kompetitive EUW-Gilde in Where Winds Meet. Jedes Wochenende 30v30-GvG, strukturierte VOD-Reviews und Coaches für jede Rolle.",
+  meta_title: "JUICED — EUW-Gilde · Where Winds Meet",
+  meta_desc: "JUICED ist eine EUW-Gilde in Where Winds Meet: GvG, Custom Games gegen andere Gilden, Ingame-Events, Friday Nights und VOD-Reviews mit Rollen-Coaches.",
   nav_home: "Start", nav_team: "Team", nav_join: "Bewerben", nav_members: "Mitgliederbereich", nav_login: "Anmelden", nav_logout: "Abmelden",
   nav_discord: "Discord", nav_menu: "Menü", theme_toggle: "Hell / Dunkel umschalten", lang_label: "Sprache", skip: "Zum Inhalt springen",
 

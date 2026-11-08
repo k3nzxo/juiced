@@ -175,3 +175,12 @@ p { margin: 0; }
 .role-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--role, var(--faint)); }
 
 :root.theme-anim *, :root.theme-anim *::before, :root.theme-anim *::after { transition: background-color .3s var(--ease), border-color .3s var(--ease), color .3s var(--ease) !important; }
+.badge-developer { background: linear-gradient(95deg, #ff7a18, #ff3d77 55%, #8b5cf6); color: #fff !important; border-color: transparent; }
+
+/* Wort-für-Wort-Einblendung (scripts/motion.ts) */
+.split .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.split .w > span { display: inline-block; transform: translateY(105%); transition: transform 0.9s var(--ease); }
+.split.split-in .w > span { transform: none; }
+.split .w > .w-inner { transform: translateY(105%); transition: transform 0.9s var(--ease); }
+.split.split-in .w > .w-inner { transform: none; }
+[data-tilt] { transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s, opacity 0.8s var(--ease); will-change: transform; }

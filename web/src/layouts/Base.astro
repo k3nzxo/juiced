@@ -4,7 +4,7 @@ import Logo from "../components/Logo.astro";
 import Icon from "../components/Icon.astro";
 import { LOCALES, useT, DISCORD_INVITE, type Lang } from "../i18n";
 
-interface Props { lang: Lang; title?: string; description?: string; page?: "home" | "team" | "join" | "app" | "privacy" | "other"; noindex?: boolean }
+interface Props { lang: Lang; title?: string; description?: string; page?: "home" | "team" | "join" | "app" | "privacy" | "schedule" | "matches" | "other"; noindex?: boolean }
 const { lang, title, description, page = "other", noindex = false } = Astro.props;
 const t = useT(lang);
 const htmlLang = LOCALES.find((l) => l.code === lang)?.html ?? "en";
@@ -16,6 +16,7 @@ const rest = Astro.url.pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
 const href = (l: string) => `/${l}${rest === "/" ? "/" : rest}`;
 const nav = [
   { id: "home", href: `/${lang}/`, label: t("nav_home") },
+  { id: "schedule", href: `/${lang}/schedule/`, label: t("nav_schedule") },
   { id: "team", href: `/${lang}/team/`, label: t("nav_team") },
   { id: "join", href: `/${lang}/join/`, label: t("nav_join") },
 ];
@@ -94,6 +95,7 @@ const nav = [
         </div>
         <nav class="footer-links" aria-label="Footer">
           {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+          <a href={`/${lang}/matches/`}>{t("nav_matches")}</a>
           <a href={`/${lang}/app/`}>{t("nav_members")}</a>
           <a href={DISCORD_INVITE} target="_blank" rel="noopener">Discord</a>
           <a href={`/${lang}/privacy/`}>{t("footer_privacy")}</a>

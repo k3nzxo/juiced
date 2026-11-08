@@ -137,3 +137,12 @@ main.vod-main, .vod-main { max-width: none; }
   .tr { flex-wrap: wrap; }
   .tr-tags, .tr-ctrl { width: 100%; justify-content: flex-start; padding-left: 48px; }
 }
+
+/* Termine + Match-Anfragen im Mitgliederbereich */
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ev-row .ev-dot { width: 10px; height: 10px; border-radius: 3px; background: var(--k, var(--faint)); flex: none; }
+.ev-row .tr-main strong .muted { font-weight: 500; }
+.vod-links { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 14px; }
+.vod-links a { color: var(--c-pink); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
+.badge-developer { background: var(--grad-brand); color: #fff; border-color: transparent; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }

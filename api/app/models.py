@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Foreign
 from .db import Base
 
 # Ränge (aufsteigend). "Coach" ist kein eigener Rang, sondern ergibt sich aus coach_roles.
-RANKS = ("guest", "member", "vice", "leader")
+RANKS = ("guest", "member", "vice", "leader", "developer")
 RANK_LEVEL = {r: i for i, r in enumerate(RANKS)}
 COACH_ROLES = ("healer", "tank", "nameless")
 MAIN_ROLES = ("healer", "tank", "nameless")
@@ -49,7 +49,7 @@ class User(Base):
 
     @property
     def public_rank(self) -> str:
-        if self.rank in ("leader", "vice"):
+        if self.rank in ("developer", "leader", "vice"):
             return self.rank
         if self.coach_list and self.level >= 1:
             return "coach"
@@ -86,7 +86,45 @@ class Application(Base):
     experience = Column(Text, nullable=False)
     why = Column(Text, nullable=True)
     lang = Column(String(5), nullable=True)
+    platforms = Column(String(40), nullable=True)   # "pc,ps,mobile"
+    vod_links = Column(Text, nullable=True)         # JSON-Liste mit URLs
     status = Column(String(12), nullable=False, default="pending")  # pending | accepted | rejected
+    decided_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+EVENT_KINDS = ("gvg", "scrim", "ingame", "friday", "other")
+PLATFORMS = ("pc", "ps", "mobile")
+
+
+class Event(Base):
+    """Eintrag im Wochenplan. repeat_weekly = gleicher Wochentag/Uhrzeit jede Woche."""
+    __tablename__ = "events"
+    id = Column(Integer, primary_key=True)
+    title = Column(String(120), nullable=False)
+    kind = Column(String(12), nullable=False, default="other")
+    starts_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    duration_min = Column(Integer, nullable=False, default=90)
+    opponent = Column(String(80), nullable=True)
+    description = Column(Text, nullable=True)
+    repeat_weekly = Column(Boolean, nullable=False, default=False)
+    is_public = Column(Boolean, nullable=False, default=True)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScrimRequest(Base):
+    """Anfrage einer anderen Gilde für ein Custom Game."""
+    __tablename__ = "scrim_requests"
+    id = Column(Integer, primary_key=True)
+    guild_name = Column(String(80), nullable=False)
+    contact = Column(String(64), nullable=False)
+    server = Column(String(80), nullable=True)
+    format = Column(String(60), nullable=True)
+    proposed_times = Column(String(300), nullable=False)
+    message = Column(Text, nullable=True)
+    status = Column(String(12), nullable=False, default="pending")  # pending | accepted | declined
     decided_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decided_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

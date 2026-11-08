@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -9,10 +10,24 @@ from sqlalchemy.orm import Session as DbSession
 from . import models, notify
 from .auth import user_out
 from .db import get_db
-from .security import client_ip, limiter, require_admin, require_management, require_member, require_user
+from .security import client_ip, current_user_optional, limiter, require_admin, require_management, require_member, require_user
 
 router = APIRouter(prefix="/api", tags=["site"])
 LANGS = {"en", "de", "fr", "es", "pt", "ru", "tr", "pl"}
+RANK_ORDER = {"developer": 0, "leader": 1, "vice": 2, "coach": 3, "member": 4}
+
+
+def clean_links(links) -> list:
+    """Nur echte http(s)-Links, max. 5, je max. 300 Zeichen."""
+    out = []
+    for raw in (links or [])[:5]:
+        u = (raw or "").strip()
+        if not u:
+            continue
+        if len(u) > 300 or not u.startswith(("https://", "http://")) or any(c in u for c in ' <>"\''):
+            raise HTTPException(status_code=400, detail="Invalid link")
+        out.append(u)
+    return out
 
 
 def clean(s: Optional[str], n: int) -> Optional[str]:
@@ -33,8 +48,7 @@ def iso(dt) -> Optional[str]:
 @router.get("/team")
 def team(db: DbSession = Depends(get_db)):
     users = db.query(models.User).filter(models.User.rank != "guest", models.User.show_on_team == True).all()  # noqa: E712
-    order = {"leader": 0, "vice": 1, "coach": 3, "member": 4}
-    users.sort(key=lambda u: (order.get(u.public_rank, 9), u.display_name.lower()))
+    users.sort(key=lambda u: (RANK_ORDER.get(u.public_rank, 9), u.display_name.lower()))
     return {"members": [{
         "display_name": u.display_name, "avatar_url": u.avatar_url, "rank": u.public_rank,
         "coach_roles": u.coach_list, "main_role": u.main_role, "country": u.country,
@@ -50,6 +64,8 @@ class ApplicationIn(BaseModel):
     experience: str
     why: Optional[str] = None
     lang: Optional[str] = None
+    platforms: list[str] = []
+    vod_links: list[str] = []
     website: Optional[str] = None  # Honeypot
 
 
@@ -61,10 +77,12 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
         return {"ok": True}
     fields = dict(discord=clean(payload.discord, 64), ingame=clean(payload.ingame, 64), country=clean(payload.country, 64),
                   times=clean(payload.times, 120), experience=clean(payload.experience, 2000))
-    if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES:
+    platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
+    if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms:
         raise HTTPException(status_code=400, detail="Missing fields")
     a = models.Application(**fields, main_role=payload.main_role, why=clean(payload.why, 2000),
-                           lang=payload.lang if payload.lang in LANGS else None)
+                           lang=payload.lang if payload.lang in LANGS else None,
+                           platforms=",".join(platforms), vod_links=json.dumps(clean_links(payload.vod_links)))
     db.add(a)
     db.commit()
     notify.application_webhook(a)
@@ -102,8 +120,7 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
 @router.get("/members")
 def members(db: DbSession = Depends(get_db), user: models.User = Depends(require_member)):
     users = db.query(models.User).filter(models.User.rank != "guest").all()
-    order = {"leader": 0, "vice": 1, "coach": 3, "member": 4}
-    users.sort(key=lambda u: (order.get(u.public_rank, 9), u.display_name.lower()))
+    users.sort(key=lambda u: (RANK_ORDER.get(u.public_rank, 9), u.display_name.lower()))
     return [{"id": u.id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
              "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "country": u.country,
              "last_login_at": iso(u.last_login_at)} for u in users]
@@ -179,6 +196,7 @@ def list_applications(db: DbSession = Depends(get_db), user: models.User = Depen
     apps = db.query(models.Application).order_by(models.Application.created_at.desc()).limit(200).all()
     return [{"id": a.id, "discord": a.discord, "ingame": a.ingame, "main_role": a.main_role, "country": a.country,
              "times": a.times, "experience": a.experience, "why": a.why, "lang": a.lang, "status": a.status,
+             "platforms": [p for p in (a.platforms or "").split(",") if p], "vod_links": json.loads(a.vod_links or "[]"),
              "created_at": iso(a.created_at)} for a in apps]
 
 
@@ -221,14 +239,27 @@ class RankIn(BaseModel):
     use_discord: Optional[bool] = None
 
 
+def _can_assign(me: models.User, target: models.User, new_rank: Optional[str]) -> bool:
+    """Developer darf alles. Leader: alle unter sich, bis Leader vergeben. Vice: nur bis Mitglied."""
+    if me.rank == "developer":
+        return True
+    if target.id != me.id and target.level >= me.level:
+        return False
+    if new_rank is None:
+        return True
+    lvl = models.RANK_LEVEL.get(new_rank, 0)
+    if me.rank == "leader":
+        return lvl <= models.RANK_LEVEL["leader"]
+    return lvl < me.level
+
+
 @router.put("/admin/users/{uid}")
 def admin_set_rank(uid: int, payload: RankIn, db: DbSession = Depends(get_db), me: models.User = Depends(require_admin)):
     u = db.get(models.User, uid)
     if not u:
         raise HTTPException(status_code=404, detail="Not found")
-    # Vice darf weder Leader/Vice vergeben noch Leader/Vice ändern
-    if me.rank != "leader" and (u.level >= me.level or (payload.rank and models.RANK_LEVEL.get(payload.rank, 0) >= me.level)):
-        raise HTTPException(status_code=403, detail="Only the Leader can change this")
+    if not _can_assign(me, u, payload.rank):
+        raise HTTPException(status_code=403, detail="Not allowed")
     if payload.use_discord:
         u.rank_manual = False
     else:
@@ -243,3 +274,155 @@ def admin_set_rank(uid: int, payload: RankIn, db: DbSession = Depends(get_db), m
         u.rank_manual = True
     db.commit()
     return {"id": u.id, "rank": u.rank, "coach_roles": u.coach_list, "rank_manual": u.rank_manual}
+
+
+# ------------------------------------------------------------------ Wochenplan
+
+class EventIn(BaseModel):
+    title: str
+    kind: str = "other"
+    starts_at: datetime
+    duration_min: int = 90
+    opponent: Optional[str] = None
+    description: Optional[str] = None
+    repeat_weekly: bool = False
+    is_public: bool = True
+
+
+def _aware(dt: datetime) -> datetime:
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _event_out(e: models.Event, start: datetime, can_edit: bool) -> dict:
+    return {"id": e.id, "title": e.title, "kind": e.kind, "starts_at": iso(start),
+            "ends_at": iso(start + timedelta(minutes=e.duration_min)), "duration_min": e.duration_min,
+            "opponent": e.opponent, "description": e.description, "repeat_weekly": e.repeat_weekly,
+            "is_public": e.is_public, "first_start": iso(e.starts_at), "can_edit": can_edit}
+
+
+@router.get("/events")
+def list_events(start: datetime, end: datetime, db: DbSession = Depends(get_db),
+                user: Optional[models.User] = Depends(current_user_optional)):
+    """Termine im Zeitraum, wöchentliche werden aufgefächert. Gäste sehen nur öffentliche Termine."""
+    start, end = _aware(start), _aware(end)
+    if end <= start or end - start > timedelta(days=62):
+        raise HTTPException(status_code=400, detail="Bad range")
+    member = bool(user and user.level >= models.RANK_LEVEL["member"])
+    can_edit = bool(user and user.level >= models.RANK_LEVEL["vice"])
+    q = db.query(models.Event).filter(models.Event.starts_at < end)
+    if not member:
+        q = q.filter(models.Event.is_public == True)  # noqa: E712
+    out = []
+    for e in q.all():
+        first = _aware(e.starts_at)
+        dur = timedelta(minutes=e.duration_min)
+        if not e.repeat_weekly:
+            if first + dur > start:
+                out.append(_event_out(e, first, can_edit))
+            continue
+        weeks = max(0, int((start - first).total_seconds() // (7 * 86400)))
+        t = first + timedelta(weeks=weeks)
+        while t < end:
+            if t + dur > start:
+                out.append(_event_out(e, t, can_edit))
+            t += timedelta(weeks=1)
+    out.sort(key=lambda x: x["starts_at"])
+    return out
+
+
+def _validate_event(p: EventIn) -> dict:
+    title = clean(p.title, 120)
+    if not title or p.kind not in models.EVENT_KINDS or not (10 <= p.duration_min <= 24 * 60):
+        raise HTTPException(status_code=400, detail="Missing fields")
+    return dict(title=title, kind=p.kind, starts_at=_aware(p.starts_at), duration_min=p.duration_min,
+                opponent=clean(p.opponent, 80), description=clean(p.description, 2000),
+                repeat_weekly=p.repeat_weekly, is_public=p.is_public)
+
+
+@router.post("/events")
+def create_event(payload: EventIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+    e = models.Event(**_validate_event(payload), created_by=user.id)
+    db.add(e)
+    db.commit()
+    db.refresh(e)
+    return _event_out(e, _aware(e.starts_at), True)
+
+
+@router.put("/events/{eid}")
+def update_event(eid: int, payload: EventIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+    e = db.get(models.Event, eid)
+    if not e:
+        raise HTTPException(status_code=404, detail="Not found")
+    for k, v in _validate_event(payload).items():
+        setattr(e, k, v)
+    db.commit()
+    return _event_out(e, _aware(e.starts_at), True)
+
+
+@router.delete("/events/{eid}")
+def delete_event(eid: int, db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+    db.query(models.Event).filter(models.Event.id == eid).delete()
+    db.commit()
+    return {"ok": True}
+
+
+# ------------------------------------------------------------------ Match-Anfragen anderer Gilden
+
+class ScrimIn(BaseModel):
+    guild_name: str
+    contact: str
+    server: Optional[str] = None
+    format: Optional[str] = None
+    proposed_times: str
+    message: Optional[str] = None
+    website: Optional[str] = None  # Honeypot
+
+
+@router.post("/scrims")
+def request_scrim(payload: ScrimIn, request: Request, db: DbSession = Depends(get_db)):
+    limiter.check("scrim:" + client_ip(request), 3, 3600)
+    if payload.website:
+        return {"ok": True}
+    guild, contact, times = clean(payload.guild_name, 80), clean(payload.contact, 64), clean(payload.proposed_times, 300)
+    if not guild or not contact or not times:
+        raise HTTPException(status_code=400, detail="Missing fields")
+    r = models.ScrimRequest(guild_name=guild, contact=contact, server=clean(payload.server, 80),
+                            format=clean(payload.format, 60), proposed_times=times, message=clean(payload.message, 2000))
+    db.add(r)
+    db.commit()
+    notify.scrim_webhook(r)
+    return {"ok": True}
+
+
+@router.get("/scrims")
+def list_scrims(db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+    cutoff = datetime.now(timezone.utc) - timedelta(days=60)
+    db.query(models.ScrimRequest).filter(models.ScrimRequest.status != "pending", models.ScrimRequest.decided_at < cutoff).delete()
+    db.commit()
+    items = db.query(models.ScrimRequest).order_by(models.ScrimRequest.created_at.desc()).limit(200).all()
+    return [{"id": r.id, "guild_name": r.guild_name, "contact": r.contact, "server": r.server, "format": r.format,
+             "proposed_times": r.proposed_times, "message": r.message, "status": r.status,
+             "created_at": iso(r.created_at)} for r in items]
+
+
+class ScrimStatusIn(BaseModel):
+    status: str
+
+
+@router.put("/scrims/{rid}")
+def set_scrim_status(rid: int, payload: ScrimStatusIn, db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+    if payload.status not in ("pending", "accepted", "declined"):
+        raise HTTPException(status_code=400, detail="Bad status")
+    r = db.get(models.ScrimRequest, rid)
+    if not r:
+        raise HTTPException(status_code=404, detail="Not found")
+    r.status, r.decided_by, r.decided_at = payload.status, user.id, datetime.now(timezone.utc)
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/scrims/{rid}")
+def delete_scrim(rid: int, db: DbSession = Depends(get_db), user: models.User = Depends(require_admin)):
+    db.query(models.ScrimRequest).filter(models.ScrimRequest.id == rid).delete()
+    db.commit()
+    return {"ok": True}

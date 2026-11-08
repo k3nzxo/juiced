@@ -1,0 +1,113 @@
+---
+import Base from "../../layouts/Base.astro";
+import Icon from "../../components/Icon.astro";
+import { useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useT(lang);
+const msgs = { required: t("join_err_required"), generic: t("join_err_generic") };
+---
+<Base lang={lang} page="matches" title={t("match_title")} description={t("match_sub")}>
+  <section class="container req">
+    <div class="intro">
+      <span class="eyebrow reveal">{t("kind_scrim")}</span>
+      <h1 class="reveal" style="--d:60ms">{t("match_title")}</h1>
+      <p class="reveal" style="--d:120ms">{t("match_sub")}</p>
+      <div class="versus reveal" style="--d:180ms" aria-hidden="true">
+        <span class="side us">JUICED</span>
+        <span class="vs">VS</span>
+        <span class="side them">?</span>
+      </div>
+      <div class="steps card reveal" style="--d:240ms">
+        <h2>{t("match_side_t")}</h2>
+        <ol>
+          <li><span>1</span>{t("match_side_1")}</li>
+          <li><span>2</span>{t("match_side_2")}</li>
+          <li><span>3</span>{t("match_side_3")}</li>
+        </ol>
+        <a class="link" href={`/${lang}/schedule/`}>{t("week_cta")} <Icon name="arrow" size={14} /></a>
+      </div>
+    </div>
+
+    <div class="form-wrap card reveal" style="--d:120ms">
+      <form id="match" novalidate data-msgs={JSON.stringify(msgs)}>
+        <div class="row2">
+          <div class="field"><label for="m-guild">{t("match_guild")} *</label><input class="input" id="m-guild" name="guild_name" maxlength="80" required /></div>
+          <div class="field"><label for="m-contact">{t("match_contact")} *</label><input class="input" id="m-contact" name="contact" maxlength="64" required placeholder={t("match_contact_ph")} /></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="m-server">{t("match_server")}</label><input class="input" id="m-server" name="server" maxlength="80" placeholder={t("match_server_ph")} /></div>
+          <div class="field"><label for="m-format">{t("match_format")}</label><input class="input" id="m-format" name="format" maxlength="60" placeholder={t("match_format_ph")} /></div>
+        </div>
+        <div class="field"><label for="m-times">{t("match_times")} *</label><input class="input" id="m-times" name="proposed_times" maxlength="300" required placeholder={t("match_times_ph")} /></div>
+        <div class="field"><label for="m-msg">{t("match_msg")}</label><textarea class="textarea" id="m-msg" name="message" maxlength="2000" rows="4"></textarea></div>
+        <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <p class="err" role="alert" hidden></p>
+        <button class="btn btn-primary" type="submit">{t("match_submit")} <Icon name="arrow" class="arrow" /></button>
+      </form>
+      <div class="done" hidden>
+        <span class="done-ico"><Icon name="check" size={26} /></span>
+        <h2>{t("match_sent_t")}</h2>
+        <p>{t("match_sent_b")}</p>
+        <a class="btn btn-outline" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> discord.gg/juiced</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const form = document.getElementById("match") as HTMLFormElement;
+  const msgs = JSON.parse(form.dataset.msgs || "{}");
+  const err = form.querySelector<HTMLElement>(".err")!;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    const fd = new FormData(form);
+    const v = (k: string) => String(fd.get(k) || "").trim();
+    const payload = { guild_name: v("guild_name"), contact: v("contact"), server: v("server"), format: v("format"),
+      proposed_times: v("proposed_times"), message: v("message"), website: v("website") };
+    if (!payload.guild_name || !payload.contact || !payload.proposed_times) { err.textContent = msgs.required; err.hidden = false; return; }
+    const btn = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    btn.disabled = true;
+    try {
+      const r = await fetch("/api/scrims", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!r.ok) { const d = await r.json().catch(() => null); throw new Error(d?.detail || msgs.generic); }
+      form.hidden = true;
+      (document.querySelector(".done") as HTMLElement).hidden = false;
+    } catch (ex) { err.textContent = (ex as Error).message || msgs.generic; err.hidden = false; btn.disabled = false; }
+  });
+</script>
+
+<style>
+  .req { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; padding-top: 72px; align-items: start; }
+  .intro { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 100px; }
+  .intro h1 { font-size: clamp(38px, 4.6vw, 56px); }
+  .intro > p { color: var(--muted); font-size: 17px; }
+  .versus { display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; font-family: var(--font-display); font-weight: 800; }
+  .side { padding: 10px 16px; border-radius: 12px; font-size: 18px; letter-spacing: 0.04em; }
+  .us { color: #fff; background: var(--grad-brand); animation: nudge-r 2.4s var(--ease) infinite; }
+  .them { border: 1.5px dashed var(--border-strong); color: var(--muted); min-width: 64px; text-align: center; animation: nudge-l 2.4s var(--ease) infinite; }
+  .vs { font-size: 14px; color: var(--faint); animation: vs 2.4s var(--ease) infinite; }
+  @keyframes nudge-r { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+  @keyframes nudge-l { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-6px); } }
+  @keyframes vs { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); color: var(--c-pink); } }
+  .steps { padding: 22px; margin-top: 8px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .steps h2 { font-size: 17px; }
+  .steps ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--text-2); }
+  .steps li span { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; background: var(--grad-brand); }
+  .link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--c-pink); }
+  .form-wrap { padding: 32px; }
+  form { display: flex; flex-direction: column; gap: 18px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .err { color: var(--danger); font-size: 14px; font-weight: 500; }
+  form .btn { align-self: flex-start; }
+  .done { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
+  .done-ico { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--ok); }
+  .done h2 { font-size: 26px; }
+  .done p { color: var(--muted); }
+  @media (max-width: 900px) { .req { grid-template-columns: 1fr; gap: 32px; } .intro { position: static; } }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .form-wrap { padding: 22px; } }
+</style>
