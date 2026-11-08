@@ -607,3 +607,7 @@ a.pp-chip:hover { border-color: var(--accent); }
 .build-main strong .emo-s { width: 18px; height: 18px; }
 .emo-dot { flex: none; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--role, var(--sc, var(--muted))); }
 .rh-p > .emo-dot { display: none; }
+/* Haupt-Build: Rolle als Pill direkt hinter dem Namen */
+.build-main { grid-template-columns: minmax(0, 1fr); }
+.build-main strong { flex-wrap: wrap; }
+.build-main .pm-role { margin-left: 4px; font-size: 11.5px; padding: 2px 8px; font-weight: 600; }

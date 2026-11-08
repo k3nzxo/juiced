@@ -930,8 +930,8 @@ function buildBlock(u: any, compact = false) {
   const ways = (u.inner_ways || []).filter((w: string) => innerWayById(w));
   if (!main.length && !alt.length && !ways.length) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
   const cols = [...new Set(main.map((w) => schoolColor(w.school)))];
-  return `${main.length ? `<div class="path-main build-main" style="--b1:${cols[0]};--b2:${cols[1] || cols[0]}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</strong>
-      <span class="pm-weapons">${esc(main.map((w) => w.name).join(" + "))}</span>${u.main_role ? roleTag(u.main_role) : ""}</div>`
+  return `${main.length ? `<div class="path-main build-main" style="--b1:${cols[0]};--b2:${cols[1] || cols[0]}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}${u.main_role ? `<span class="path-tag pm-role role-${esc(u.main_role)}"><i></i>${esc(T("role_" + u.main_role))}</span>` : ""}</strong>
+      <span class="pm-weapons">${esc(main.map((w) => w.name).join(" + "))}</span></div>`
       : u.main_role ? `<div class="build-row"><span class="label">${esc(T("prof_role"))}</span><div class="tags">${roleTag(u.main_role)}</div></div>` : ""}
     ${alt.length ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((b: string) => buildTag(b)).join("")}</div></div>` : ""}
     ${ways.length ? `<div class="build-row"><span class="label">${esc(T("prof_inner_ways"))}</span><div class="iw-grid ${compact ? "small" : ""}">${ways.map((w: string) => iwTile(w, compact)).join("")}</div></div>` : ""}`;
