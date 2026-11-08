@@ -847,7 +847,7 @@ const iwTile = (id: string, small = false) => {
   const w = innerWayById(id);
   return w ? `<span class="iw ${small ? "iw-sm" : ""}" title="${esc(w.name)}"><img src="${innerWayImg(id)}" alt="" loading="lazy" width="48" height="64">${small ? "" : `<span>${esc(w.name)}</span>`}</span>` : "";
 };
-const hasBuild = (u: any) => !!(u.main_build || (u.alt_builds || []).length || (u.inner_ways || []).length || u.weapon_other);
+const hasBuild = (u: any) => !!(u.main_build || (u.alt_builds || []).length || (u.inner_ways || []).length);
 // Farbpunkte je Schule (Hybride = zwei Farben)
 const buildDots = (id: string | null | undefined) => [...new Set(buildWeapons(id).map((w) => w.school))].map((sc) => `<i style="background:${schoolColor(sc)}"></i>`).join("");
 const buildTag = (id: string | null | undefined, main = false) => {
@@ -892,13 +892,12 @@ function buildBlock(u: any, compact = false) {
   const main = buildWeapons(u.main_build);
   const alt = (u.alt_builds || []).filter((b: string) => buildWeapons(b).length);
   const ways = (u.inner_ways || []).filter((w: string) => innerWayById(w));
-  const other = String(u.weapon_other || "").trim();
-  if (!main.length && !alt.length && !ways.length && !other) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
+  if (!main.length && !alt.length && !ways.length) return `<p class="muted">${esc(T("mem_no_build"))}</p>`;
   const cols = [...new Set(main.map((w) => schoolColor(w.school)))];
   return `${main.length ? `<div class="path-main build-main" style="--b1:${cols[0]};--b2:${cols[1] || cols[0]}"><span class="pm-label">${esc(T("mem_main"))}</span><strong>${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</strong>
       <span class="pm-weapons">${esc(main.map((w) => w.name).join(" + "))}</span>${u.main_role ? roleTag(u.main_role) : ""}</div>`
       : u.main_role ? `<div class="build-row"><span class="label">${esc(T("prof_role"))}</span><div class="tags">${roleTag(u.main_role)}</div></div>` : ""}
-    ${alt.length || other ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((b: string) => buildTag(b)).join("")}${other ? `<span class="path-tag path-other"><i></i>${esc(other)}</span>` : ""}</div></div>` : ""}
+    ${alt.length ? `<div class="build-row"><span class="label">${esc(T("prof_alt_paths"))}</span><div class="tags">${alt.map((b: string) => buildTag(b)).join("")}</div></div>` : ""}
     ${ways.length ? `<div class="build-row"><span class="label">${esc(T("prof_inner_ways"))}</span><div class="iw-grid ${compact ? "small" : ""}">${ways.map((w: string) => iwTile(w, compact)).join("")}</div></div>` : ""}`;
 }
 
@@ -1096,7 +1095,7 @@ function viewProfile(view: HTMLElement) {
       <button type="button" class="btn btn-outline btn-sm alt-open" data-alt-open>${icon.plus} ${esc(T("prof_alt_add"))}</button>
       <div class="alt-pick" data-alt-pick hidden><p class="hint">${esc(T("prof_alt_pick_hint"))}</p>
         <div class="wpick">${SCHOOLS.map((sc) => `<div class="wp-col" style="--sc:${sc.color}"><span class="wp-h"><i></i>${esc(sc.name)}</span>${WEAPONS.filter((w) => w.school === sc.id).map((w) => `<button type="button" class="wp" data-aw="${w.id}">${esc(w.name)}</button>`).join("")}</div>`).join("")}</div></div>
-      <input class="input alt-other" id="p-other" maxlength="40" value="${esc(me!.weapon_other || "")}" placeholder="${esc(T("prof_alt_other_ph"))}"></div>
+</div>
     <div class="field"><div class="iw-head"><span class="label">${esc(T("prof_inner_ways"))} <span class="muted" data-iw-count></span></span>
       <label class="check check-sm"><input type="checkbox" data-iw-all> <span>${esc(T("prof_iw_all"))}</span></label></div>
       <p class="hint">${esc(T("prof_iw_hint"))}</p><div data-iw></div></div>
@@ -1206,7 +1205,7 @@ function viewProfile(view: HTMLElement) {
       const r = await api<{ user: Me }>("/me", { method: "PUT", json: {
         ingame_name: (view.querySelector("#p-name") as HTMLInputElement).value,
         main_role: role, main_build: curMain(), alt_builds: [...altB], inner_ways: [...ways], partners,
-        weapon_other: (view.querySelector("#p-other") as HTMLInputElement).value,
+        weapon_other: "",
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });
