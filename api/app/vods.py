@@ -18,6 +18,7 @@ from typing import Optional, List
 from urllib.parse import urlparse, parse_qs
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, Text, Date, DateTime, Float, BigInteger, Boolean, ForeignKey, func, inspect, text
 from sqlalchemy.orm import Session
@@ -31,6 +32,10 @@ router = APIRouter(prefix="/api/vods", tags=["vods"])
 
 VOD_DIR = os.environ.get("VOD_DIR", "/code/vods")
 os.makedirs(VOD_DIR, exist_ok=True)
+# Laufende Uploads landen erst auf der schnellen lokalen Platte (nicht auf der Storage Box übers Netz),
+# fertige Videos werden danach in einem Rutsch nach VOD_DIR verschoben.
+UPLOAD_DIR = os.environ.get("VOD_UPLOAD_DIR", os.path.join(VOD_DIR, ".uploads"))
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 GB = 1024 ** 3
 MAX_FILE_BYTES = int(float(os.environ.get("VOD_MAX_FILE_GB", "8")) * GB)
 MAX_TOTAL_BYTES = int(float(os.environ.get("VOD_MAX_TOTAL_GB", "25")) * GB)
@@ -120,7 +125,7 @@ def _chunk_lock(vod_id: int) -> threading.Lock:
 
 
 def _chunks_path(v: "Vod") -> str:
-    return os.path.join(VOD_DIR, f"{v.file_key}.chunks")
+    return os.path.join(UPLOAD_DIR, f"{v.file_key}.chunks")
 
 
 def _chunks_total(v: "Vod") -> int:
@@ -136,7 +141,9 @@ def _chunks_done(v: "Vod") -> list:
 
 
 def _part_path(v: Vod) -> str:
-    return os.path.join(VOD_DIR, f"{v.file_key}.part")
+    p = os.path.join(UPLOAD_DIR, f"{v.file_key}.part")
+    old = os.path.join(VOD_DIR, f"{v.file_key}.part")  # Uploads von vor der Umstellung
+    return old if not os.path.exists(p) and os.path.exists(old) else p
 
 
 def _final_name(v: Vod) -> str:
@@ -210,13 +217,15 @@ def _used_bytes(db: Session) -> int:
 
 
 def _delete_files(v: Vod):
-    for name in (f"{v.file_key}.part", f"{v.file_key}.chunks", _final_name(v), _thumb_name(v), f"{v.file_key}.remux.mp4"):
-        try:
-            os.remove(os.path.join(VOD_DIR, name))
-        except FileNotFoundError:
-            pass
-        except Exception as e:
-            print(f"[vod] Konnte {name} nicht löschen: {e}")
+    names = (f"{v.file_key}.part", f"{v.file_key}.chunks", _final_name(v), _thumb_name(v), f"{v.file_key}.remux.mp4")
+    for folder in (VOD_DIR, UPLOAD_DIR):
+        for name in names:
+            try:
+                os.remove(os.path.join(folder, name))
+            except FileNotFoundError:
+                pass
+            except Exception as e:
+                print(f"[vod] Konnte {name} nicht löschen: {e}")
 
 
 def _storage_ok() -> bool:
@@ -299,11 +308,11 @@ def _process_vod(vod_id: int):
 
                 if is_webm:
                     v.file_ext = ".webm"
-                    os.replace(src, os.path.join(VOD_DIR, _final_name(v)))
+                    shutil.move(src, os.path.join(VOD_DIR, _final_name(v)))
                 else:
                     v.file_ext = ".mp4"
                     dst = os.path.join(VOD_DIR, _final_name(v))
-                    tmp = os.path.join(VOD_DIR, f"{v.file_key}.remux.mp4")
+                    tmp = os.path.join(UPLOAD_DIR, f"{v.file_key}.remux.mp4")  # lokal remuxen, dann einmal verschieben
                     # Immer remuxen (auch MP4): verschiebt den moov-Atom nach vorne (faststart) -> sofortiges Abspielen/Spulen.
                     # Video wird NIE neu encodiert (würde auf 2 CPUs ewig dauern), Audio nur falls der Browser es nicht kann.
                     acodec_args = ["-c:a", "copy"] if browser_ok_audio else ["-c:a", "aac", "-b:a", "160k"]
@@ -315,13 +324,13 @@ def _process_vod(vod_id: int):
                     if res.returncode != 0:
                         if is_mp4:
                             # Remux fehlgeschlagen, aber MP4 spielt der Browser trotzdem meist ab
-                            os.replace(src, dst)
+                            shutil.move(src, dst)
                             try: os.remove(tmp)
                             except FileNotFoundError: pass
                         else:
                             raise RuntimeError(f"ffmpeg: {res.stderr.strip()[-400:]}")
                     else:
-                        os.replace(tmp, dst)
+                        shutil.move(tmp, dst)
                         os.remove(src)
 
                 final = os.path.join(VOD_DIR, _final_name(v))
@@ -549,8 +558,10 @@ def create_vod(payload: VodCreateIn, db: Session = Depends(get_db), ctx: VodCtx 
     used = _used_bytes(db)
     if used + payload.size_bytes > MAX_TOTAL_BYTES:
         raise HTTPException(status_code=400, detail=f"VOD-Speicher voll ({used / GB:.1f} / {MAX_TOTAL_BYTES / GB:.0f} GB) -- alte VODs löschen")
-    if shutil.disk_usage(VOD_DIR).free - payload.size_bytes * 2 < MIN_FREE_BYTES:
-        raise HTTPException(status_code=400, detail="Zu wenig freier Speicher")
+    if shutil.disk_usage(VOD_DIR).free - payload.size_bytes < MIN_FREE_BYTES:
+        raise HTTPException(status_code=400, detail="Not enough free storage")
+    if shutil.disk_usage(UPLOAD_DIR).free - payload.size_bytes * 2 < MIN_FREE_BYTES:
+        raise HTTPException(status_code=400, detail="Not enough free space for uploads right now, try again later")
     result = payload.result if payload.result in VALID_RESULTS else None
     v = Vod(
         title=title, role=payload.role, opponent=_clean(payload.opponent, 120), match_date=payload.match_date, result=result,
@@ -590,17 +601,24 @@ async def upload_chunk(vod_id: int, index: int, request: Request, db: Session = 
             raise HTTPException(status_code=400, detail="Chunk too large")
     if len(buf) != expected:
         raise HTTPException(status_code=400, detail="Chunk incomplete")
-    try:
-        with open(_part_path(v), "r+b") as f:
+    part = _part_path(v)
+
+    def _write() -> set:
+        # läuft in einem Hilfs-Thread: parallele Stücke blockieren sich nicht gegenseitig
+        with open(part, "r+b") as f:
             f.seek(start)
             f.write(buf)
+        with _chunk_lock(v.id):
+            got = set(_chunks_done(v))
+            got.add(index)
+            with open(_chunks_path(v), "w", encoding="utf-8") as f:
+                f.write(",".join(str(x) for x in sorted(got)))
+        return got
+
+    try:
+        done = await run_in_threadpool(_write)
     except FileNotFoundError:
         raise HTTPException(status_code=410, detail="Upload was cancelled")
-    with _chunk_lock(v.id):
-        done = set(_chunks_done(v))
-        done.add(index)
-        with open(_chunks_path(v), "w", encoding="utf-8") as f:
-            f.write(",".join(str(x) for x in sorted(done)))
     v.received_bytes = min(v.size_bytes, len(done) * CHUNK_SIZE)
     db.commit()
     return {"done": len(done), "total": total}

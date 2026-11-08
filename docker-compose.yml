@@ -32,8 +32,10 @@ services:
       DATABASE_URL: postgresql://juiced:${DB_PASSWORD}@db:5432/juiced
       PUBLIC_URL: https://juiced.team
       VOD_DIR: /data/vods
+      VOD_UPLOAD_DIR: /data/uploads
     volumes:
       - ${VOD_HOST_DIR:-./data/vods}:/data/vods
+      - ./data/uploads:/data/uploads   # laufende Uploads auf der lokalen Platte (schnell)
     depends_on:
       db:
         condition: service_healthy

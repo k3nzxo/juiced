@@ -201,7 +201,7 @@ function drawVodList() {
 // ---------------------------------------------------------------- Upload
 
 const VOD_ACCEPT = "video/*,.mkv,.flv,.ts";
-const VOD_PARALLEL = 4;  // gleichzeitige Stücke
+const VOD_PARALLEL = 6;  // gleichzeitige Stücke
 
 function vodDropzone(id) {
   return `<label class="vod-drop" id="${id}">
@@ -419,27 +419,55 @@ async function cancelVodUpload(id) {
 
 const vodOnList = () => location.hash.startsWith("#/vods") && !/^#\/vods\/\d+/.test(location.hash);
 
+// Fortschritt: Zeilen werden EINMAL gebaut und danach nur noch aktualisiert (max. 1x pro Bild),
+// Tempo ist ein gleitender Wert über die letzten Sekunden statt Durchschnitt seit Start.
+let vodPanelFrame = 0;
 function renderUploadProgressPanel() {
+  if (vodPanelFrame) return;
+  vodPanelFrame = requestAnimationFrame(() => { vodPanelFrame = 0; drawUploadPanel(); });
+}
+
+function drawUploadPanel() {
   const el = document.getElementById("vod-upload-progress");
   if (!el) return;
   const ups = Object.values(vodState.uploads);
-  el.innerHTML = ups.map(u => {
+  // Zeilen für beendete Uploads entfernen
+  el.querySelectorAll("[data-up-row]").forEach(r => { if (!vodState.uploads[r.dataset.upRow]) r.remove(); });
+  const now = performance.now();
+  for (const u of ups) {
+    let row = el.querySelector(`[data-up-row="${u.id}"]`);
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "vod-upload-row";
+      row.dataset.upRow = String(u.id);
+      row.innerHTML = `
+        <div class="vod-upload-head">
+          <strong>${escapeHtml(u.title)}</strong>
+          <span class="vod-upload-pct" data-pct>0%</span>
+          <button class="btn btn-sm btn-ghost vod-upload-cancel" type="button">${icon.x} ${vt("cancel")}</button>
+        </div>
+        <div class="vod-progress"><span data-bar></span></div>
+        <div class="vod-upload-foot"><span data-stats></span><span class="vod-hint">${vt("keep_open")}</span></div>`;
+      row.querySelector(".vod-upload-cancel").addEventListener("click", () => cancelVodUpload(u.id));
+      el.appendChild(row);
+    }
     const cur = Math.min(u.size, u.done + Object.values(u.inflight).reduce((a, b) => a + b, 0));
+    // gleitendes Tempo: alle ~500 ms messen, weich mitteln
+    u.samples = u.samples || { t: now, b: cur, speed: 0 };
+    const dt = (now - u.samples.t) / 1000;
+    if (dt >= 0.5) {
+      const inst = Math.max(0, (cur - u.samples.b) / dt);
+      u.samples.speed = u.samples.speed ? u.samples.speed * 0.7 + inst * 0.3 : inst;
+      u.samples.t = now; u.samples.b = cur;
+    }
+    const speed = u.samples.speed;
     const pct = Math.min(100, cur / u.size * 100);
-    const secs = (Date.now() - u.started) / 1000;
-    const speed = secs > 2 ? (cur - u.startedBytes) / secs : 0;
     const eta = speed > 0 ? (u.size - cur) / speed : 0;
-    return `<div class="vod-upload-row">
-      <div class="vod-upload-head">
-        <strong>${escapeHtml(u.title)}</strong>
-        <span class="vod-upload-stats">${pct.toFixed(0)}% · ${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)}${speed ? ` · ${(speed / 1024 / 1024).toFixed(1)} MB/s · ~${vodFmtTime(eta)}` : ""}</span>
-        <button class="btn btn-sm btn-ghost vod-upload-cancel" data-cancel-up="${u.id}">${icon.x} ${vt("cancel")}</button>
-      </div>
-      <div class="vod-progress"><span style="width:${pct.toFixed(1)}%"></span></div>
-      <div class="vod-hint">${vt("keep_open")}</div>
-    </div>`;
-  }).join("");
-  el.querySelectorAll("[data-cancel-up]").forEach(b => b.addEventListener("click", () => cancelVodUpload(parseInt(b.dataset.cancelUp, 10))));
+    row.querySelector("[data-bar]").style.transform = `scaleX(${(pct / 100).toFixed(4)})`;
+    row.querySelector("[data-pct]").textContent = `${Math.floor(pct)}%`;
+    row.querySelector("[data-stats]").textContent =
+      `${vodFmtBytes(cur)} / ${vodFmtBytes(u.size)}` + (speed > 0 ? ` · ${(speed / 1024 / 1024).toFixed(1)} MB/s · ~${vodFmtTime(eta)}` : "");
+  }
 }
 
 // ---------------------------------------------------------------- Detail / Review
