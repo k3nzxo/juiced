@@ -1,5 +1,5 @@
 // Windfeld im Hero: feine Strömungslinien, die der Maus ausweichen und um sie herum wirbeln.
-type P = { x: number; y: number; px: number; py: number; s: number; life: number; c: number };
+type P = { x: number; y: number; px: number; py: number; vx: number; vy: number; s: number; life: number; c: number; hot: number };
 
 export function initWind(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
@@ -21,7 +21,7 @@ export function initWind(canvas: HTMLCanvasElement) {
   const spawn = (p: P, anywhere: boolean) => {
     p.x = anywhere ? Math.random() * w : -10 - Math.random() * 60;
     p.y = Math.random() * h;
-    p.px = p.x; p.py = p.y;
+    p.px = p.x; p.py = p.y; p.vx = 0; p.vy = 0; p.hot = 0;
     p.s = 0.7 + Math.random() * 1.5;
     p.life = 160 + Math.random() * 360;
     p.c = Math.random() < 0.8 ? 0 : 1;
@@ -45,6 +45,8 @@ export function initWind(canvas: HTMLCanvasElement) {
       + 0.45 * Math.sin((nx + ny) * 3.1 + t * 0.6);
   };
 
+  const R = 220;  // Wirkradius der Maus
+
   const step = () => {
     t += 0.004;
     // Spuren langsam ausblenden (funktioniert auf transparentem Canvas, egal welches Theme)
@@ -52,36 +54,52 @@ export function initWind(canvas: HTMLCanvasElement) {
     ctx.fillStyle = "rgba(0,0,0,0.055)";
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
-    ctx.lineWidth = 1.35;
     ctx.lineCap = "round";
 
-    for (let c = 0; c < 2; c++) {
+    // Bewegen: jede Linie hat Schwung und gleitet zurück in die Windrichtung
+    const mspeed = Math.min(40, Math.hypot(mouse.vx, mouse.vy));
+    for (const p of parts) {
+      const a = angle(p.x, p.y);
+      const tx = Math.cos(a) * p.s * 1.6, ty = Math.sin(a) * p.s * 1.6;
+      p.vx += (tx - p.vx) * 0.06;
+      p.vy += (ty - p.vy) * 0.06;
+      p.hot *= 0.94;
+      if (mouse.on) {
+        const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+        if (d2 < R * R) {
+          const d = Math.sqrt(d2) || 1, f = 1 - d / R, f2 = f * f;
+          // Wirbel um den Cursor + leicht wegdrücken + Windstoß in Mausrichtung
+          p.vx += (-dy / d) * f2 * 0.8 + (dx / d) * f2 * 0.22 + mouse.vx * f * 0.06;
+          p.vy += (dx / d) * f2 * 0.8 + (dy / d) * f2 * 0.22 + mouse.vy * f * 0.06;
+          p.hot = Math.max(p.hot, f * (0.6 + mspeed / 40));
+        }
+      }
+      const sp = Math.hypot(p.vx, p.vy);
+      if (sp > 7) { p.vx *= 7 / sp; p.vy *= 7 / sp; }
+      p.px = p.x; p.py = p.y;
+      p.x += p.vx; p.y += p.vy;
+      if (--p.life < 0 || p.x > w + 20 || p.x < -80 || p.y < -40 || p.y > h + 40) spawn(p, p.life < 0);
+    }
+
+    // Zeichnen: normal, neutral, und "heiß" (nah an der Maus, kräftiger)
+    const pass = (c: number, hot: boolean, alpha: number, width: number) => {
       ctx.strokeStyle = colors[c];
-      ctx.globalAlpha = c === 0 ? 0.7 : 0.25;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
       ctx.beginPath();
       for (const p of parts) {
-        if (p.c !== c) continue;
-        const a = angle(p.x, p.y);
-        let vx = Math.cos(a) * p.s * 1.6, vy = Math.sin(a) * p.s * 1.6;
-        if (mouse.on) {
-          const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
-          if (d2 < 170 * 170) {
-            const d = Math.sqrt(d2) || 1, f = (1 - d / 170) ** 2;
-            // wegdrücken + verwirbeln + Mausbewegung mitnehmen
-            vx += (dx / d) * f * 4 + (-dy / d) * f * 5 + mouse.vx * f * 0.6;
-            vy += (dy / d) * f * 4 + (dx / d) * f * 5 + mouse.vy * f * 0.6;
-          }
-        }
-        p.px = p.x; p.py = p.y;
-        p.x += vx; p.y += vy;
-        if (--p.life < 0 || p.x > w + 20 || p.x < -80 || p.y < -20 || p.y > h + 20) { spawn(p, p.life < 0); continue; }
+        if (p.c !== c || (p.hot > 0.15) !== hot || p.px === p.x && p.py === p.y) continue;
         ctx.moveTo(p.px, p.py);
         ctx.lineTo(p.x, p.y);
       }
       ctx.stroke();
-    }
+    };
+    pass(1, false, 0.25, 1.35);
+    pass(0, false, 0.7, 1.35);
+    pass(1, true, 0.5, 1.8);
+    pass(0, true, 1, 2.2);
     ctx.globalAlpha = 1;
-    mouse.vx *= 0.85; mouse.vy *= 0.85;
+    mouse.vx *= 0.8; mouse.vy *= 0.8;
   };
 
   const loop = () => {
@@ -116,7 +134,7 @@ export function initWind(canvas: HTMLCanvasElement) {
   host.addEventListener("pointermove", (e) => {
     const r = canvas.getBoundingClientRect();
     const x = e.clientX - r.left, y = e.clientY - r.top;
-    if (mouse.on) { mouse.vx = x - mouse.x; mouse.vy = y - mouse.y; }
+    if (mouse.on) { mouse.vx += x - mouse.x; mouse.vy += y - mouse.y; }
     mouse.x = x; mouse.y = y; mouse.on = true;
   }, { passive: true });
   host.addEventListener("pointerleave", () => { mouse.on = false; });

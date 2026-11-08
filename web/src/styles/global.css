@@ -1,10 +1,9 @@
 @import "@fontsource-variable/inter";
-@import "@fontsource-variable/bricolage-grotesque";
 
 /* ------------------------------------------------------------------ tokens */
 :root {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Bricolage Grotesque Variable", var(--font-sans);
+  --font-display: var(--font-sans);
 
   /* Eine Akzentfarbe, sonst neutral. Die alten Namen zeigen auf die neue Palette. */
   --accent: #dc5512;
@@ -81,7 +80,6 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
   transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
 }
 img, svg, video, canvas { display: block; max-width: 100%; }
@@ -90,7 +88,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
 ::selection { background: var(--accent-soft); }
-h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; margin: 0; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 p { margin: 0; }
 
 .container { width: 100%; max-width: var(--container); margin: 0 auto; padding: 0 24px; }
@@ -193,7 +191,6 @@ p { margin: 0; }
 .split .w > .w-inner { transform: translateY(105%); transition: transform 0.9s var(--ease); }
 .split.split-in .w > .w-inner { transform: none; }
 [hidden] { display: none !important; }
-[data-tilt] { transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s, opacity 0.8s var(--ease); will-change: transform; }
 
 .flag { display: inline-block; width: 20px; height: 15px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px var(--border); vertical-align: -2px; }
 
