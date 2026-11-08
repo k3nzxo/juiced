@@ -33,7 +33,7 @@ const en = {
   match_side_t: "Good to know", match_side_1: "We play custom games mostly on weekends.", match_side_2: "Tell us your preferred format and a few time slots.",
   match_side_3: "We confirm on Discord and put it on our schedule.",
   join_platform: "Platform", plat_pc: "PC", plat_ps: "PlayStation", plat_mobile: "Mobile",
-  join_vods: "VODs or clips (optional)", join_vods_hint: "Links to YouTube, Streamable, Twitch, Medal … up to 5.",
+  join_vods: "VODs", join_vods_hint: "Links to YouTube, Streamable, Twitch, Medal … up to 5.",
   join_vods_add: "Add another link", join_err_url: "Please check your links: they need to start with https://", join_err_platform: "Please pick at least one platform.",
   app_nav_schedule: "Schedule", app_nav_matches: "Match requests",
   ev_new: "New event", ev_edit: "Edit event", ev_title: "Title", ev_kind: "Type", ev_start: "Start", ev_duration: "Duration (minutes)",
@@ -86,6 +86,7 @@ const en = {
   ev_daily: "daily",
   kind_raid: "Raid",
   role_twinblades: "Twinblades",
+  join_err_vods: "Please add at least one VOD.",
 };
 
 export type ExtraDict = typeof en;
@@ -123,7 +124,7 @@ const de: Partial<ExtraDict> = {
   match_side_t: "Gut zu wissen", match_side_1: "Custom Games spielen wir meistens am Wochenende.", match_side_2: "Nennt uns euer Wunschformat und ein paar Zeitfenster.",
   match_side_3: "Wir bestätigen auf Discord und tragen es in unseren Wochenplan ein.",
   join_platform: "Plattform", plat_mobile: "Mobil",
-  join_vods: "VODs oder Clips (optional)", join_vods_hint: "Links zu YouTube, Streamable, Twitch, Medal … bis zu 5.",
+  join_vods: "VODs", join_vods_hint: "Links zu YouTube, Streamable, Twitch, Medal … bis zu 5.",
   join_vods_add: "Weiteren Link hinzufügen", join_err_url: "Bitte prüf deine Links: sie müssen mit https:// anfangen.", join_err_platform: "Bitte mindestens eine Plattform wählen.",
   app_nav_schedule: "Wochenplan", app_nav_matches: "Match-Anfragen",
   ev_new: "Neuer Termin", ev_edit: "Termin bearbeiten", ev_title: "Titel", ev_kind: "Art", ev_start: "Beginn", ev_duration: "Dauer (Minuten)",
@@ -177,6 +178,7 @@ const de: Partial<ExtraDict> = {
   ev_daily: "täglich",
   kind_raid: "Raid",
   role_twinblades: "Twinblades",
+  join_err_vods: "Bitte mindestens ein VOD angeben.",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -206,7 +208,7 @@ const fr: Partial<ExtraDict> = {
   match_format: "Format", match_format_ph: "ex. 30v30", match_times: "Dates et horaires proposés", match_times_ph: "ex. sam. 20h ou dim. après-midi",
   match_msg: "Autre chose ?", match_submit: "Envoyer la demande", match_sent_t: "Demande envoyée", match_sent_b: "Merci ! On te contacte sur Discord.",
   match_side_t: "Bon à savoir", match_side_1: "On joue surtout le week-end.", match_side_2: "Indique ton format préféré et quelques créneaux.", match_side_3: "On confirme sur Discord et on l'ajoute au planning.",
-  join_platform: "Plateforme", plat_mobile: "Mobile", join_vods: "VOD ou clips (facultatif)", join_vods_hint: "Liens YouTube, Streamable, Twitch, Medal … jusqu'à 5.",
+  join_platform: "Plateforme", plat_mobile: "Mobile", join_vods: "VODs", join_vods_hint: "Liens YouTube, Streamable, Twitch, Medal … jusqu'à 5.",
   join_vods_add: "Ajouter un lien", join_err_url: "Vérifie tes liens: ils doivent commencer par https://", join_err_platform: "Choisis au moins une plateforme.",
   app_nav_schedule: "Planning", app_nav_matches: "Demandes de match",
   ev_new: "Nouvel événement", ev_edit: "Modifier l'événement", ev_title: "Titre", ev_kind: "Type", ev_start: "Début", ev_duration: "Durée (minutes)",
@@ -259,6 +261,7 @@ const fr: Partial<ExtraDict> = {
   ev_daily: "tous les jours",
   kind_raid: "Raid",
   role_twinblades: "Twinblades",
+  join_err_vods: "Ajoute au moins une VOD.",
 };
 
 const es: Partial<ExtraDict> = {
@@ -288,7 +291,7 @@ const es: Partial<ExtraDict> = {
   match_format: "Formato", match_format_ph: "p. ej. 30v30", match_times: "Fechas y horas propuestas", match_times_ph: "p. ej. sáb. 20:00 o dom. por la tarde",
   match_msg: "¿Algo más?", match_submit: "Enviar solicitud", match_sent_t: "Solicitud enviada", match_sent_b: "¡Gracias! Te contactamos en Discord.",
   match_side_t: "Bueno saber", match_side_1: "Jugamos partidas personalizadas sobre todo los fines de semana.", match_side_2: "Dinos tu formato preferido y algunos horarios.", match_side_3: "Confirmamos en Discord y lo añadimos al calendario.",
-  join_platform: "Plataforma", plat_mobile: "Móvil", join_vods: "VOD o clips (opcional)", join_vods_hint: "Enlaces a YouTube, Streamable, Twitch, Medal … hasta 5.",
+  join_platform: "Plataforma", plat_mobile: "Móvil", join_vods: "VODs", join_vods_hint: "Enlaces a YouTube, Streamable, Twitch, Medal … hasta 5.",
   join_vods_add: "Añadir otro enlace", join_err_url: "Revisa tus enlaces: deben empezar por https://", join_err_platform: "Elige al menos una plataforma.",
   app_nav_schedule: "Calendario", app_nav_matches: "Solicitudes de partida",
   ev_new: "Nuevo evento", ev_edit: "Editar evento", ev_title: "Título", ev_kind: "Tipo", ev_start: "Inicio", ev_duration: "Duración (minutos)",
@@ -341,6 +344,7 @@ const es: Partial<ExtraDict> = {
   ev_daily: "a diario",
   kind_raid: "Raid",
   role_twinblades: "Twinblades",
+  join_err_vods: "Añade al menos un VOD.",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -370,7 +374,7 @@ const pt: Partial<ExtraDict> = {
   match_format: "Formato", match_format_ph: "ex.: 30v30", match_times: "Datas e horários sugeridos", match_times_ph: "ex.: sáb. 20h ou dom. à tarde",
   match_msg: "Mais alguma coisa?", match_submit: "Enviar pedido", match_sent_t: "Pedido enviado", match_sent_b: "Valeu! Entraremos em contato no Discord.",
   match_side_t: "Bom saber", match_side_1: "Jogamos partidas personalizadas principalmente nos fins de semana.", match_side_2: "Diga o formato preferido e alguns horários.", match_side_3: "Confirmamos no Discord e colocamos na agenda.",
-  join_platform: "Plataforma", plat_mobile: "Celular", join_vods: "VODs ou clipes (opcional)", join_vods_hint: "Links do YouTube, Streamable, Twitch, Medal … até 5.",
+  join_platform: "Plataforma", plat_mobile: "Celular", join_vods: "VODs", join_vods_hint: "Links do YouTube, Streamable, Twitch, Medal … até 5.",
   join_vods_add: "Adicionar outro link", join_err_url: "Confira os links: precisam começar com https://", join_err_platform: "Escolha pelo menos uma plataforma.",
   app_nav_schedule: "Agenda", app_nav_matches: "Pedidos de partida",
   ev_new: "Novo evento", ev_edit: "Editar evento", ev_title: "Título", ev_kind: "Tipo", ev_start: "Início", ev_duration: "Duração (minutos)",
@@ -423,6 +427,7 @@ const pt: Partial<ExtraDict> = {
   ev_daily: "diário",
   kind_raid: "Raid",
   role_twinblades: "Twinblades",
+  join_err_vods: "Adicione pelo menos um VOD.",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -452,7 +457,7 @@ const ru: Partial<ExtraDict> = {
   match_format: "Формат", match_format_ph: "например, 30v30", match_times: "Предлагаемые даты и время", match_times_ph: "например, сб 20:00 или вс днём",
   match_msg: "Что-то ещё?", match_submit: "Отправить заявку", match_sent_t: "Заявка отправлена", match_sent_b: "Спасибо! Мы свяжемся с тобой в Discord.",
   match_side_t: "Полезно знать", match_side_1: "Кастомные матчи мы играем в основном по выходным.", match_side_2: "Укажите удобный формат и несколько вариантов времени.", match_side_3: "Мы подтвердим в Discord и добавим матч в расписание.",
-  join_platform: "Платформа", plat_mobile: "Мобильные", join_vods: "VOD или клипы (необязательно)", join_vods_hint: "Ссылки на YouTube, Streamable, Twitch, Medal … до 5.",
+  join_platform: "Платформа", plat_mobile: "Мобильные", join_vods: "VODs", join_vods_hint: "Ссылки на YouTube, Streamable, Twitch, Medal … до 5.",
   join_vods_add: "Добавить ссылку", join_err_url: "Проверь ссылки: они должны начинаться с https://", join_err_platform: "Выбери хотя бы одну платформу.",
   app_nav_schedule: "Расписание", app_nav_matches: "Заявки на матчи",
   ev_new: "Новое событие", ev_edit: "Изменить событие", ev_title: "Название", ev_kind: "Тип", ev_start: "Начало", ev_duration: "Длительность (мин)",
@@ -505,6 +510,7 @@ const ru: Partial<ExtraDict> = {
   ev_daily: "ежедневно",
   kind_raid: "Рейд",
   role_twinblades: "Twinblades",
+  join_err_vods: "Добавь хотя бы одну VOD.",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -534,7 +540,7 @@ const tr: Partial<ExtraDict> = {
   match_format: "Format", match_format_ph: "örn. 30v30", match_times: "Önerilen tarih ve saatler", match_times_ph: "örn. Cmt 20:00 veya Paz öğleden sonra",
   match_msg: "Eklemek istediğin bir şey?", match_submit: "İsteği gönder", match_sent_t: "İstek gönderildi", match_sent_b: "Teşekkürler! Discord'dan sana ulaşacağız.",
   match_side_t: "Bilmekte fayda var", match_side_1: "Özel maçları çoğunlukla hafta sonları oynuyoruz.", match_side_2: "Tercih ettiğiniz formatı ve birkaç zaman aralığını yazın.", match_side_3: "Discord'dan onaylayıp programımıza ekliyoruz.",
-  join_platform: "Platform", plat_mobile: "Mobil", join_vods: "VOD veya klipler (isteğe bağlı)", join_vods_hint: "YouTube, Streamable, Twitch, Medal bağlantıları … en fazla 5.",
+  join_platform: "Platform", plat_mobile: "Mobil", join_vods: "VODs", join_vods_hint: "YouTube, Streamable, Twitch, Medal bağlantıları … en fazla 5.",
   join_vods_add: "Başka bağlantı ekle", join_err_url: "Bağlantılarını kontrol et: https:// ile başlamalı.", join_err_platform: "En az bir platform seç.",
   app_nav_schedule: "Program", app_nav_matches: "Maç istekleri",
   ev_new: "Yeni etkinlik", ev_edit: "Etkinliği düzenle", ev_title: "Başlık", ev_kind: "Tür", ev_start: "Başlangıç", ev_duration: "Süre (dakika)",
@@ -587,6 +593,7 @@ const tr: Partial<ExtraDict> = {
   ev_daily: "her gün",
   kind_raid: "Raid",
   role_twinblades: "Twinblades",
+  join_err_vods: "Lütfen en az bir VOD ekle.",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -616,7 +623,7 @@ const pl: Partial<ExtraDict> = {
   match_format: "Format", match_format_ph: "np. 30v30", match_times: "Proponowane terminy", match_times_ph: "np. sob. 20:00 lub niedz. po południu",
   match_msg: "Coś jeszcze?", match_submit: "Wyślij prośbę", match_sent_t: "Prośba wysłana", match_sent_b: "Dzięki! Odezwiemy się na Discordzie.",
   match_side_t: "Dobrze wiedzieć", match_side_1: "Mecze customowe gramy głównie w weekendy.", match_side_2: "Podajcie preferowany format i kilka terminów.", match_side_3: "Potwierdzamy na Discordzie i dodajemy do planu.",
-  join_platform: "Platforma", plat_mobile: "Mobile", join_vods: "VOD lub klipy (opcjonalnie)", join_vods_hint: "Linki do YouTube, Streamable, Twitch, Medal … do 5.",
+  join_platform: "Platforma", plat_mobile: "Mobile", join_vods: "VODs", join_vods_hint: "Linki do YouTube, Streamable, Twitch, Medal … do 5.",
   join_vods_add: "Dodaj kolejny link", join_err_url: "Sprawdź linki: muszą zaczynać się od https://", join_err_platform: "Wybierz co najmniej jedną platformę.",
   app_nav_schedule: "Plan tygodnia", app_nav_matches: "Prośby o mecz",
   ev_new: "Nowe wydarzenie", ev_edit: "Edytuj wydarzenie", ev_title: "Tytuł", ev_kind: "Rodzaj", ev_start: "Początek", ev_duration: "Czas trwania (min)",
@@ -669,6 +676,7 @@ const pl: Partial<ExtraDict> = {
   ev_daily: "codziennie",
   kind_raid: "Rajd",
   role_twinblades: "Twinblades",
+  join_err_vods: "Dodaj co najmniej jeden VOD.",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

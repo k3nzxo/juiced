@@ -7,7 +7,7 @@ export const getStaticPaths = langPaths;
 const lang = Astro.params.lang as Lang;
 const t = useT(lang);
 const roles = ["healer", "tank", "nameless"] as const;
-const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform") };
+const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic"), url: t("join_err_url"), platform: t("join_err_platform"), vods: t("join_err_vods") };
 ---
 <Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>
   <section class="container join">
@@ -48,7 +48,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
         <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
         <div class="field"><label for="f-exp">{t("join_exp")} *</label><textarea class="textarea" id="f-exp" name="experience" required maxlength="2000" placeholder={t("join_exp_ph")}></textarea></div>
         <div class="field">
-          <span class="label">{t("join_vods")}</span>
+          <span class="label">{t("join_vods")} *</span>
           <div class="links" data-links>
             <input class="input" type="url" inputmode="url" maxlength="300" placeholder="https://" data-link />
           </div>
@@ -119,6 +119,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
       err.textContent = msgs.required; err.hidden = false; return;
     }
     if (!platforms.size) { err.textContent = msgs.platform; err.hidden = false; return; }
+    if (!vodLinks.length) { err.textContent = msgs.vods; err.hidden = false; links.querySelector<HTMLInputElement>("[data-link]")?.focus(); return; }
     if (vodLinks.some((u) => !/^https?:\/\/[^\s<>"']+$/i.test(u))) { err.textContent = msgs.url; err.hidden = false; return; }
     if (!fd.get("consent")) { err.textContent = msgs.consent; err.hidden = false; return; }
     const btn = form.querySelector<HTMLButtonElement>("button[type=submit]")!;

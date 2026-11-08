@@ -81,11 +81,12 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
     fields = dict(discord=clean(payload.discord, 64), ingame=clean(payload.ingame, 64), country=clean(payload.country, 64),
                   experience=clean(payload.experience, 2000))
     platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
-    if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms:
+    links = clean_links(payload.vod_links)
+    if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms or not links:
         raise HTTPException(status_code=400, detail="Missing fields")
     a = models.Application(**fields, times=clean(payload.times, 120) or "", main_role=payload.main_role, why=clean(payload.why, 2000),
                            lang=payload.lang if payload.lang in LANGS else None,
-                           platforms=",".join(platforms), vod_links=json.dumps(clean_links(payload.vod_links)))
+                           platforms=",".join(platforms), vod_links=json.dumps(links))
     db.add(a)
     db.commit()
     notify.application_webhook(a)
