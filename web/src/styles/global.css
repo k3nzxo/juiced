@@ -153,7 +153,7 @@ p { margin: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13.5px; font-weight: 500; color: var(--text-2); transition: all 0.15s; }
 .chip:hover { border-color: var(--text-2); }
-.chip[aria-pressed="true"], .chip.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+.chip[aria-pressed="true"], .chip.active { background: var(--role, var(--accent)); border-color: var(--role, var(--accent)); color: #fff; }
 
 /* ------------------------------------------------------------------ reveal on scroll */
 .reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); transition-delay: calc(var(--d, 0ms) * 0.6); }

@@ -452,10 +452,10 @@ async function loadNextEvents(el: HTMLElement) {
         const isLive = live(e), isNext = !isLive && e === next;
         const time = e.open_end ? T("sched_from", { t: timeShort(s, lang()) }) : timeRange(s, en, lang());
         return `<article class="ag-ev kind-${esc(e.kind)} ${isLive ? "is-live" : ""} ${isNext ? "is-next" : ""}" data-start="${esc(e.starts_at)}">
-          <div class="ag-time">${esc(time)}${e.open_end ? `<small>${esc(T("sched_open_end"))}</small>` : ""}</div>
+          <div class="ag-time">${esc(time)}</div>
           <div class="ag-main">
             <strong>${esc(e.title)}${e.opponent ? ` <span>· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>
-            <span class="ag-meta"><i></i>${esc(T("kind_" + e.kind))}${e.repeat_days ? ` · ${esc(repeatLabel(e.repeat_days))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span>
+            <span class="ag-meta"><i></i>${esc(T("kind_" + e.kind))}${e.open_end ? ` · ${esc(T("sched_open_end"))}` : ""}${e.repeat_days ? ` · ${esc(repeatLabel(e.repeat_days))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}</span>
           </div>
           ${isLive ? `<span class="ag-live"><b></b>Live</span>` : isNext ? `<span class="ag-in" data-countdown>${esc(countdown(e))}</span>` : ""}
         </article>`;
