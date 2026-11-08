@@ -13,7 +13,7 @@ import subprocess
 import threading
 import time
 import json
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from typing import Optional, List
 from urllib.parse import urlparse, parse_qs
 
@@ -78,6 +78,8 @@ class Vod(Base):
     has_thumb = Column(Integer, nullable=False, default=0)
     pinned = Column(Boolean, nullable=False, default=False, server_default="false")  # "Behalten": nie automatisch löschen
     role = Column(String, nullable=False, default="team", server_default="team")  # healer | tank | nameless | team
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)   # Review vom Coach abgeschlossen
+    reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -101,6 +103,8 @@ Base.metadata.create_all(bind=engine, tables=[Vod.__table__, VodNote.__table__])
 _MIGRATIONS = {
     "pinned": "ALTER TABLE vods ADD COLUMN pinned BOOLEAN NOT NULL DEFAULT false",
     "role": "ALTER TABLE vods ADD COLUMN role VARCHAR NOT NULL DEFAULT 'team'",
+    "reviewed_at": "ALTER TABLE vods ADD COLUMN reviewed_at TIMESTAMP WITH TIME ZONE",
+    "reviewed_by": "ALTER TABLE vods ADD COLUMN reviewed_by INTEGER",
 }
 try:
     _cols = {c["name"] for c in inspect(engine).get_columns("vods")}
@@ -203,6 +207,11 @@ def _can_edit(v: Vod, ctx: VodCtx) -> bool:
     """Bearbeiten / Behalten / Löschen: Uploader, Admin, Coaches der Rolle (Team-VODs: alle Coaches)."""
     return bool(ctx.is_admin or v.uploader_id == ctx.user.id or v.role in ctx.roles
                 or (v.role == "team" and ctx.level == "coach"))
+
+
+def _can_review(v: "Vod", ctx: "VodCtx") -> bool:
+    """Review abschließen: Coaches der Rolle sowie Leader/Vice."""
+    return bool(ctx.is_admin or v.role in ctx.roles)
 
 
 def _get_vod(db: Session, vod_id: int) -> Vod:
@@ -438,6 +447,10 @@ def _vod_out(v: Vod, users: dict, note_count: int, ctx: VodCtx) -> dict:
         "status": v.status, "error": v.error, "duration_sec": v.duration_sec,
         "note_count": note_count,
         "pinned": bool(v.pinned),
+        "reviewed": bool(v.reviewed_at),
+        "reviewed_at": v.reviewed_at.isoformat() if v.reviewed_at else None,
+        "reviewed_by_name": users.get(v.reviewed_by),
+        "can_review": _can_review(v, ctx),
         "expires_at": (lambda e: e.isoformat() if e else None)(_expires_at(v)),
         "created_at": v.created_at.isoformat() if v.created_at else None,
         "can_edit": _can_edit(v, ctx),
@@ -694,6 +707,28 @@ def pin_vod(vod_id: int, payload: PinIn, db: Session = Depends(get_db), ctx: Vod
         raise HTTPException(status_code=403, detail="Keine Berechtigung")
     v.pinned = bool(payload.pinned)
     db.commit()
+    return _vod_out(v, _users_map(db), 0, ctx)
+
+
+class ReviewedIn(BaseModel):
+    reviewed: bool
+
+
+@router.put("/{vod_id}/reviewed")
+def set_reviewed(vod_id: int, payload: ReviewedIn, db: Session = Depends(get_db), ctx: VodCtx = Depends(vod_ctx)):
+    """Review als abgeschlossen markieren (oder wieder öffnen). Uploader bekommt eine Discord-Nachricht."""
+    v = _get_visible_vod(db, vod_id, ctx)
+    if not _can_review(v, ctx):
+        raise HTTPException(status_code=403, detail="Only coaches of this role can do that")
+    was = bool(v.reviewed_at)
+    if payload.reviewed:
+        v.reviewed_at, v.reviewed_by = v.reviewed_at or datetime.now(timezone.utc), v.reviewed_by or ctx.user.id
+    else:
+        v.reviewed_at, v.reviewed_by = None, None
+    db.commit()
+    if payload.reviewed and not was and v.uploader_id and v.uploader_id != ctx.user.id:
+        _notify(db, [v.uploader_id], "Your VOD has been reviewed",
+                f"{ctx.user.display_name} finished the review of \"{v.title}\".", v.id)
     return _vod_out(v, _users_map(db), 0, ctx)
 
 

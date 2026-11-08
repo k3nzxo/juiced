@@ -156,6 +156,15 @@ const en = {
   ev_tab_all: "All events",
   ev_group_repeat: "Recurring",
   ev_group_once: "One-off",
+  vod_review_open: "Open",
+  vod_review_done: "Reviewed",
+  vod_review_mark: "Finish review",
+  vod_review_reopen: "Reopen review",
+  vod_review_done_toast: "Review finished. The player gets a message.",
+  vod_review_open_toast: "Review reopened.",
+  vod_review_f_all: "All",
+  vod_review_f_open: "Open",
+  vod_review_f_done: "Reviewed",
 };
 
 export type ExtraDict = typeof en;
@@ -317,6 +326,15 @@ const de: Partial<ExtraDict> = {
   ev_tab_all: "Alle Termine",
   ev_group_repeat: "Wiederkehrend",
   ev_group_once: "Einmalig",
+  vod_review_open: "Offen",
+  vod_review_done: "Abgeschlossen",
+  vod_review_mark: "Review abschließen",
+  vod_review_reopen: "Review wieder öffnen",
+  vod_review_done_toast: "Review abgeschlossen. Der Spieler bekommt eine Nachricht.",
+  vod_review_open_toast: "Review wieder geöffnet.",
+  vod_review_f_all: "Alle",
+  vod_review_f_open: "Offen",
+  vod_review_f_done: "Abgeschlossen",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -469,6 +487,15 @@ const fr: Partial<ExtraDict> = {
   ev_tab_all: "Tous les events",
   ev_group_repeat: "Récurrents",
   ev_group_once: "Ponctuels",
+  vod_review_open: "À faire",
+  vod_review_done: "Terminé",
+  vod_review_mark: "Terminer la review",
+  vod_review_reopen: "Rouvrir la review",
+  vod_review_done_toast: "Review terminée. Le joueur reçoit un message.",
+  vod_review_open_toast: "Review rouverte.",
+  vod_review_f_all: "Tous",
+  vod_review_f_open: "À faire",
+  vod_review_f_done: "Terminés",
 };
 
 const es: Partial<ExtraDict> = {
@@ -621,6 +648,15 @@ const es: Partial<ExtraDict> = {
   ev_tab_all: "Todos los eventos",
   ev_group_repeat: "Recurrentes",
   ev_group_once: "Únicos",
+  vod_review_open: "Pendiente",
+  vod_review_done: "Revisado",
+  vod_review_mark: "Terminar revisión",
+  vod_review_reopen: "Reabrir revisión",
+  vod_review_done_toast: "Revisión terminada. El jugador recibe un mensaje.",
+  vod_review_open_toast: "Revisión reabierta.",
+  vod_review_f_all: "Todos",
+  vod_review_f_open: "Pendientes",
+  vod_review_f_done: "Revisados",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -773,6 +809,15 @@ const pt: Partial<ExtraDict> = {
   ev_tab_all: "Todos os eventos",
   ev_group_repeat: "Recorrentes",
   ev_group_once: "Únicos",
+  vod_review_open: "Pendente",
+  vod_review_done: "Revisado",
+  vod_review_mark: "Concluir review",
+  vod_review_reopen: "Reabrir review",
+  vod_review_done_toast: "Review concluída. O jogador recebe uma mensagem.",
+  vod_review_open_toast: "Review reaberta.",
+  vod_review_f_all: "Todos",
+  vod_review_f_open: "Pendentes",
+  vod_review_f_done: "Revisados",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -925,6 +970,15 @@ const ru: Partial<ExtraDict> = {
   ev_tab_all: "Все события",
   ev_group_repeat: "Повторяющиеся",
   ev_group_once: "Разовые",
+  vod_review_open: "Ждёт разбора",
+  vod_review_done: "Разобрано",
+  vod_review_mark: "Завершить разбор",
+  vod_review_reopen: "Открыть разбор снова",
+  vod_review_done_toast: "Разбор завершён. Игрок получит сообщение.",
+  vod_review_open_toast: "Разбор снова открыт.",
+  vod_review_f_all: "Все",
+  vod_review_f_open: "Ждут разбора",
+  vod_review_f_done: "Разобраны",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -1077,6 +1131,15 @@ const tr: Partial<ExtraDict> = {
   ev_tab_all: "Tüm etkinlikler",
   ev_group_repeat: "Tekrarlanan",
   ev_group_once: "Tek seferlik",
+  vod_review_open: "Bekliyor",
+  vod_review_done: "İncelendi",
+  vod_review_mark: "İncelemeyi bitir",
+  vod_review_reopen: "İncelemeyi yeniden aç",
+  vod_review_done_toast: "İnceleme bitti. Oyuncu bir mesaj alır.",
+  vod_review_open_toast: "İnceleme yeniden açıldı.",
+  vod_review_f_all: "Tümü",
+  vod_review_f_open: "Bekleyen",
+  vod_review_f_done: "İncelenen",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -1229,6 +1292,15 @@ const pl: Partial<ExtraDict> = {
   ev_tab_all: "Wszystkie eventy",
   ev_group_repeat: "Cykliczne",
   ev_group_once: "Jednorazowe",
+  vod_review_open: "Otwarte",
+  vod_review_done: "Omówione",
+  vod_review_mark: "Zakończ omówienie",
+  vod_review_reopen: "Otwórz ponownie",
+  vod_review_done_toast: "Omówienie zakończone. Gracz dostanie wiadomość.",
+  vod_review_open_toast: "Omówienie ponownie otwarte.",
+  vod_review_f_all: "Wszystkie",
+  vod_review_f_open: "Otwarte",
+  vod_review_f_done: "Omówione",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

@@ -551,8 +551,7 @@ def notifications(db: DbSession = Depends(get_db), user: Optional[models.User] =
         out["matches"] = db.query(models.ScrimRequest).filter(models.ScrimRequest.status == "pending").count()
     roles = list(models.COACH_ROLES) if user.level >= models.RANK_LEVEL["vice"] else user.coach_list
     if roles:
-        from .vods import Vod, VodNote
-        reviewed = {vid for (vid,) in db.query(VodNote.vod_id).distinct().all()}
-        out["vods"] = sum(1 for (vid,) in db.query(Vod.id).filter(Vod.status == "ready", Vod.role.in_(roles),
-                                                                    Vod.uploader_id != user.id).all() if vid not in reviewed)
+        from .vods import Vod
+        out["vods"] = db.query(Vod).filter(Vod.status == "ready", Vod.role.in_(roles), Vod.reviewed_at.is_(None),
+                                           Vod.uploader_id != user.id).count()
     return {**out, "total": sum(out.values())}

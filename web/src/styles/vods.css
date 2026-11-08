@@ -177,3 +177,21 @@ main.vod-main { max-width: 1500px; }
 .vod-progress span { position: absolute; inset: 0; width: 100% !important; transform-origin: left; transform: scaleX(0); background: var(--accent); border-radius: 4px; transition: transform .25s linear; }
 .vod-upload-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .vod-upload-foot .vod-hint { margin: 0; }
+
+/* Review-Status */
+.vod-filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.vod-filters .vod-chip-row { margin: 0; }
+.vod-review-filter button.active { background: var(--accent); color: #fff; }
+.vod-review { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.vod-review svg { width: 12px; height: 12px; }
+.vod-review-open { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.vod-review-done { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.vod-thumb .vod-review { position: absolute; top: 8px; left: 8px; backdrop-filter: blur(6px); background: color-mix(in srgb, #000 55%, transparent); }
+.vod-thumb .vod-review-open { color: #ffb185; }
+.vod-thumb .vod-review-done { color: #6ee7a0; }
+
+/* Karten gleich hoch, Fußzeile immer ganz unten */
+.vod-grid { align-items: stretch; }
+.vod-card { display: flex; flex-direction: column; }
+.vod-card-body { flex: 1; display: flex; flex-direction: column; }
+.vod-card-foot { margin-top: auto; padding-top: 0.55rem; }
