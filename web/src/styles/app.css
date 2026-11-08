@@ -297,3 +297,14 @@ main.vod-main, .vod-main { max-width: none; }
   .ag-main { grid-column: 1; flex-direction: column; gap: 1px; }
   .ag-in, .ag-live { grid-column: 2; grid-row: 1 / span 2; }
 }
+
+/* Wochenplan verwalten: Umschalter + Aktionen in der Agenda */
+.seg-tabs { display: inline-flex; padding: 3px; gap: 2px; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.seg-tabs button { height: 32px; padding: 0 14px; border-radius: 7px; font-size: 13.5px; font-weight: 600; color: var(--muted); transition: background-color .15s, color .15s; }
+.seg-tabs button:hover { color: var(--text); }
+.seg-tabs button[aria-selected="true"] { background: var(--accent); color: #fff; }
+.ag-actions { display: flex; gap: 2px; opacity: .55; transition: opacity .15s; }
+.ag-ev:hover .ag-actions, .ag-actions:focus-within { opacity: 1; }
+.ag-actions .btn-sm { height: 30px; width: 30px; padding: 0; justify-content: center; }
+.agenda.series .ag-ev { grid-template-columns: 230px minmax(0, 1fr) auto; }
+@media (max-width: 600px) { .agenda.series .ag-ev { grid-template-columns: minmax(0, 1fr) auto; } .ag-actions { opacity: 1; } }

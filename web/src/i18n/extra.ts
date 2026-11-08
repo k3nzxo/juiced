@@ -152,6 +152,10 @@ const en = {
   join_expect_vods: "Recording VODs is mandatory. Our coaches give feedback on them.",
   join_pc: "I play on PC",
   join_pc_hint: "We only take PC players at the moment.",
+  ev_tab_week: "Next 7 days",
+  ev_tab_all: "All events",
+  ev_group_repeat: "Recurring",
+  ev_group_once: "One-off",
 };
 
 export type ExtraDict = typeof en;
@@ -309,6 +313,10 @@ const de: Partial<ExtraDict> = {
   join_expect_vods: "VODs aufnehmen ist Pflicht. Unsere Coaches geben dir Feedback darauf.",
   join_pc: "Ich spiele auf dem PC",
   join_pc_hint: "Wir nehmen aktuell nur PC-Spieler auf.",
+  ev_tab_week: "Nächste 7 Tage",
+  ev_tab_all: "Alle Termine",
+  ev_group_repeat: "Wiederkehrend",
+  ev_group_once: "Einmalig",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -457,6 +465,10 @@ const fr: Partial<ExtraDict> = {
   join_expect_vods: "Enregistrer ses VODs est obligatoire. Nos coachs te font un retour dessus.",
   join_pc: "Je joue sur PC",
   join_pc_hint: "Pour l'instant, on ne prend que des joueurs PC.",
+  ev_tab_week: "7 prochains jours",
+  ev_tab_all: "Tous les events",
+  ev_group_repeat: "Récurrents",
+  ev_group_once: "Ponctuels",
 };
 
 const es: Partial<ExtraDict> = {
@@ -605,6 +617,10 @@ const es: Partial<ExtraDict> = {
   join_expect_vods: "Grabar VODs es obligatorio. Nuestros coaches te dan feedback.",
   join_pc: "Juego en PC",
   join_pc_hint: "Por ahora solo aceptamos jugadores de PC.",
+  ev_tab_week: "Próximos 7 días",
+  ev_tab_all: "Todos los eventos",
+  ev_group_repeat: "Recurrentes",
+  ev_group_once: "Únicos",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -753,6 +769,10 @@ const pt: Partial<ExtraDict> = {
   join_expect_vods: "Gravar VODs é obrigatório. Nossos coaches dão feedback sobre eles.",
   join_pc: "Eu jogo no PC",
   join_pc_hint: "No momento só aceitamos jogadores de PC.",
+  ev_tab_week: "Próximos 7 dias",
+  ev_tab_all: "Todos os eventos",
+  ev_group_repeat: "Recorrentes",
+  ev_group_once: "Únicos",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -901,6 +921,10 @@ const ru: Partial<ExtraDict> = {
   join_expect_vods: "Записывать VOD обязательно. Коучи дают по ним фидбек.",
   join_pc: "Я играю на ПК",
   join_pc_hint: "Сейчас мы принимаем только игроков на ПК.",
+  ev_tab_week: "Ближайшие 7 дней",
+  ev_tab_all: "Все события",
+  ev_group_repeat: "Повторяющиеся",
+  ev_group_once: "Разовые",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -1049,6 +1073,10 @@ const tr: Partial<ExtraDict> = {
   join_expect_vods: "VOD kaydetmek zorunludur. Koçlarımız bunlar üzerine geri bildirim verir.",
   join_pc: "PC'de oynuyorum",
   join_pc_hint: "Şu an yalnızca PC oyuncularını alıyoruz.",
+  ev_tab_week: "Önümüzdeki 7 gün",
+  ev_tab_all: "Tüm etkinlikler",
+  ev_group_repeat: "Tekrarlanan",
+  ev_group_once: "Tek seferlik",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -1197,6 +1225,10 @@ const pl: Partial<ExtraDict> = {
   join_expect_vods: "Nagrywanie VOD-ów jest obowiązkowe. Nasi coachowie dają do nich feedback.",
   join_pc: "Gram na PC",
   join_pc_hint: "Na razie przyjmujemy tylko graczy na PC.",
+  ev_tab_week: "Najbliższe 7 dni",
+  ev_tab_all: "Wszystkie eventy",
+  ev_group_repeat: "Cykliczne",
+  ev_group_once: "Jednorazowe",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

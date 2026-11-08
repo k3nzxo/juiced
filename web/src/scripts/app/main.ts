@@ -467,26 +467,82 @@ async function loadNextEvents(el: HTMLElement) {
   }, 30000);
 }
 
+// Wochenplan verwalten: "Nächste 7 Tage" (nach Tagen) oder "Alle Termine" (jede Serie einmal)
+let schedTab: "week" | "all" = "week";
 async function viewSchedule(view: HTMLElement) {
-  view.innerHTML = head(T("app_nav_schedule"), T("ev_upcoming"), `<a class="btn btn-ghost btn-sm" href="/${lang()}/schedule/" target="_blank">${esc(T("week_cta"))}</a><button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ev_new"))}</button>`) + `<div id="evs">${loading}</div>`;
-  view.querySelector("[data-new]")!.addEventListener("click", () => editEvent(null, () => viewSchedule(view)));
-  const el = view.querySelector("#evs")!;
-  try {
-    const list = await fetchUpcoming(14);
-    // wöchentliche Termine nur einmal auflisten (nächstes Vorkommen)
+  view.innerHTML = head(T("app_nav_schedule"), "", `<a class="btn btn-ghost btn-sm" href="/${lang()}/schedule/" target="_blank">${esc(T("week_cta"))}</a><button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ev_new"))}</button>`)
+    + `<div class="seg-tabs" role="tablist">
+        <button role="tab" data-tab="week" aria-selected="${schedTab === "week"}">${esc(T("ev_tab_week"))}</button>
+        <button role="tab" data-tab="all" aria-selected="${schedTab === "all"}">${esc(T("ev_tab_all"))}</button>
+      </div><div id="evs">${loading}</div>`;
+  const reload = () => viewSchedule(view);
+  view.querySelector("[data-new]")!.addEventListener("click", () => editEvent(null, reload));
+  view.querySelectorAll<HTMLElement>("[data-tab]").forEach((b) => b.addEventListener("click", () => {
+    schedTab = b.dataset.tab as "week" | "all";
+    reload();
+  }));
+  const el = view.querySelector<HTMLElement>("#evs")!;
+  let list: any[] = [];
+  try { list = await fetchUpcoming(schedTab === "week" ? 7 : 56); }
+  catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; return; }
+  if (!list.length) { el.innerHTML = `<p class="empty">${esc(T("ev_none"))}</p>`; return; }
+
+  const actions = `<div class="ag-actions"><button class="btn btn-ghost btn-sm" data-edit title="${esc(T("edit"))}">${icon.edit}</button><button class="btn btn-ghost btn-sm" data-del title="${esc(T("delete"))}">${icon.trash}</button></div>`;
+  const timeOf = (e: any) => e.open_end ? T("sched_from", { t: timeShort(new Date(e.starts_at), lang()) }) : timeRange(new Date(e.starts_at), new Date(e.ends_at), lang());
+  const title = (e: any) => `<strong>${esc(e.title)}${e.opponent ? ` <span>· ${esc(T("sched_vs", { name: e.opponent }))}</span>` : ""}</strong>`;
+  const flags = (e: any) => `${e.open_end ? ` · ${esc(T("sched_open_end"))}` : ""}${!e.is_public ? ` · ${esc(T("sched_internal"))}` : ""}`;
+
+  if (schedTab === "week") {
+    const groups: { date: Date; items: any[] }[] = [];
+    for (const e of list) {
+      const d = new Date(e.starts_at);
+      const g = groups.find((x) => x.date.toDateString() === d.toDateString());
+      if (g) g.items.push(e); else groups.push({ date: d, items: [e] });
+    }
+    const today = new Date().toDateString();
+    el.innerHTML = `<div class="agenda">${groups.map((g) => `
+      <section class="ag-day ${g.date.toDateString() === today ? "is-today" : ""}">
+        <h3 class="ag-head"><span></span>${esc(g.date.toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "short" }))}</h3>
+        <div class="ag-items">${g.items.map((e) => `
+          <article class="ag-ev kind-${esc(e.kind)}" data-id="${e.id}">
+            <div class="ag-time">${esc(timeOf(e))}</div>
+            <div class="ag-main">${title(e)}<span class="ag-meta"><i></i>${esc(T("kind_" + e.kind))}${e.repeat_days ? ` · ${esc(repeatLabel(e.repeat_days))}` : ""}${flags(e)}</span></div>
+            ${actions}
+          </article>`).join("")}</div>
+      </section>`).join("")}</div>`;
+  } else {
+    // jede Serie nur einmal (nächstes Vorkommen), getrennt in wiederkehrend / einmalig
     const seen = new Set<number>();
     const items = list.filter((e) => (seen.has(e.id) ? false : (seen.add(e.id), true)));
-    el.innerHTML = items.length ? `<div class="table card">${items.map((e) => evRow(e, true)).join("")}</div>` : `<p class="empty">${esc(T("ev_none"))}</p>`;
-    el.querySelectorAll<HTMLElement>(".ev-row").forEach((row) => {
-      const e = items.find((x) => x.id === Number(row.dataset.id));
-      row.querySelector("[data-edit]")!.addEventListener("click", () => editEvent(e, () => viewSchedule(view)));
-      row.querySelector("[data-del]")!.addEventListener("click", async () => {
-        if (!confirm(T("ev_delete_confirm"))) return;
-        await api(`/events/${e.id}`, { method: "DELETE" }).catch((x) => toast(x.message));
-        viewSchedule(view);
-      });
+    const minutes = (e: any) => { const d = new Date(e.starts_at); return d.getHours() * 60 + d.getMinutes(); };
+    // täglich zuerst, dann nach erstem Wochentag (Mo → So), dann Uhrzeit
+    const firstDay = (e: any) => (e.repeat_days.length === 7 ? -1 : Number(e.repeat_days[0]));
+    const repeating = items.filter((e) => e.repeat_days).sort((a, b) => firstDay(a) - firstDay(b) || minutes(a) - minutes(b) || a.title.localeCompare(b.title));
+    const once = items.filter((e) => !e.repeat_days).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const pattern = (days: string) => { const t = days.length === 7 ? T("ev_daily") : days.split("").map((d) => wdName(Number(d))).join(", "); return t.charAt(0).toUpperCase() + t.slice(1); };
+    const row = (e: any, when: string) => `
+      <article class="ag-ev kind-${esc(e.kind)}" data-id="${e.id}">
+        <div class="ag-time">${esc(when)}</div>
+        <div class="ag-main">${title(e)}<span class="ag-meta"><i></i>${esc(T("kind_" + e.kind))}${flags(e)}</span></div>
+        ${actions}
+      </article>`;
+    const section = (head: string, rows: string) => rows ? `<section class="ag-day"><h3 class="ag-head"><span></span>${esc(head)}</h3><div class="ag-items">${rows}</div></section>` : "";
+    el.innerHTML = `<div class="agenda series">
+      ${section(T("ev_group_repeat"), repeating.map((e) => row(e, `${pattern(e.repeat_days)} · ${timeOf(e)}`)).join(""))}
+      ${section(T("ev_group_once"), once.map((e) => row(e, `${new Date(e.starts_at).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })} · ${timeOf(e)}`)).join(""))}
+    </div>`;
+  }
+
+  const byId = new Map(list.map((e) => [e.id, e]));
+  el.querySelectorAll<HTMLElement>(".ag-ev").forEach((row) => {
+    const e = byId.get(Number(row.dataset.id));
+    row.querySelector("[data-edit]")!.addEventListener("click", () => editEvent(e, reload));
+    row.querySelector("[data-del]")!.addEventListener("click", async () => {
+      if (!confirm(T("ev_delete_confirm"))) return;
+      await api(`/events/${e.id}`, { method: "DELETE" }).catch((x) => toast(x.message));
+      reload();
     });
-  } catch (x) { el.innerHTML = `<p class="empty">${esc((x as Error).message)}</p>`; }
+  });
 }
 
 function toLocalInput(iso: string | null) {
