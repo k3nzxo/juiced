@@ -1,0 +1,20 @@
+---
+import Base from "../layouts/Base.astro";
+import { useT } from "../i18n";
+const t = useT("en");
+---
+<Base lang="en" title={t("notfound_title")} noindex>
+  <section class="container nf">
+    <span class="code grad-text">404</span>
+    <h1>{t("notfound_title")}</h1>
+    <p>{t("notfound_body")}</p>
+    <a class="btn btn-primary" href="/">{t("notfound_back")}</a>
+  </section>
+</Base>
+
+<style>
+  .nf { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding-top: 72px; }
+  .code { font-family: var(--font-display); font-weight: 800; font-size: 96px; line-height: 1; }
+  h1 { font-size: 32px; }
+  p { color: var(--muted); }
+</style>

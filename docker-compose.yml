@@ -1,0 +1,67 @@
+# juiced.team -- eigener Stack neben ~/archiv (kenzxo.dev).
+# HTTPS macht der Caddy aus dem archiv-Stack; er erreicht "juiced-web" über das Netz "juiced_edge".
+#   Starten / Update:  docker compose up -d --build
+name: juiced
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: juiced
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt in .env}
+      POSTGRES_DB: juiced
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U juiced -d juiced"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ENV: prod
+      DATABASE_URL: postgresql://juiced:${DB_PASSWORD}@db:5432/juiced
+      PUBLIC_URL: https://juiced.team
+      VOD_DIR: /data/vods
+    volumes:
+      - ${VOD_HOST_DIR:-./data/vods}:/data/vods
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    volumes:
+      - ${VOD_HOST_DIR:-./data/vods}:/srv/vods:ro
+    depends_on:
+      - api
+    networks:
+      default:
+      edge:
+        aliases: [juiced-web]
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+volumes:
+  db_data:
+
+networks:
+  edge:
+    name: juiced_edge

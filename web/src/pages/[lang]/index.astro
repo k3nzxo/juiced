@@ -1,0 +1,161 @@
+---
+import Base from "../../layouts/Base.astro";
+import Hero from "../../components/Hero.astro";
+import Icon from "../../components/Icon.astro";
+import { useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useT(lang);
+
+const what = [
+  { icon: "swords", t: t("what_gvg_t"), b: t("what_gvg_b"), tone: "orange" },
+  { icon: "play", t: t("what_review_t"), b: t("what_review_b"), tone: "pink" },
+  { icon: "users", t: t("what_structure_t"), b: t("what_structure_b"), tone: "violet" },
+];
+const loop = [
+  { icon: "swords", t: t("loop_1_t"), b: t("loop_1_b") },
+  { icon: "record", t: t("loop_2_t"), b: t("loop_2_b") },
+  { icon: "message", t: t("loop_3_t"), b: t("loop_3_b") },
+  { icon: "repeat", t: t("loop_4_t"), b: t("loop_4_b") },
+];
+const ranks = { leader: t("rank_leader"), vice: t("rank_vice"), management: t("rank_management"), coach: t("rank_coach") };
+---
+<Base lang={lang} page="home">
+  <Hero lang={lang} />
+
+  <section class="section">
+    <div class="container">
+      <header class="sec-head reveal">
+        <span class="eyebrow">{t("what_eyebrow")}</span>
+        <h2>{t("what_title")}</h2>
+        <p>{t("what_sub")}</p>
+      </header>
+      <div class="what-grid">
+        {what.map((w, i) => (
+          <article class={`what card reveal tone-${w.tone}`} style={`--d:${i * 90}ms`}>
+            <span class="what-ico"><Icon name={w.icon} size={20} /></span>
+            <h3>{w.t}</h3>
+            <p>{w.b}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section tinted">
+    <div class="container">
+      <header class="sec-head reveal">
+        <span class="eyebrow">{t("loop_eyebrow")}</span>
+        <h2>{t("loop_title")}</h2>
+      </header>
+      <ol class="loop">
+        {loop.map((s, i) => (
+          <li class="reveal" style={`--d:${i * 110}ms`}>
+            <div class="loop-top"><span class="loop-ico"><Icon name={s.icon} size={18} /></span><span class="loop-n">0{i + 1}</span></div>
+            <h3>{s.t}</h3>
+            <p>{s.b}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <header class="sec-head row reveal">
+        <div>
+          <span class="eyebrow">{t("lead_eyebrow")}</span>
+          <h2>{t("lead_title")}</h2>
+        </div>
+        <a class="btn btn-outline btn-sm" href={`/${lang}/team/`}>{t("lead_cta")} <Icon name="arrow" size={15} /></a>
+      </header>
+      <div class="lead-grid" data-lead-grid data-empty={t("lead_empty")} data-ranks={JSON.stringify(ranks)}>
+        {[0, 1, 2, 3].map(() => <div class="person skeleton"></div>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta-band reveal">
+        <div class="cta-glow" aria-hidden="true"></div>
+        <h2>{t("cta_title")}</h2>
+        <p>{t("cta_body")}</p>
+        <div class="cta-actions">
+          <a class="btn btn-primary" href={`/${lang}/join/`}>{t("hero_cta_join")} <Icon name="arrow" class="arrow" /></a>
+          <a class="btn btn-outline" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> Discord</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { renderLeadership } from "../../scripts/team";
+  const grid = document.querySelector<HTMLElement>("[data-lead-grid]");
+  if (grid) renderLeadership(grid);
+</script>
+
+<style>
+  .section { padding: 96px 0 0; }
+  .section.tinted { margin-top: 96px; padding: 88px 0; background: var(--bg-tint); border-block: 1px solid var(--border); }
+  .section.tinted + .section { padding-top: 96px; }
+  .sec-head { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin-bottom: 40px; }
+  .sec-head h2 { font-size: clamp(30px, 3.6vw, 44px); }
+  .sec-head p { color: var(--muted); font-size: 17px; }
+  .sec-head.row { max-width: none; flex-direction: row; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
+  .sec-head.row > div { display: flex; flex-direction: column; gap: 12px; }
+
+  .what-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .what { padding: 28px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s; }
+  .what::after { content: ""; position: absolute; inset: auto -40% -60% auto; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--tone) 22%, transparent), transparent 70%); opacity: 0; transition: opacity 0.4s; }
+  .what:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--border-strong); }
+  .what:hover::after { opacity: 1; }
+  .tone-orange { --tone: var(--c-orange); } .tone-pink { --tone: var(--c-pink); } .tone-violet { --tone: var(--c-violet); }
+  .what-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; color: var(--tone); background: color-mix(in srgb, var(--tone) 12%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent); }
+  .what h3 { font-size: 20px; margin-top: 6px; }
+  .what p { color: var(--muted); font-size: 15.5px; }
+
+  .loop { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: s; position: relative; }
+  .loop::before { content: ""; position: absolute; left: 24px; right: 24px; top: 21px; height: 1px; background: repeating-linear-gradient(90deg, var(--border-strong) 0 6px, transparent 6px 12px); }
+  .loop li { position: relative; display: flex; flex-direction: column; gap: 10px; }
+  .loop-top { display: flex; align-items: center; justify-content: space-between; }
+  .loop-ico { position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); color: var(--c-pink); }
+  .loop-n { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--faint); padding-right: 6px; background: var(--bg-tint); position: relative; z-index: 1; padding-left: 6px; }
+  .loop h3 { font-size: 19px; margin-top: 8px; }
+  .loop p { color: var(--muted); font-size: 15px; }
+
+  .lead-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  :global(.person) { border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-height: 190px; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
+  :global(.person:hover) { transform: translateY(-3px); box-shadow: var(--shadow); }
+  :global(.person img), :global(.person .avatar-fallback) { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--surface-2); }
+  :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--grad-brand); }
+  :global(.person .p-name) { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  :global(.person .p-sub) { font-size: 13.5px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  :global(.person.skeleton) { background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  :global(.lead-empty) { grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: var(--r-lg); }
+
+  .cta-band { position: relative; overflow: hidden; border-radius: 24px; padding: 72px 32px; text-align: center; background: #120f16; color: #f4f2ee; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .cta-band h2 { font-size: clamp(30px, 4vw, 48px); position: relative; }
+  .cta-band p { color: #b9b3c2; font-size: 17px; position: relative; }
+  .cta-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px; position: relative; }
+  .cta-band .btn-outline { background: transparent; color: #f4f2ee; border-color: #3a3546; }
+  .cta-band .btn-outline:hover { border-color: #f4f2ee; }
+  .cta-glow { position: absolute; inset: -40% -10% auto; height: 120%; background: radial-gradient(40% 50% at 25% 50%, rgba(255, 122, 24, 0.35), transparent 70%), radial-gradient(40% 50% at 75% 50%, rgba(139, 92, 246, 0.35), transparent 70%), radial-gradient(30% 40% at 50% 60%, rgba(255, 61, 119, 0.3), transparent 70%); filter: blur(10px); animation: glow 12s ease-in-out infinite alternate; }
+  @keyframes glow { from { transform: translateX(-4%) rotate(-2deg); } to { transform: translateX(4%) rotate(2deg); } }
+
+  @media (max-width: 980px) {
+    .what-grid { grid-template-columns: 1fr; }
+    .loop { grid-template-columns: repeat(2, 1fr); row-gap: 32px; }
+    .loop::before { display: none; }
+    .lead-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .section { padding-top: 72px; }
+    .loop { grid-template-columns: 1fr; }
+    .lead-grid { grid-template-columns: 1fr; }
+    .cta-band { padding: 56px 20px; }
+  }
+</style>

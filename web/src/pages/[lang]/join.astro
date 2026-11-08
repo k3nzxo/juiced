@@ -1,0 +1,126 @@
+---
+import Base from "../../layouts/Base.astro";
+import Icon from "../../components/Icon.astro";
+import { useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useT(lang);
+const roles = ["healer", "tank", "nameless"] as const;
+const msgs = { required: t("join_err_required"), consent: t("join_err_consent"), generic: t("join_err_generic") };
+---
+<Base lang={lang} page="join" title={t("join_title")} description={t("join_sub")}>
+  <section class="container join">
+    <div class="intro">
+      <span class="eyebrow reveal">{t("nav_join")}</span>
+      <h1 class="reveal" style="--d:60ms">{t("join_title")}</h1>
+      <p class="reveal" style="--d:120ms">{t("join_sub")}</p>
+      <div class="steps card reveal" style="--d:180ms">
+        <h2>{t("join_side_t")}</h2>
+        <ol>
+          <li><span>1</span>{t("join_side_1")}</li>
+          <li><span>2</span>{t("join_side_2")}</li>
+          <li><span>3</span>{t("join_side_3")}</li>
+        </ol>
+        <a class="btn btn-outline btn-sm" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" size={15} /> discord.gg/juiced</a>
+      </div>
+    </div>
+
+    <div class="form-wrap card reveal" style="--d:120ms">
+      <form id="apply" novalidate data-msgs={JSON.stringify(msgs)} data-lang={lang}>
+        <div class="row2">
+          <div class="field"><label for="f-discord">{t("join_discord")} *</label><input class="input" id="f-discord" name="discord" required maxlength="64" placeholder={t("join_discord_ph")} autocomplete="off" /></div>
+          <div class="field"><label for="f-ingame">{t("join_ingame")} *</label><input class="input" id="f-ingame" name="ingame" required maxlength="64" autocomplete="off" /></div>
+        </div>
+        <div class="field">
+          <span class="label">{t("join_role")} *</span>
+          <div class="chips" role="radiogroup" data-role-chips>
+            {roles.map((r) => <button type="button" class={`chip role-${r}`} aria-pressed="false" data-role={r}>{t(`role_${r}`)}</button>)}
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
+          <div class="field"><label for="f-times">{t("join_times")} *</label><input class="input" id="f-times" name="times" required maxlength="120" placeholder={t("join_times_ph")} /></div>
+        </div>
+        <div class="field"><label for="f-exp">{t("join_exp")} *</label><textarea class="textarea" id="f-exp" name="experience" required maxlength="2000" placeholder={t("join_exp_ph")}></textarea></div>
+        <div class="field"><label for="f-why">{t("join_why")}</label><textarea class="textarea" id="f-why" name="why" maxlength="2000" placeholder={t("join_why_ph")} rows="3"></textarea></div>
+        <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <label class="check"><input type="checkbox" name="consent" /> <span>{t("join_consent")}</span></label>
+        <p class="err" role="alert" hidden></p>
+        <button class="btn btn-primary" type="submit">{t("join_submit")} <Icon name="arrow" class="arrow" /></button>
+      </form>
+      <div class="done" hidden>
+        <span class="done-ico"><Icon name="check" size={26} /></span>
+        <h2>{t("join_sent_t")}</h2>
+        <p>{t("join_sent_b")}</p>
+        <a class="btn btn-primary" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> discord.gg/juiced</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const form = document.getElementById("apply") as HTMLFormElement;
+  const msgs = JSON.parse(form.dataset.msgs || "{}");
+  const err = form.querySelector<HTMLElement>(".err")!;
+  let role = "";
+  form.querySelectorAll<HTMLButtonElement>("[data-role]").forEach((b) =>
+    b.addEventListener("click", () => {
+      role = b.dataset.role || "";
+      form.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    }),
+  );
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    const fd = new FormData(form);
+    const val = (k: string) => String(fd.get(k) || "").trim();
+    const payload = {
+      discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"), times: val("times"),
+      experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
+    };
+    if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.times || !payload.experience) {
+      err.textContent = msgs.required; err.hidden = false; return;
+    }
+    if (!fd.get("consent")) { err.textContent = msgs.consent; err.hidden = false; return; }
+    const btn = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    btn.disabled = true;
+    try {
+      const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!r.ok) {
+        const d = await r.json().catch(() => null);
+        throw new Error(d?.detail || msgs.generic);
+      }
+      form.hidden = true;
+      (document.querySelector(".done") as HTMLElement).hidden = false;
+    } catch (ex) {
+      err.textContent = (ex as Error).message || msgs.generic; err.hidden = false; btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .join { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; padding-top: 72px; align-items: start; }
+  .intro { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 100px; }
+  .intro h1 { font-size: clamp(38px, 4.6vw, 56px); }
+  .intro > p { color: var(--muted); font-size: 17px; }
+  .steps { padding: 22px; margin-top: 12px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .steps h2 { font-size: 17px; }
+  .steps ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--text-2); }
+  .steps li span { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; background: var(--grad-brand); }
+  .form-wrap { padding: 32px; }
+  form { display: flex; flex-direction: column; gap: 18px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .err { color: var(--danger); font-size: 14px; font-weight: 500; }
+  form .btn { align-self: flex-start; }
+  .chip[aria-pressed="true"] { background: var(--role); border-color: var(--role); color: #fff; }
+  .done { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
+  .done-ico { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--ok); animation: pop-in 0.5s var(--ease); }
+  @keyframes pop-in { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+  .done h2 { font-size: 26px; }
+  .done p { color: var(--muted); }
+  @media (max-width: 900px) { .join { grid-template-columns: 1fr; gap: 32px; } .intro { position: static; } }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .form-wrap { padding: 22px; } }
+</style>

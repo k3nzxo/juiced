@@ -1,0 +1,138 @@
+---
+import Icon from "./Icon.astro";
+import { useT, DISCORD_INVITE, type Lang } from "../i18n";
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useT(lang);
+const roles = [
+  { id: "healer", label: t("role_healer") },
+  { id: "tank", label: t("role_tank") },
+  { id: "nameless", label: t("role_nameless") },
+  { id: "team", label: t("role_team") },
+];
+---
+<section class="hero">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="container hero-copy">
+    <span class="pill reveal"><span class="dot"></span>{t("hero_badge")}</span>
+    <h1 class="reveal" style="--d:80ms">
+      {t("hero_title_1")}<br /><span class="grad-text">{t("hero_title_2")}</span>
+    </h1>
+    <p class="lead reveal" style="--d:160ms">{t("hero_sub")}</p>
+    <div class="cta reveal" style="--d:240ms">
+      <a class="btn btn-primary" href={`/${lang}/join/`}>{t("hero_cta_join")} <Icon name="arrow" class="arrow" /></a>
+      <a class="btn btn-outline" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" /> {t("hero_cta_discord")}</a>
+    </div>
+  </div>
+
+  <div class="container stage-wrap reveal" style="--d:320ms">
+    <div class="stage">
+      <canvas class="ribbons" data-ribbons aria-hidden="true"></canvas>
+
+      <div class="float f-roles card" aria-hidden="true">
+        <div class="f-label">{t("float_roster_t")}</div>
+        <ul>
+          {roles.map((r, i) => (
+            <li class={`role-${r.id}`} style={`--i:${i}`}>
+              <span class="r-ico"><Icon name={r.id === "team" ? "users" : r.id === "tank" ? "shield" : r.id === "healer" ? "layers" : "swords"} size={15} /></span>
+              <span>{r.label}</span>
+              <span class="r-line"></span>
+            </li>
+          ))}
+        </ul>
+        <p class="f-foot">{t("float_roster_b")}</p>
+      </div>
+
+      <div class="float f-week card" aria-hidden="true">
+        <span class="f-ico"><Icon name="calendar" size={16} /></span>
+        <div>
+          <div class="f-title">{t("float_gvg_t")} <span class="tag-live">{t("float_region")}</span></div>
+          <div class="f-sub">{t("float_gvg_b")}</div>
+        </div>
+      </div>
+
+      <div class="float f-review card" aria-hidden="true">
+        <div class="f-review-head"><span class="f-badge">{t("float_review_t")}</span></div>
+        <div class="note">
+          <span class="ts">12:41</span>
+          <span class="cat">{t("vod_c_mistake")}</span>
+          <span class="bar"></span>
+        </div>
+        <div class="note">
+          <span class="ts">18:07</span>
+          <span class="cat good">{t("vod_c_good")}</span>
+          <span class="bar short"></span>
+        </div>
+        <p class="f-sub">{t("float_review_b")}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initRibbons } from "../scripts/ribbons";
+  const c = document.querySelector<HTMLCanvasElement>("[data-ribbons]");
+  if (c) initRibbons(c);
+</script>
+
+<style>
+  .hero { position: relative; padding: 72px 0 24px; overflow: hidden; }
+  .hero-grid-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px; opacity: 0.45;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  }
+  .hero-copy { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
+  h1 { font-size: clamp(40px, 6.4vw, 76px); line-height: 1.02; letter-spacing: -0.035em; max-width: 920px; }
+  .lead { max-width: 640px; font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+
+  .stage-wrap { position: relative; margin-top: 40px; }
+  .stage { position: relative; height: 560px; }
+  .ribbons { position: absolute; left: 50%; top: 0; width: min(560px, 90%); height: 100%; transform: translateX(-50%); }
+
+  .float { position: absolute; padding: 14px 16px; border-radius: 16px; box-shadow: var(--shadow); background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(8px); animation: float 7s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  .f-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .f-roles { left: 0; top: 70px; width: 250px; animation-delay: -1s; }
+  .f-roles ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .f-roles li { display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; }
+  .r-ico { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: var(--role); background: color-mix(in srgb, var(--role) 13%, transparent); border: 1px solid color-mix(in srgb, var(--role) 30%, transparent); }
+  .r-line { flex: 1; height: 2px; border-radius: 2px; background: linear-gradient(90deg, color-mix(in srgb, var(--role) 70%, transparent), transparent); transform-origin: left; animation: line 3.2s var(--ease) infinite; animation-delay: calc(var(--i) * 0.35s); }
+  @keyframes line { 0% { transform: scaleX(0.15); opacity: 0.3; } 50% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(0.15); opacity: 0.3; } }
+  .f-foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+
+  .f-week { left: 50%; top: 0; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; animation-name: float-c; }
+  @keyframes float-c { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -8px); } }
+  .f-ico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: var(--grad-brand); flex: none; }
+  .f-title { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .f-sub { font-size: 12.5px; color: var(--muted); }
+  .tag-live { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 5px; color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+
+  .f-review { right: 0; top: 150px; width: 280px; animation-delay: -3s; }
+  .f-review-head { margin-bottom: 10px; }
+  .f-badge { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 5px; color: #d61e5a; background: color-mix(in srgb, var(--c-pink) 12%, transparent); }
+  .note { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 13px; }
+  .ts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); }
+  .cat { font-size: 11.5px; font-weight: 700; color: var(--danger); }
+  .cat.good { color: var(--ok); }
+  .bar { flex: 1; height: 6px; border-radius: 4px; background: var(--surface-2); position: relative; overflow: hidden; }
+  .bar::after { content: ""; position: absolute; inset: 0; width: 70%; border-radius: 4px; background: linear-gradient(90deg, var(--border-strong), transparent); }
+  .bar.short::after { width: 45%; }
+  .f-review .f-sub { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+  @media (max-width: 980px) {
+    .stage { height: 520px; }
+    .f-roles { top: auto; bottom: 10px; left: 0; width: 220px; }
+    .f-review { top: auto; bottom: 30px; right: 0; width: 240px; }
+  }
+  @media (max-width: 640px) {
+    .hero { padding-top: 48px; }
+    .stage { height: 440px; }
+    .f-roles { display: none; }
+    .f-review { width: 220px; right: 50%; transform: translateX(50%); animation: none; bottom: 0; }
+    .f-week { top: 6px; }
+  }
+</style>

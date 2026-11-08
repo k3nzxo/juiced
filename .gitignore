@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.env
+data/
+__pycache__/
+*.pyc
+*.db

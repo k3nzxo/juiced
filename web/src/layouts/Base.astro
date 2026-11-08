@@ -1,0 +1,154 @@
+---
+import "../styles/global.css";
+import Logo from "../components/Logo.astro";
+import Icon from "../components/Icon.astro";
+import { LOCALES, useT, DISCORD_INVITE, type Lang } from "../i18n";
+
+interface Props { lang: Lang; title?: string; description?: string; page?: "home" | "team" | "join" | "app" | "privacy" | "other"; noindex?: boolean }
+const { lang, title, description, page = "other", noindex = false } = Astro.props;
+const t = useT(lang);
+const htmlLang = LOCALES.find((l) => l.code === lang)?.html ?? "en";
+const fullTitle = title ? `${title} · JUICED` : t("meta_title");
+const desc = description ?? t("meta_desc");
+
+// Pfad ohne Sprach-Präfix -> für Sprachumschalter und hreflang
+const rest = Astro.url.pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/";
+const href = (l: string) => `/${l}${rest === "/" ? "/" : rest}`;
+const nav = [
+  { id: "home", href: `/${lang}/`, label: t("nav_home") },
+  { id: "team", href: `/${lang}/team/`, label: t("nav_team") },
+  { id: "join", href: `/${lang}/join/`, label: t("nav_join") },
+];
+---
+<!doctype html>
+<html lang={htmlLang} data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#0b0a0e" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    {LOCALES.map((l) => <link rel="alternate" hreflang={l.html} href={new URL(href(l.code), Astro.site)} />)}
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <!-- Theme vor dem ersten Paint setzen (kein Aufblitzen) -->
+    <script is:inline>
+      (function () {
+        var s = null;
+        try { s = localStorage.getItem("juiced-theme"); } catch (e) {}
+        var dark = s ? s === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
+  </head>
+  <body data-page={page} data-lang={lang}>
+    <a class="skip sr-only" href="#main">{t("skip")}</a>
+    <header class="site-header" id="site-header">
+      <div class="container header-inner">
+        <a href={`/${lang}/`} class="brand" aria-label="JUICED"><Logo /></a>
+        <nav class="nav-desktop" aria-label="Main">
+          {nav.map((n) => <a href={n.href} class:list={["nav-link", { active: page === n.id }]}>{n.label}</a>)}
+        </nav>
+        <div class="header-actions">
+          <div class="lang-menu" data-lang-menu>
+            <button class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label={t("lang_label")} data-lang-btn>
+              <Icon name="globe" /><span class="lang-code">{lang.toUpperCase()}</span>
+            </button>
+            <ul class="lang-list" role="menu" hidden>
+              {LOCALES.map((l) => (
+                <li role="none"><a role="menuitem" href={href(l.code)} data-set-lang={l.code} aria-current={l.code === lang ? "true" : undefined}>{l.name}</a></li>
+              ))}
+            </ul>
+          </div>
+          <button class="icon-btn" data-theme-toggle aria-label={t("theme_toggle")}>
+            <span class="i-sun"><Icon name="sun" /></span><span class="i-moon"><Icon name="moon" /></span>
+          </button>
+          <a class="icon-btn hide-sm" href={DISCORD_INVITE} target="_blank" rel="noopener" aria-label="Discord"><Icon name="discord" /></a>
+          <a class="btn btn-outline btn-sm hide-sm" href={`/${lang}/app/`} data-account-link>
+            <span data-account-label>{t("nav_members")}</span>
+          </a>
+          <button class="icon-btn show-sm" data-menu-btn aria-expanded="false" aria-label={t("nav_menu")}><Icon name="menu" /></button>
+        </div>
+      </div>
+      <div class="mobile-panel" hidden data-mobile-panel>
+        <div class="container">
+          {nav.map((n) => <a href={n.href} class="m-link">{n.label}</a>)}
+          <a href={`/${lang}/app/`} class="m-link">{t("nav_members")}</a>
+          <a href={DISCORD_INVITE} target="_blank" rel="noopener" class="m-link">Discord</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main"><slot /></main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <Logo />
+          <p class="muted">{t("footer_tagline")}</p>
+        </div>
+        <nav class="footer-links" aria-label="Footer">
+          {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+          <a href={`/${lang}/app/`}>{t("nav_members")}</a>
+          <a href={DISCORD_INVITE} target="_blank" rel="noopener">Discord</a>
+          <a href={`/${lang}/privacy/`}>{t("footer_privacy")}</a>
+        </nav>
+      </div>
+      <div class="container footer-bottom">
+        <p>© {new Date().getFullYear()} JUICED</p>
+        <p class="legal">{t("footer_legal")}</p>
+      </div>
+    </footer>
+    <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+
+    <script>
+      import { initChrome } from "../scripts/chrome";
+      initChrome();
+    </script>
+  </body>
+</html>
+
+<style>
+  .site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: saturate(160%) blur(14px); -webkit-backdrop-filter: saturate(160%) blur(14px); border-bottom: 1px solid transparent; transition: border-color 0.3s, background-color 0.3s; }
+  .site-header.scrolled { border-bottom-color: var(--border); }
+  .header-inner { display: flex; align-items: center; gap: 24px; height: 68px; }
+  .brand { flex: none; }
+  .nav-desktop { display: flex; gap: 4px; margin-left: 12px; }
+  .nav-link { padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 500; color: var(--muted); transition: color 0.15s, background-color 0.15s; }
+  .nav-link:hover { color: var(--text); background: var(--surface-2); }
+  .nav-link.active { color: var(--text); }
+  .header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .icon-btn { height: 36px; min-width: 36px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; color: var(--muted); transition: color 0.15s, background-color 0.15s; }
+  .icon-btn:hover { color: var(--text); background: var(--surface-2); }
+  .lang-code { font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; }
+  :global([data-theme="dark"]) .i-sun, :global([data-theme="light"]) .i-moon { display: none; }
+  .lang-menu { position: relative; }
+  .lang-list { position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; list-style: none; margin: 0; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); animation: pop 0.18s var(--ease); }
+  .lang-list a { display: block; padding: 8px 10px; border-radius: 8px; font-size: 14px; color: var(--text-2); }
+  .lang-list a:hover { background: var(--surface-2); color: var(--text); }
+  .lang-list a[aria-current="true"] { color: var(--text); font-weight: 600; }
+  @keyframes pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .show-sm { display: none; }
+  .mobile-panel { border-top: 1px solid var(--border); background: var(--bg); }
+  .mobile-panel .container { display: flex; flex-direction: column; padding-top: 8px; padding-bottom: 16px; }
+  .m-link { padding: 12px 4px; font-size: 17px; font-weight: 500; border-bottom: 1px solid var(--border); }
+  @media (max-width: 820px) {
+    .nav-desktop, .hide-sm { display: none !important; }
+    .show-sm { display: inline-flex; }
+  }
+
+  .site-footer { margin-top: 120px; border-top: 1px solid var(--border); background: var(--bg-tint); }
+  .footer-grid { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; padding-top: 48px; padding-bottom: 32px; }
+  .footer-brand { display: flex; flex-direction: column; gap: 10px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 8px 24px; align-content: flex-start; font-size: 14.5px; color: var(--text-2); }
+  .footer-links a:hover { color: var(--text); }
+  .footer-bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 20px; padding-bottom: 32px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .legal { max-width: 640px; }
+  .skip:focus { position: fixed; left: 12px; top: 12px; width: auto; height: auto; clip: auto; padding: 10px 14px; background: var(--surface); border-radius: 8px; z-index: 100; }
+</style>

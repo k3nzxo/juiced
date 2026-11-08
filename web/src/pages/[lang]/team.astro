@@ -1,0 +1,64 @@
+---
+import Base from "../../layouts/Base.astro";
+import { useT, langPaths, type Lang } from "../../i18n";
+
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const t = useT(lang);
+const labels = {
+  leader: t("rank_leader"), vice: t("rank_vice"), management: t("rank_management"), coach: t("rank_coach"), member: t("rank_member"),
+  role_healer: t("role_healer"), role_tank: t("role_tank"), role_nameless: t("role_nameless"),
+  leadership: t("team_leadership"), coaches: t("team_coaches"), members: t("team_members"), empty: t("team_empty"), count: t("team_count"),
+};
+---
+<Base lang={lang} page="team" title={t("team_title")} description={t("team_sub")}>
+  <section class="container page-head">
+    <span class="eyebrow reveal">JUICED</span>
+    <h1 class="reveal" style="--d:60ms">{t("team_title")}</h1>
+    <p class="reveal" style="--d:120ms">{t("team_sub")}</p>
+    <p class="count reveal" style="--d:180ms" data-count></p>
+  </section>
+  <section class="container" data-roster data-labels={JSON.stringify(labels)}>
+    <div class="grid">{[0, 1, 2, 3, 4, 5, 6, 7].map(() => <div class="person skeleton"></div>)}</div>
+  </section>
+</Base>
+
+<script>
+  import { fetchTeam, personCard, esc } from "../../scripts/team";
+  const root = document.querySelector<HTMLElement>("[data-roster]")!;
+  const L = JSON.parse(root.dataset.labels || "{}");
+  fetchTeam().then((all) => {
+    const groups = [
+      { title: L.leadership, items: all.filter((m) => ["leader", "vice", "management"].includes(m.rank)) },
+      { title: L.coaches, items: all.filter((m) => m.rank === "coach") },
+      { title: L.members, items: all.filter((m) => m.rank === "member") },
+    ].filter((g) => g.items.length);
+    const count = document.querySelector<HTMLElement>("[data-count]");
+    if (count && all.length) count.textContent = L.count.replace("{n}", String(all.length));
+    if (!groups.length) { root.innerHTML = `<p class="lead-empty">${esc(L.empty)}</p>`; return; }
+    root.innerHTML = groups.map((g) => `
+      <h2 class="group-title">${esc(g.title)} <span>${g.items.length}</span></h2>
+      <div class="grid">${g.items.map((m) => personCard(m, L)).join("")}</div>`).join("");
+  }).catch(() => { root.innerHTML = `<p class="lead-empty">${esc(L.empty)}</p>`; });
+</script>
+
+<style>
+  .page-head { padding-top: 72px; padding-bottom: 40px; display: flex; flex-direction: column; gap: 12px; }
+  .page-head h1 { font-size: clamp(40px, 5vw, 60px); }
+  .page-head p { color: var(--muted); font-size: 17px; max-width: 620px; }
+  .count { font-size: 14px !important; font-weight: 600; color: var(--text-2) !important; }
+  :global(.grid) { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  :global(.group-title) { font-size: 22px; margin: 40px 0 16px; display: flex; align-items: center; gap: 10px; }
+  :global(.group-title span) { font-size: 13px; font-family: var(--font-sans); font-weight: 600; color: var(--muted); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); }
+  :global(.person) { border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 12px; min-height: 170px; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
+  :global(.person:hover) { transform: translateY(-3px); box-shadow: var(--shadow); }
+  :global(.person img), :global(.person .avatar-fallback) { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+  :global(.person .avatar-fallback) { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff; background: var(--grad-brand); }
+  :global(.person .p-name) { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+  :global(.person .p-sub) { font-size: 13.5px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+  :global(.person.skeleton) { background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  :global(.lead-empty) { padding: 40px; text-align: center; color: var(--muted); border: 1px dashed var(--border-strong); border-radius: var(--r-lg); }
+  @media (max-width: 980px) { :global(.grid) { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { :global(.grid) { grid-template-columns: 1fr; } }
+</style>

@@ -1,0 +1,56 @@
+{
+	admin off
+	# TLS macht der vorgeschaltete Caddy (archiv-Stack); dessen IP ist privat -> X-Forwarded-* vertrauen
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: https://cdn.discordapp.com; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://discord.com"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy api:8000 {
+			flush_interval -1
+		}
+	}
+
+	# VOD-Dateien: Zugriff nur mit gültiger, signierter URL (Prüfung durch die API)
+	handle /vods/* {
+		forward_auth api:8000 {
+			uri /api/vods/media-auth
+		}
+		header Cache-Control "private, max-age=21600"
+		root * /srv
+		file_server
+	}
+
+	handle {
+		root * /srv/site
+		@assets path /_astro/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		@html path *.html */
+		header @html Cache-Control "no-cache"
+		try_files {path} {path}/index.html {path}.html
+		file_server
+	}
+
+	handle_errors {
+		@notfound expression {err.status_code} == 404
+		handle @notfound {
+			root * /srv/site
+			rewrite * /404.html
+			file_server
+		}
+	}
+}

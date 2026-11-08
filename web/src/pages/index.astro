@@ -1,0 +1,30 @@
+---
+// "/" -> bevorzugte Sprache (gespeichert oder Browser), sonst Englisch
+import { LOCALES } from "../i18n";
+const codes = LOCALES.map((l) => l.code);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JUICED</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://juiced.team/en/" />
+    <noscript><meta http-equiv="refresh" content="0; url=/en/" /></noscript>
+    <script is:inline define:vars={{ codes }}>
+      var pick = null;
+      try { pick = localStorage.getItem("juiced-lang"); } catch (e) {}
+      if (!pick || codes.indexOf(pick) < 0) {
+        var langs = navigator.languages || [navigator.language || "en"];
+        for (var i = 0; i < langs.length && !pick; i++) {
+          var c = String(langs[i]).slice(0, 2).toLowerCase();
+          if (codes.indexOf(c) >= 0) pick = c;
+        }
+      }
+      location.replace("/" + (pick || "en") + "/" + location.hash);
+    </script>
+    <style>html{background:#0b0a0e}@media (prefers-color-scheme: light){html{background:#fbfaf8}}</style>
+  </head>
+  <body></body>
+</html>
