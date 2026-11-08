@@ -40,14 +40,13 @@ export function personCard(m: PublicMember, labels: Record<string, string>): str
   const wt = [...(m.weapons || []).map((w) => labels["weapon_" + w] || w), ...(m.weapon_other ? [m.weapon_other] : [])].join(", ");
   return `<article class="person">
     ${avatar(m)}
-    <div>
-      <div class="p-name">${esc(m.display_name)}</div>
-      <div class="p-sub">
-        <span class="badge badge-${esc(m.rank)}">${esc(labels[m.rank] || m.rank)}</span>
+    <div class="p-info">
+      <div class="p-name"><span>${esc(m.display_name)}</span>${m.country ? flag(m.country) : ""}</div>
+      <div class="p-sub"><span class="badge badge-${esc(m.rank)}">${esc(labels[m.rank] || m.rank)}</span></div>
+      ${roleLabel || wt ? `<div class="p-role">
         ${roleLabel ? `<span class="role-tag role-${esc(m.main_role)}">${esc(roleLabel)}</span>` : ""}
-        ${wt ? `<span class="weapons">${esc(wt)}</span>` : ""}
-        ${m.country ? flag(m.country) : ""}
-      </div>
+        ${wt ? `<span class="weapons">${roleLabel ? "· " : ""}${esc(wt)}</span>` : ""}
+      </div>` : ""}
     </div>
   </article>`;
 }

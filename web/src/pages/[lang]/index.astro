@@ -186,6 +186,15 @@ const tiles = [
     /* Wochenvorschau: nur Tage mit Terminen, ab heute */
     :global([data-home-week] .day.empty), :global([data-home-week] .day.past) { display: none; }
   }
+
+  /* Karte: Name + Flagge, darunter Rang, darunter Rolle · Waffen */
+  :global(.person .p-info) { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  :global(.person .p-name) { display: flex; align-items: center; gap: 8px; }
+  :global(.person .p-name span) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :global(.person .p-name .flag) { flex: none; }
+  :global(.person .p-sub) { margin-top: 0; }
+  :global(.person .p-role) { display: flex; align-items: center; gap: 6px; font-size: 13.5px; min-width: 0; }
+  :global(.person .p-role .weapons) { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 <style>
   :global(.person:not(.skeleton)) { animation: person-in 0.45s var(--ease) both; }
