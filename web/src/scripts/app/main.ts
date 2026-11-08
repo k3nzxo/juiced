@@ -186,10 +186,11 @@ async function viewDashboard(view: HTMLElement) {
       <section class="card dash-card dash-next">
         <header><h2>${esc(T("dash_next"))}</h2><button class="btn btn-ghost btn-sm" data-week aria-expanded="false">${icon.calendar} ${esc(T("dash_week"))}</button></header>
         <div id="next-one">${loading}</div>
+        <div id="dash-ann"></div>
       </section>
     </div>
     <div id="next-ev" hidden></div>
-    <h2 class="v-sub">${esc(T("ann_title"))}</h2><div id="ann">${loading}</div>
+    <h2 class="v-sub" id="ann-head">${esc(T("ann_title"))}</h2><div id="ann">${loading}</div>
     <h2 class="v-sub v-sub-link"><span>${esc(T("app_nav_members"))}</span><a href="#/roster">${esc(T("mem_back"))} →</a></h2><div id="dash-mem">${loading}</div>`;
   loadNextOne(view.querySelector("#next-one")!);
   const week = view.querySelector<HTMLElement>("#next-ev")!;
@@ -209,6 +210,15 @@ async function viewDashboard(view: HTMLElement) {
   view.querySelector("[data-new]")?.addEventListener("click", () => editAnnouncement(null, () => viewDashboard(view)));
   try {
     const list = await api<any[]>("/announcements");
+    // neueste (bzw. angepinnte) Ankündigung als Vorschau neben "Als Nächstes"
+    const top = list[0];
+    const prev = view.querySelector<HTMLElement>("#dash-ann");
+    if (prev && top) {
+      prev.innerHTML = `<button type="button" class="dash-ann">
+        <span class="da-label">${top.pinned ? icon.pin : ""}${esc(T("ann_title"))}<em>${esc(timeAgo(top.created_at))}</em></span>
+        <strong>${esc(top.title)}</strong><span class="da-body">${esc(top.body)}</span></button>`;
+      prev.querySelector("button")!.addEventListener("click", () => view.querySelector("#ann-head")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
     const el = view.querySelector("#ann")!;
     if (!list.length) { el.innerHTML = `<p class="empty">${esc(T("ann_empty"))}</p>`; return; }
     el.innerHTML = list.map((a) => `<article class="ann card ${a.pinned ? "pinned" : ""}" data-id="${a.id}">

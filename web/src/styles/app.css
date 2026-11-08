@@ -491,3 +491,12 @@ main.vod-main, .vod-main { max-width: none; }
 .mc-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mc-empty { font-style: italic; color: var(--faint); }
 .mc-build { min-height: 28px; } .mc-build .path-tag { font-size: 12.5px; }
+/* Übersicht: neueste Ankündigung unter "Als Nächstes" */
+.dash-ann { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 12px 14px; text-align: left; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: inherit; transition: border-color .15s, background-color .15s; }
+.dash-ann:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); background: var(--surface-2); }
+.da-label { display: flex; align-items: center; gap: 6px; width: 100%; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.da-label svg { width: 13px; height: 13px; color: var(--accent); }
+.da-label em { margin-left: auto; font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.dash-ann strong { font-size: 14.5px; }
+.da-body { font-size: 13px; color: var(--text-2); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+#ann-head { scroll-margin-top: 90px; }
