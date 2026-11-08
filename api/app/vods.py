@@ -292,9 +292,15 @@ def _cleanup_stale(db: Session):
 
 # ---------------------------------------------------------------- Verarbeitung (ffmpeg)
 
+# niedrige Priorität für ffmpeg/ffprobe: "nice" = nur übrige Rechenzeit, "ionice -c3" = nur übrige Plattenzeit
+# (beim Remux großer VODs werden viele GB auf derselben Platte wie die Datenbank gelesen und geschrieben)
+_LOW_PRIO = (["ionice", "-c3"] if shutil.which("ionice") else []) + (["nice", "-n", "15"] if shutil.which("nice") else [])
+
+
+
 def _probe(path: str) -> dict:
     out = subprocess.run(
-        ["nice", "-n", "15", "ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", path],
+        [*_LOW_PRIO, "ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", path],
         capture_output=True, text=True, timeout=120,
     )
     if out.returncode != 0:
@@ -303,8 +309,7 @@ def _probe(path: str) -> dict:
 
 
 def _run_ffmpeg(args: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
-    # "nice": ffmpeg bekommt nur übrige Rechenzeit, die Website bleibt flüssig
-    return subprocess.run(["nice", "-n", "15", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args],
+    return subprocess.run([*_LOW_PRIO, "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args],
                           capture_output=True, text=True, timeout=timeout)
 
 
