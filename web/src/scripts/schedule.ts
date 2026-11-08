@@ -33,19 +33,9 @@ export const timeFmt = (lang: string) => new Intl.DateTimeFormat(locale(lang), {
 export const dayFmt = (lang: string, long = false) => new Intl.DateTimeFormat(locale(lang), { weekday: long ? "long" : "short" });
 export const dateFmt = (lang: string) => new Intl.DateTimeFormat(locale(lang), { day: "numeric", month: "short" });
 
-/** Kompakte Uhrzeit: bei 12h-Format volle Stunden ohne ":00" ("9 PM"), sonst normal ("21:00"). */
+/** Uhrzeit immer mit Minuten ("7:00 PM", "19:00"); AM/PM kann für Zeiträume weggelassen werden. */
 function compact(parts: Intl.DateTimeFormatPart[], withPeriod: boolean): string {
-  const hasPeriod = parts.some((x) => x.type === "dayPeriod");
-  const zero = hasPeriod && parts.find((x) => x.type === "minute")?.value === "00";
-  let out = "";
-  for (let k = 0; k < parts.length; k++) {
-    const x = parts[k];
-    if (x.type === "dayPeriod" && !withPeriod) continue;
-    if (zero && x.type === "minute") continue;
-    if (zero && x.type === "literal" && parts[k + 1]?.type === "minute") continue;
-    out += x.value;
-  }
-  return out.trim();
+  return parts.filter((x) => withPeriod || x.type !== "dayPeriod").map((x) => x.value).join("").trim();
 }
 
 export function timeShort(d: Date, lang: string): string {

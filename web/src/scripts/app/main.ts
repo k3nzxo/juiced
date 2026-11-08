@@ -430,7 +430,7 @@ async function loadNextEvents(el: HTMLElement) {
 
   const dayLabel = (d: Date) => {
     const diff = Math.round((startOf(d).getTime() - startOf(new Date()).getTime()) / 86400000);
-    return diff <= 1 ? cap(rel.format(diff, "day")) : d.toLocaleDateString(loc(), { weekday: "short" }).replace(".", "");
+    return diff <= 1 ? cap(rel.format(diff, "day")) : "";
   };
   const countdown = (e: any) => {
     const ms = new Date(e.starts_at).getTime() - Date.now();
@@ -440,13 +440,9 @@ async function loadNextEvents(el: HTMLElement) {
     return h < 48 ? relShort.format(h, "hour") : relShort.format(Math.round(h / 24), "day");
   };
 
-  el.innerHTML = `<div class="agenda">${groups.map((g) => `
-    <section class="ag-day">
-      <div class="ag-date">
-        <span class="ag-wd">${esc(dayLabel(g.date))}</span>
-        <span class="ag-num">${g.date.getDate()}</span>
-        <span class="ag-mon">${esc(g.date.toLocaleDateString(loc(), { month: "short" }).replace(".", ""))}</span>
-      </div>
+  el.innerHTML = `<div class="agenda">${groups.map((g, gi) => `
+    <section class="ag-day ${gi === 0 && dayLabel(g.date) === cap(rel.format(0, "day")) ? "is-today" : ""}">
+      <h3 class="ag-head"><span>${esc(dayLabel(g.date))}</span>${esc(g.date.toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" }))}</h3>
       <div class="ag-items">${g.items.map((e) => {
         const s = new Date(e.starts_at), en = new Date(e.ends_at);
         const isLive = live(e), isNext = !isLive && e === next;
