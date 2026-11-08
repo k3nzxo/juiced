@@ -3,13 +3,13 @@
 // Geschwindigkeit hängt an der echten Zeit, nicht an der Bildrate (60 Hz und 144 Hz sehen gleich aus).
 
 const SEG = 3.2;        // Abstand der gespeicherten Spurpunkte in px
-const TL = 26;          // Spurpunkte pro Linie (≈ 80 px Spurlänge)
+const TL = 44;          // max. Spurpunkte pro Linie (nahe Linien ≈ 140 px, ferne kürzer)
 const BASE = 2.1;       // Grundgeschwindigkeit in px pro 1/60 s
 const R = 160;          // Wirkradius der Maus
 
 type P = {
   x: number; y: number; vx: number; vy: number; s: number;
-  life: number; age: number; dying: boolean; c: number; hot: number;
+  life: number; age: number; dying: boolean; c: number; hot: number; z: number; tl: number;
   px: Float32Array; py: Float32Array; n: number;   // Spur, [0] = ältester Punkt
 };
 
@@ -41,7 +41,9 @@ export function initWind(canvas: HTMLCanvasElement) {
     p.x = anywhere ? Math.random() * w : -20 - Math.random() * 40;
     p.y = Math.random() * h;
     p.vx = 0; p.vy = 0; p.hot = 0; p.age = 0; p.dying = false;
-    p.s = 1 + Math.random() * 0.45;
+    p.z = Math.pow(Math.random(), 1.25);      // Tiefe: mehr ferne als nahe Linien
+    p.s = (0.55 + p.z * 0.9) * (0.9 + Math.random() * 0.2);
+    p.tl = Math.round(14 + p.z * (TL - 14));
     p.life = 4 + Math.random() * 6;           // Sekunden
     p.c = Math.random() < 0.92 ? 0 : 1;
     if (!p.px) { p.px = new Float32Array(TL); p.py = new Float32Array(TL); }
@@ -54,18 +56,25 @@ export function initWind(canvas: HTMLCanvasElement) {
     w = r.width; h = r.height;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.min(380, Math.round((w * h) / 2800));
+    const n = Math.min(400, Math.round((w * h) / 2600));
     parts = Array.from({ length: n }, () => { const p = {} as P; spawn(p, true); p.age = 1; return p; });
   };
 
-  // Ruhiges Strömungsfeld: überwiegend nach rechts, sanft wellend
+  // Strömungsfeld: weite, geschwungene Bögen, die sich langsam verschieben
   const angle = (x: number, y: number) =>
-    -0.06
-    + 0.38 * Math.sin(x / 640 + t * 0.22) * Math.cos(y / 400 - t * 0.17)
-    + 0.14 * Math.sin((x + y) / 950 + t * 0.35);
+    -0.05
+    + 0.85 * Math.sin(x / 520 + t * 0.3) * Math.cos(y / 330 - t * 0.22)
+    + 0.3 * Math.sin((x - y) / 700 + t * 0.5);
+
+  // Windböen: ein breites Band fegt alle paar Sekunden von links nach rechts
+  let gust = -9999, gustNext = 2.5;
+  const GUST_W = 280;
 
   const step = (dt: number) => {
     t += 0.004 * dt;
+    gustNext -= dt / 60;
+    if (gustNext <= 0 && gust < -1000) { gust = -GUST_W; gustNext = 5 + Math.random() * 4; }
+    if (gust > -1000) { gust += 11 * dt; if (gust > w + GUST_W) gust = -9999; }
     // Maus weich nachführen
     const follow = 1 - Math.pow(0.75, dt);
     mouse.sx += (mouse.x - mouse.sx) * follow;
@@ -85,7 +94,11 @@ export function initWind(canvas: HTMLCanvasElement) {
         continue;
       }
       const a = angle(p.x, p.y);
-      let tx = Math.cos(a) * p.s * BASE, ty = Math.sin(a) * p.s * BASE;
+      // Böe: Linien im Band werden schneller und leuchten kurz auf
+      const gd = gust > -1000 ? (p.x - gust) / GUST_W : 9;
+      const g = Math.abs(gd) < 1.5 ? Math.exp(-gd * gd * 2) : 0;
+      const boost = 1 + g * 1.4;
+      let tx = Math.cos(a) * p.s * BASE * boost, ty = Math.sin(a) * p.s * BASE * boost;
       let wgt = 0;
       if (mouse.k > 0.01) {
         const dx = p.x - mouse.sx, dy = p.y - mouse.sy;
@@ -100,14 +113,14 @@ export function initWind(canvas: HTMLCanvasElement) {
       }
       p.vx += (tx - p.vx) * ease;
       p.vy += (ty - p.vy) * ease;
-      p.hot += (Math.min(1, wgt * 2.2) - p.hot) * (1 - Math.pow(0.88, dt));
+      p.hot += (Math.min(1, wgt * 2.2 + g * 0.7) - p.hot) * (1 - Math.pow(0.88, dt));
       p.x += p.vx * dt; p.y += p.vy * dt;
 
       // Spur: neuer Punkt erst nach SEG px, der vorderste Punkt folgt immer live
       const li = p.n - 1;
       if (Math.hypot(p.x - p.px[li > 0 ? li - 1 : 0], p.y - p.py[li > 0 ? li - 1 : 0]) >= SEG || p.n === 1) {
-        if (p.n < TL) p.n++;
-        else { p.px.copyWithin(0, 1); p.py.copyWithin(0, 1); }
+        if (p.n < p.tl) p.n++;
+        else { p.px.copyWithin(0, 1, p.n); p.py.copyWithin(0, 1, p.n); }
       }
       p.px[p.n - 1] = p.x; p.py[p.n - 1] = p.y;
 
@@ -124,7 +137,8 @@ export function initWind(canvas: HTMLCanvasElement) {
       if (p.n < 3) continue;
       const [r, g, b] = rgb[p.c];
       const fadeIn = Math.min(1, p.age / 0.6);
-      const base = (p.c === 0 ? 0.5 : 0.18) + p.hot * (p.c === 0 ? 0.45 : 0.2);
+      const depth = 0.45 + p.z * 0.55;
+      const base = (p.c === 0 ? 0.7 : 0.22) * depth + p.hot * (p.c === 0 ? 0.45 : 0.2);
       const alpha = base * fadeIn;
       if (alpha < 0.01) continue;
       const x0 = p.px[0], y0 = p.py[0], x1 = p.px[p.n - 1], y1 = p.py[p.n - 1];
@@ -132,7 +146,7 @@ export function initWind(canvas: HTMLCanvasElement) {
       grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
       grad.addColorStop(1, `rgba(${r},${g},${b},${alpha.toFixed(3)})`);
       ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.15 + p.hot * 0.55;
+      ctx.lineWidth = 0.7 + p.z * 1.1 + p.hot * 0.5;
       // glatte Kurve durch die Mittelpunkte der Spur
       ctx.beginPath();
       ctx.moveTo(x0, y0);
