@@ -82,7 +82,7 @@ const pl: Partial<Dict> = {
   vod_hotkeys: "Spacja odtwórz/pauza · J / L ±5 s · , / . klatka · N nowa notatka", vod_leave_warn: "Trwa wysyłanie. Mimo to wyjść?",
   vod_pin: "Zachowaj", vod_unpin: "Zachowane", vod_pinned_toast: "Zachowane — nie zostanie usunięte automatycznie", vod_unpinned_toast: "Znów będzie usuwane automatycznie",
   vod_expires_in: "usunięcie za {n} dni", vod_expires_today: "usunięcie dziś",
-  vod_retention_hint: "VOD są usuwane po {n} dniach, chyba że zostaną zachowane. Maks. {m} VOD na członka.",
+  vod_retention_hint: "VOD są usuwane po {n} dniach, chyba że zostaną zachowane.",
   vod_storage_down: "Magazyn VOD jest teraz niepodłączony — wysyłanie wstrzymane.",
 };
 export default pl;

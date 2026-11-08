@@ -82,7 +82,7 @@ const pt: Partial<Dict> = {
   vod_hotkeys: "Espaço play/pausa · J / L ±5 s · , / . quadro a quadro · N nova nota", vod_leave_warn: "Há um envio em andamento. Sair mesmo assim?",
   vod_pin: "Manter", vod_unpin: "Mantido", vod_pinned_toast: "Mantido — não será apagado automaticamente", vod_unpinned_toast: "Será apagado automaticamente de novo",
   vod_expires_in: "apaga em {n} d", vod_expires_today: "apaga hoje",
-  vod_retention_hint: "VODs são apagados após {n} dias, a menos que sejam mantidos. Máx. {m} VODs por membro.",
+  vod_retention_hint: "VODs são apagados após {n} dias, a menos que sejam mantidos.",
   vod_storage_down: "O armazenamento de VODs não está conectado — envios pausados.",
 };
 export default pt;

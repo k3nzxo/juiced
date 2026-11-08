@@ -83,7 +83,7 @@ const fr: Partial<Dict> = {
   vod_hotkeys: "Espace lecture/pause · J / L ±5 s · , / . image par image · N nouvelle note", vod_leave_warn: "Un envoi est en cours. Quitter quand même ?",
   vod_pin: "Garder", vod_unpin: "Gardée", vod_pinned_toast: "Gardée — ne sera pas supprimée automatiquement", vod_unpinned_toast: "Sera de nouveau supprimée automatiquement",
   vod_expires_in: "supprimée dans {n} j", vod_expires_today: "supprimée aujourd'hui",
-  vod_retention_hint: "Les VOD sont supprimées après {n} jours sauf si elles sont gardées. Max. {m} VOD par membre.",
+  vod_retention_hint: "Les VOD sont supprimées après {n} jours sauf si elles sont gardées.",
   vod_storage_down: "Le stockage VOD n'est pas connecté — les envois sont en pause.",
 };
 export default fr;

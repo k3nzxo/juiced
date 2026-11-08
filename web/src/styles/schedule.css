@@ -2,7 +2,7 @@
 .kind-gvg { --k: var(--c-pink); }
 .kind-scrim { --k: var(--c-violet); }
 .kind-ingame { --k: var(--c-cyan); }
-.kind-friday { --k: #65a30d; }
+.kind-friday { --k: var(--c-lime); }
 .kind-other { --k: var(--faint); }
 
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }

@@ -60,7 +60,7 @@ class ApplicationIn(BaseModel):
     ingame: str
     main_role: str
     country: str
-    times: str
+    times: Optional[str] = None
     experience: str
     why: Optional[str] = None
     lang: Optional[str] = None
@@ -76,11 +76,11 @@ def apply(payload: ApplicationIn, request: Request, db: DbSession = Depends(get_
     if payload.website:  # Bot -> so tun, als wäre alles gut
         return {"ok": True}
     fields = dict(discord=clean(payload.discord, 64), ingame=clean(payload.ingame, 64), country=clean(payload.country, 64),
-                  times=clean(payload.times, 120), experience=clean(payload.experience, 2000))
+                  experience=clean(payload.experience, 2000))
     platforms = [p for p in models.PLATFORMS if p in (payload.platforms or [])]
     if not all(fields.values()) or payload.main_role not in models.MAIN_ROLES or not platforms:
         raise HTTPException(status_code=400, detail="Missing fields")
-    a = models.Application(**fields, main_role=payload.main_role, why=clean(payload.why, 2000),
+    a = models.Application(**fields, times=clean(payload.times, 120) or "", main_role=payload.main_role, why=clean(payload.why, 2000),
                            lang=payload.lang if payload.lang in LANGS else None,
                            platforms=",".join(platforms), vod_links=json.dumps(clean_links(payload.vod_links)))
     db.add(a)

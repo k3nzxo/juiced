@@ -83,7 +83,7 @@ const tr: Partial<Dict> = {
   vod_hotkeys: "Boşluk oynat/durdur · J / L ±5 sn · , / . kare kare · N yeni not", vod_leave_warn: "Bir yükleme sürüyor. Yine de çıkılsın mı?",
   vod_pin: "Sakla", vod_unpin: "Saklandı", vod_pinned_toast: "Saklandı — otomatik silinmeyecek", vod_unpinned_toast: "Yeniden otomatik silinecek",
   vod_expires_in: "{n} g sonra silinir", vod_expires_today: "bugün silinir",
-  vod_retention_hint: "VOD'lar saklanmadıkça {n} gün sonra silinir. Üye başına en fazla {m} VOD.",
+  vod_retention_hint: "VOD'lar saklanmadıkça {n} gün sonra silinir.",
   vod_storage_down: "VOD depolaması şu an bağlı değil — yüklemeler durduruldu.",
 };
 export default tr;

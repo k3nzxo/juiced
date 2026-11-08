@@ -2,7 +2,7 @@ import type { Dict } from "./en";
 
 const de: Partial<Dict> = {
   meta_title: "JUICED — EUW-Gilde · Where Winds Meet",
-  meta_desc: "JUICED ist eine EUW-Gilde in Where Winds Meet: GvG, Custom Games gegen andere Gilden, Ingame-Events, Friday Nights und VOD-Reviews mit Rollen-Coaches.",
+  meta_desc: "JUICED ist eine EUW-Gilde in Where Winds Meet: GvG, Custom Games gegen andere Gilden, Ingame- und Community-Events und VOD-Reviews mit Rollen-Coaches.",
   nav_home: "Start", nav_team: "Team", nav_join: "Bewerben", nav_members: "Mitgliederbereich", nav_login: "Anmelden", nav_logout: "Abmelden",
   nav_discord: "Discord", nav_menu: "Menü", theme_toggle: "Hell / Dunkel umschalten", lang_label: "Sprache", skip: "Zum Inhalt springen",
 
@@ -112,7 +112,7 @@ const de: Partial<Dict> = {
   vod_leave_warn: "Ein Upload läuft noch. Trotzdem verlassen?",
   vod_pin: "Behalten", vod_unpin: "Behalten ✓", vod_pinned_toast: "Behalten — wird nicht automatisch gelöscht", vod_unpinned_toast: "Wird wieder automatisch gelöscht",
   vod_expires_in: "weg in {n} T.", vod_expires_today: "wird heute gelöscht",
-  vod_retention_hint: "VODs werden nach {n} Tagen gelöscht, außer sie werden behalten. Max. {m} VODs pro Mitglied gleichzeitig.",
+  vod_retention_hint: "VODs werden nach {n} Tagen gelöscht, außer sie werden behalten.",
   vod_storage_down: "Der VOD-Speicher ist gerade nicht verbunden — Uploads sind pausiert.",
 };
 

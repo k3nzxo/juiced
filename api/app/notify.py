@@ -67,7 +67,6 @@ def application_webhook(a) -> None:
         {"name": "In-game", "value": a.ingame[:100], "inline": True},
         {"name": "Role", "value": a.main_role, "inline": True},
         {"name": "Country", "value": a.country[:100], "inline": True},
-        {"name": "Availability", "value": a.times[:200], "inline": True},
         {"name": "Experience", "value": a.experience[:1000] or "—"},
     ]
     if a.why:

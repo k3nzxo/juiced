@@ -20,7 +20,7 @@ const VOD_COACH_ROLES = ["healer", "tank", "nameless"];
 const vodState = { list: null, filter: "", uploads: {}, pollTimer: null, keyHandler: null, catFilter: "all", roleFilter: "all", me: null };
 
 function vodIsCoach() { return vodState.me && (vodState.me.level === "coach" || vodState.me.level === "admin"); }
-function vodUploadRoles() { return vodIsCoach() ? [...VOD_COACH_ROLES, "team"] : VOD_COACH_ROLES; }
+function vodUploadRoles() { return VOD_COACH_ROLES; }
 function vodRoleBadge(r) { return r ? `<span class="vod-role vod-role-${escapeHtml(r)}">${escapeHtml(vt("role_" + r))}</span>` : ""; }
 function vodRoleChips(id, selected) {
   return `<div class="vod-chip-row" id="${id}">${vodUploadRoles().map(r =>
@@ -102,7 +102,7 @@ async function renderVodList() {
         <div class="vod-hint" id="vod-retention-hint" style="margin:-0.4rem 0 1rem;"></div>
         <div id="vod-upload-progress"></div>
         <div class="vod-chip-row" id="vod-role-filter" style="margin-bottom:1rem;">
-          ${["all", ...VOD_COACH_ROLES, "team"].map(r => `<button class="cat-tab ${vodState.roleFilter === r ? "active" : ""}" data-rf="${r}">${vt("role_" + r)}</button>`).join("")}
+          ${["all", ...VOD_COACH_ROLES].map(r => `<button class="cat-tab ${vodState.roleFilter === r ? "active" : ""}" data-rf="${r}">${vt("role_" + r)}</button>`).join("")}
         </div>
         <div id="vod-list"><div class="loader"><span class="spinner"></span></div></div>
     </div>`;

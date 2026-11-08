@@ -83,7 +83,7 @@ const ru: Partial<Dict> = {
   vod_hotkeys: "Пробел — пауза · J / L ±5 с · , / . по кадрам · N — заметка", vod_leave_warn: "Идёт загрузка. Всё равно уйти?",
   vod_pin: "Оставить", vod_unpin: "Оставлено", vod_pinned_toast: "Оставлено — не удалится автоматически", vod_unpinned_toast: "Снова будет удалено автоматически",
   vod_expires_in: "удалится через {n} д", vod_expires_today: "удалится сегодня",
-  vod_retention_hint: "VOD удаляются через {n} дн., если их не оставить. Не больше {m} VOD на участника.",
+  vod_retention_hint: "VOD удаляются через {n} дн., если их не оставить.",
   vod_storage_down: "Хранилище VOD сейчас не подключено — загрузки приостановлены.",
 };
 export default ru;

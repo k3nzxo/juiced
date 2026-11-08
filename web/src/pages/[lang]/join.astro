@@ -22,6 +22,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
           <li><span>2</span>{t("join_side_2")}</li>
           <li><span>3</span>{t("join_side_3")}</li>
         </ol>
+        <p class="lang-note">{t("join_lang_note")}</p>
         <a class="btn btn-outline btn-sm" href={DISCORD_INVITE} target="_blank" rel="noopener"><Icon name="discord" size={15} /> discord.gg/juiced</a>
       </div>
     </div>
@@ -44,10 +45,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
             {(["pc", "ps", "mobile"] as const).map((p) => <button type="button" class="chip" aria-pressed="false" data-plat={p}>{t(`plat_${p}`)}</button>)}
           </div>
         </div>
-        <div class="row2">
-          <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
-          <div class="field"><label for="f-times">{t("join_times")} *</label><input class="input" id="f-times" name="times" required maxlength="120" placeholder={t("join_times_ph")} /></div>
-        </div>
+        <div class="field"><label for="f-country">{t("join_country")} *</label><input class="input" id="f-country" name="country" required maxlength="64" placeholder={t("join_country_ph")} /></div>
         <div class="field"><label for="f-exp">{t("join_exp")} *</label><textarea class="textarea" id="f-exp" name="experience" required maxlength="2000" placeholder={t("join_exp_ph")}></textarea></div>
         <div class="field">
           <span class="label">{t("join_vods")}</span>
@@ -113,11 +111,11 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
     const val = (k: string) => String(fd.get(k) || "").trim();
     const vodLinks = [...links.querySelectorAll<HTMLInputElement>("[data-link]")].map((i) => i.value.trim()).filter(Boolean);
     const payload = {
-      discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"), times: val("times"),
+      discord: val("discord"), ingame: val("ingame"), main_role: role, country: val("country"),
       experience: val("experience"), why: val("why"), website: val("website"), lang: form.dataset.lang,
       platforms: [...platforms], vod_links: vodLinks,
     };
-    if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.times || !payload.experience) {
+    if (!payload.discord || !payload.ingame || !role || !payload.country || !payload.experience) {
       err.textContent = msgs.required; err.hidden = false; return;
     }
     if (!platforms.size) { err.textContent = msgs.platform; err.hidden = false; return; }
@@ -146,6 +144,7 @@ const msgs = { required: t("join_err_required"), consent: t("join_err_consent"),
   .intro > p { color: var(--muted); font-size: 17px; }
   .steps { padding: 22px; margin-top: 12px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
   .steps h2 { font-size: 17px; }
+  .lang-note { font-size: 14px; color: var(--text-2); padding-top: 12px; border-top: 1px solid var(--border); width: 100%; }
   .steps ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
   .steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--text-2); }
   .steps li span { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; background: var(--grad-brand); }

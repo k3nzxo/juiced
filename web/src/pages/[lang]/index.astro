@@ -2,7 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import Hero from "../../components/Hero.astro";
 import Icon from "../../components/Icon.astro";
-import { dict, useT, langPaths, DISCORD_INVITE, LOCALES, type Lang } from "../../i18n";
+import { dict, useT, langPaths, DISCORD_INVITE, type Lang } from "../../i18n";
 import "../../styles/schedule.css";
 
 export const getStaticPaths = langPaths;
@@ -11,17 +11,10 @@ const t = useT(lang);
 const d = dict(lang);
 const L = Object.fromEntries(Object.entries(d).filter(([k]) => k.startsWith("kind_") || k.startsWith("sched_")));
 const ranks = { developer: t("rank_developer"), leader: t("rank_leader"), vice: t("rank_vice"), coach: t("rank_coach"), role_healer: t("role_healer"), role_tank: t("role_tank"), role_nameless: t("role_nameless") };
-const marquee = [t("m_gvg"), t("m_custom"), t("m_events"), t("m_friday"), t("m_reviews"), t("m_community"), t("m_euw")];
 const fridayChips = t("b_friday_chips").split("|");
 ---
 <Base lang={lang} page="home">
   <Hero lang={lang} />
-
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-track">
-      {[0, 1].map(() => marquee.map((m) => <span class="m-item">{m}<i></i></span>))}
-    </div>
-  </div>
 
   <section class="section">
     <div class="container">
@@ -49,7 +42,7 @@ const fridayChips = t("b_friday_chips").split("|");
           <span class="tile-k kind-scrim">{t("kind_scrim")}</span>
           <h3>{t("b_custom_t")}</h3>
           <p>{t("b_custom_b")}</p>
-          <div class="viz-vs" aria-hidden="true"><span class="p us">JUICED</span><span class="spark"></span><span class="p them">?</span></div>
+          <div class="viz-vs" aria-hidden="true"><span class="p us">JUICED</span><span class="vs-txt">VS</span><span class="p them">?</span></div>
           <a class="tile-link" href={`/${lang}/matches/`}>{t("b_custom_cta")} <Icon name="arrow" size={14} /></a>
         </article>
 
@@ -64,7 +57,11 @@ const fridayChips = t("b_friday_chips").split("|");
           <span class="tile-k kind-friday">{t("kind_friday")}</span>
           <h3>{t("b_friday_t")}</h3>
           <p>{t("b_friday_b")}</p>
-          <div class="viz-chips" aria-hidden="true">{fridayChips.map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</div>
+          <div class="viz-poll" aria-hidden="true">
+            {fridayChips.slice(0, 3).map((c, i) => (
+              <div class="vp-row" style={`--i:${i};--v:${[58, 31, 11][i]}%`}><span class="vp-name">{c}</span><span class="vp-bar"></span><span class="vp-pct">{[58, 31, 11][i]}%</span></div>
+            ))}
+          </div>
         </article>
 
         <article class="tile t-review reveal" style="--d:260ms" data-tilt="4">
@@ -87,7 +84,6 @@ const fridayChips = t("b_friday_chips").split("|");
       <div class="stats reveal">
         <div><strong data-count-to="0" data-stat="members">0</strong><span>{t("s_members")}</span></div>
         <div><strong data-count-to="0" data-stat="events">0</strong><span>{t("s_events")}</span></div>
-        <div><strong data-count-to={LOCALES.length}>0</strong><span>{t("s_langs")}</span></div>
       </div>
     </div>
   </section>
@@ -171,14 +167,6 @@ const fridayChips = t("b_friday_chips").split("|");
   .sec-head.row { max-width: none; flex-direction: row; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
   .sec-head.row > div { display: flex; flex-direction: column; gap: 12px; }
 
-  /* Laufband */
-  .marquee { margin-top: 40px; border-block: 1px solid var(--border); background: var(--bg-tint); overflow: hidden; padding: 18px 0;
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-  .marquee-track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
-  .marquee:hover .marquee-track { animation-play-state: paused; }
-  .m-item { display: inline-flex; align-items: center; gap: 28px; padding-right: 28px; font-family: var(--font-display); font-weight: 700; font-size: clamp(20px, 2.4vw, 28px); letter-spacing: -0.01em; color: var(--text-2); white-space: nowrap; }
-  .m-item i { width: 9px; height: 9px; border-radius: 3px; background: var(--grad-brand); transform: rotate(45deg); }
-  @keyframes marquee { to { transform: translateX(-50%); } }
 
   /* Bento */
   .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
@@ -187,7 +175,7 @@ const fridayChips = t("b_friday_chips").split("|");
   .tile h3 { font-size: 22px; }
   .tile p { color: var(--muted); font-size: 15px; }
   .tile-k { align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: var(--k); background: color-mix(in srgb, var(--k) 12%, transparent); }
-  .tile-link { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--c-violet); }
+  .tile-link { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
   .tile-link:hover { gap: 9px; }
   .t-gvg { grid-column: span 4; flex-direction: row; align-items: center; gap: 28px; }
   .t-gvg .tile-copy { flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -200,8 +188,8 @@ const fridayChips = t("b_friday_chips").split("|");
   .viz-gvg { flex: 1.2; display: flex; align-items: center; gap: 14px; justify-content: center; }
   .team { display: grid; grid-template-columns: repeat(6, 12px); gap: 6px; }
   .team span { width: 12px; height: 12px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); animation: dot 4s var(--ease) infinite; animation-delay: calc(var(--i) * 45ms); }
-  .team.a span { --c: var(--c-pink); }
-  .team.b span { --c: var(--c-violet); animation-delay: calc(var(--i) * 45ms + 0.6s); }
+  .team.a span { --c: var(--accent); }
+  .team.b span { --c: var(--text-2); animation-delay: calc(var(--i) * 45ms + 0.6s); }
   @keyframes dot { 0%, 10% { background: var(--surface-2); border-color: var(--border); transform: scale(0.85); } 30%, 75% { background: var(--c); border-color: var(--c); transform: scale(1); } 100% { background: var(--surface-2); border-color: var(--border); transform: scale(0.85); } }
   .vs { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--faint); animation: vs 4s var(--ease) infinite; }
   @keyframes vs { 0%, 40% { transform: scale(1); color: var(--faint); } 55% { transform: scale(1.3); color: var(--text); } 70%, 100% { transform: scale(1); color: var(--faint); } }
@@ -210,13 +198,11 @@ const fridayChips = t("b_friday_chips").split("|");
   .viz-vs { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
   .viz-vs .p { padding: 7px 12px; border-radius: 9px; font-family: var(--font-display); font-weight: 800; font-size: 14px; }
   .viz-vs .us { color: #fff; background: var(--grad-brand); animation: push-r 2.6s var(--ease) infinite; }
-  .viz-vs .them { border: 1.5px dashed var(--border-strong); color: var(--muted); animation: push-l 2.6s var(--ease) infinite; }
-  .spark { width: 18px; height: 18px; position: relative; }
-  .spark::before, .spark::after { content: ""; position: absolute; inset: 50% 0 auto; height: 2px; background: var(--c-violet); border-radius: 2px; animation: spark 2.6s var(--ease) infinite; }
-  .spark::after { transform: rotate(90deg); }
-  @keyframes push-r { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(7px); } }
-  @keyframes push-l { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(-7px); } }
-  @keyframes spark { 0%, 30%, 100% { opacity: 0; scale: 0.4; } 45% { opacity: 1; scale: 1.2; } 60% { opacity: 0; scale: 0.6; } }
+  .viz-vs .them { border: 1px solid var(--border-strong); color: var(--muted); animation: push-l 2.6s var(--ease) infinite; }
+  .vs-txt { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: 0.04em; color: var(--muted); animation: vs-pop 2.6s var(--ease) infinite; }
+  @keyframes vs-pop { 0%, 30%, 100% { transform: scale(1); color: var(--muted); } 45% { transform: scale(1.25); color: var(--text); } }
+  @keyframes push-r { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(6px); } }
+  @keyframes push-l { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(-6px); } }
 
   /* Kalender */
   .viz-cal { margin-top: auto; display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding-top: 8px; }
@@ -224,10 +210,15 @@ const fridayChips = t("b_friday_chips").split("|");
   .viz-cal span.on { --k: var(--c-cyan); background: color-mix(in srgb, var(--k) 18%, transparent); border-color: color-mix(in srgb, var(--k) 45%, transparent); animation: cal 3.2s var(--ease) infinite; animation-delay: calc(var(--i) * 90ms); }
   @keyframes cal { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); background: var(--k); } 30% { transform: scale(1); } }
 
-  /* Friday-Chips */
-  .viz-chips { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; }
-  .viz-chips span { font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text-2); animation: chip 5s var(--ease) infinite; animation-delay: calc(var(--i) * 1s); }
-  @keyframes chip { 0%, 100% { background: transparent; color: var(--text-2); border-color: var(--border-strong); } 8%, 18% { background: #65a30d; color: #fff; border-color: #65a30d; } 26% { background: transparent; color: var(--text-2); border-color: var(--border-strong); } }
+  /* Abstimmung */
+  .viz-poll { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
+  .vp-row { display: grid; grid-template-columns: 1fr 2fr 34px; align-items: center; gap: 10px; font-size: 13px; }
+  .vp-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vp-pct { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .vp-bar { height: 8px; border-radius: 5px; background: var(--surface-2); position: relative; overflow: hidden; }
+  .vp-bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); border-radius: 5px; background: var(--text-2); transform-origin: left; animation: vp 6s var(--ease) infinite; animation-delay: calc(var(--i) * 0.12s); }
+  .vp-row:first-child .vp-bar::after { background: var(--accent); }
+  @keyframes vp { 0% { transform: scaleX(0); } 25%, 88% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
 
   /* VOD-Timeline */
   .viz-tl { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
@@ -246,7 +237,7 @@ const fridayChips = t("b_friday_chips").split("|");
   @keyframes note3 { 0%, 75% { opacity: 0.35; } 77%, 97% { opacity: 1; } 100% { opacity: 0.35; } }
 
   /* Zahlen */
-  .stats { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: 20px; background: var(--surface); }
+  .stats { margin-top: 28px; display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--border); border-radius: 20px; background: var(--surface); }
   .stats div { padding: 22px 26px; display: flex; align-items: baseline; gap: 10px; }
   .stats div + div { border-left: 1px solid var(--border); }
   .stats strong { font-family: var(--font-display); font-size: clamp(32px, 4vw, 46px); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }

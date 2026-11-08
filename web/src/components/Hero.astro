@@ -51,12 +51,12 @@ const week = [
 
       <div class="float f-friday card" aria-hidden="true">
         <div class="f-head"><span class="f-badge">{t("f_friday_t")}</span></div>
-        <div class="ticker">
-          <div class="ticker-track">
-            {[...t("b_friday_chips").split("|"), t("b_friday_chips").split("|")[0]].map((g) => <span>{g}</span>)}
-          </div>
+        <div class="poll">
+          {t("b_friday_chips").split("|").slice(0, 3).map((g, i) => (
+            <div class="poll-row" style={`--i:${i};--v:${[62, 27, 11][i]}%`}><span>{g}</span><span class="poll-bar"></span></div>
+          ))}
         </div>
-        <p class="f-sub">{t("f_friday_b")}</p>
+        <p class="f-sub"><Icon name="discord" size={13} /> {t("f_friday_b")}</p>
       </div>
     </div>
   </div>
@@ -110,16 +110,14 @@ const week = [
 
   .f-friday { right: 0; top: 140px; width: 260px; animation-delay: -3s; }
   .f-head { margin-bottom: 10px; }
-  .f-badge { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 5px; color: #4d7c0f; background: color-mix(in srgb, #65a30d 14%, transparent); }
-  :global([data-theme="dark"]) .f-badge { color: #a3e635; }
-  .ticker { height: 34px; overflow: hidden; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); }
-  .ticker-track { display: flex; flex-direction: column; animation: tick 10s var(--ease) infinite; }
-  .ticker-track span { height: 34px; flex: none; display: flex; align-items: center; padding: 0 12px; font-family: var(--font-display); font-weight: 700; font-size: 16px; }
-  @keyframes tick {
-    0%, 16% { transform: translateY(0); } 20%, 36% { transform: translateY(-34px); } 40%, 56% { transform: translateY(-68px); }
-    60%, 76% { transform: translateY(-102px); } 80%, 96% { transform: translateY(-136px); } 100% { transform: translateY(-170px); }
-  }
-  .f-friday .f-sub { margin-top: 10px; }
+  .f-badge { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .poll { display: flex; flex-direction: column; gap: 8px; }
+  .poll-row { display: grid; grid-template-columns: 82px 1fr; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .poll-bar { height: 6px; border-radius: 4px; background: var(--surface-2); position: relative; overflow: hidden; }
+  .poll-bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); border-radius: 4px; background: var(--text-2); transform-origin: left; animation: vote 5s var(--ease) infinite; animation-delay: calc(var(--i) * 0.15s); }
+  .poll-row:first-child .poll-bar::after { background: var(--accent); }
+  @keyframes vote { 0% { transform: scaleX(0); } 30%, 85% { transform: scaleX(1); } 100% { transform: scaleX(1); opacity: 0; } }
+  .f-friday .f-sub { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
 
   @media (max-width: 980px) {
     .stage { height: 500px; }

@@ -82,7 +82,7 @@ const es: Partial<Dict> = {
   vod_hotkeys: "Espacio reproducir/pausa · J / L ±5 s · , / . fotograma · N nueva nota", vod_leave_warn: "Hay una subida en curso. ¿Salir igualmente?",
   vod_pin: "Guardar", vod_unpin: "Guardado", vod_pinned_toast: "Guardado — no se borrará automáticamente", vod_unpinned_toast: "Se volverá a borrar automáticamente",
   vod_expires_in: "se borra en {n} d", vod_expires_today: "se borra hoy",
-  vod_retention_hint: "Los VOD se borran tras {n} días salvo que se guarden. Máx. {m} VOD por miembro.",
+  vod_retention_hint: "Los VOD se borran tras {n} días salvo que se guarden.",
   vod_storage_down: "El almacenamiento de VOD no está conectado — las subidas están en pausa.",
 };
 export default es;

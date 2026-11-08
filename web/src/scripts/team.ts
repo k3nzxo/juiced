@@ -15,10 +15,11 @@ export function esc(s: unknown): string {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-export function flag(cc: string | null): string {
+// Flaggen als SVG-Dateien (Windows zeigt Flaggen-Emojis nur als Buchstaben an)
+export function flag(cc: string | null, title = ""): string {
   if (!cc || !/^[A-Za-z]{2}$/.test(cc)) return "";
-  const up = cc.toUpperCase();
-  return String.fromCodePoint(...[...up].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+  const c = cc.toLowerCase();
+  return `<img class="flag" src="/flags/${c}.svg" alt="${esc(cc.toUpperCase())}" title="${esc(title || cc.toUpperCase())}" width="20" height="15" loading="lazy" onerror="this.replaceWith(document.createTextNode('${c.toUpperCase()}'))">`;
 }
 
 export function avatar(m: { display_name: string; avatar_url: string | null }, size = 56): string {
@@ -42,7 +43,7 @@ export function personCard(m: PublicMember, labels: Record<string, string>): str
       <div class="p-sub">
         <span class="badge badge-${esc(m.rank)}">${esc(labels[m.rank] || m.rank)}</span>
         ${roleLabel ? `<span class="role-tag role-${esc(m.main_role)}">${esc(roleLabel)}</span>` : ""}
-        ${m.country ? `<span title="${esc(m.country)}">${flag(m.country)}</span>` : ""}
+        ${m.country ? flag(m.country) : ""}
       </div>
     </div>
   </article>`;

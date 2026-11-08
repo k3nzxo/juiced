@@ -3,22 +3,22 @@
 
 type Strand = { color: [number, number, number]; phase: number; amp: number; speed: number; width: number };
 
-const PALETTE: [number, number, number][] = [
-  [255, 122, 24], // orange
-  [255, 61, 119], // pink
-  [139, 92, 246], // violet
-  [25, 195, 214], // cyan
-  [155, 214, 41], // lime
-  [255, 176, 32], // amber
-];
+// Farben werden zur Laufzeit aus dem Theme gelesen: Akzent + Grautöne (kein Regenbogen)
+function palette(): [number, number, number][] {
+  const dark = document.documentElement.dataset.theme === "dark";
+  const accent: [number, number, number] = dark ? [238, 106, 36] : [220, 85, 18];
+  const g1: [number, number, number] = dark ? [228, 228, 231] : [40, 40, 42];
+  const g2: [number, number, number] = dark ? [113, 113, 122] : [150, 147, 144];
+  return [accent, g1, g2, accent, g2, g1];
+}
 
 export function initRibbons(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const strands: Strand[] = PALETTE.map((color, i) => ({
+  const strands: Strand[] = palette().map((color, i) => ({
     color,
-    phase: (i / PALETTE.length) * Math.PI * 2,
+    phase: (i / 6) * Math.PI * 2,
     amp: 0.78 + (i % 3) * 0.09,
     speed: 0.55 + (i % 2) * 0.12,
     width: 2.6 + (i % 3) * 0.6,
@@ -37,8 +37,10 @@ export function initRibbons(canvas: HTMLCanvasElement) {
 
   const draw = () => {
     const dark = document.documentElement.dataset.theme === "dark";
+    const cols = palette();
+    strands.forEach((st, i) => (st.color = cols[i]));
     ctx.clearRect(0, 0, w, h);
-    ctx.globalCompositeOperation = dark ? "lighter" : "source-over";
+    ctx.globalCompositeOperation = "source-over";
     const cx = w / 2;
     const maxA = Math.min(w * 0.42, 210);
     const step = 3;

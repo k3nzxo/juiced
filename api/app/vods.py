@@ -36,7 +36,7 @@ MAX_FILE_BYTES = int(float(os.environ.get("VOD_MAX_FILE_GB", "8")) * GB)
 MAX_TOTAL_BYTES = int(float(os.environ.get("VOD_MAX_TOTAL_GB", "25")) * GB)
 MIN_FREE_BYTES = int(float(os.environ.get("VOD_MIN_FREE_GB", "5")) * GB)  # nie die Platte vollschreiben
 RETENTION_DAYS = float(os.environ.get("VOD_RETENTION_DAYS", "7"))       # 0 = nie automatisch löschen
-MAX_PER_USER = int(os.environ.get("VOD_MAX_PER_USER", "3"))             # gleichzeitige (nicht behaltene) VODs pro Person, Admins ausgenommen
+MAX_PER_USER = int(os.environ.get("VOD_MAX_PER_USER", "0"))  # 0 = kein Limit             # gleichzeitige (nicht behaltene) VODs pro Person, Admins ausgenommen
 # Liegt VOD_DIR auf der Storage Box, muss dort diese Datei existieren -- fehlt sie, ist die Box nicht eingehängt
 # und es wird NICHT auf die Server-Platte geschrieben.
 REQUIRE_MARKER = os.environ.get("VOD_REQUIRE_MARKER", "") not in ("", "0", "false")
@@ -47,7 +47,7 @@ ALLOWED_EXT = {".mp4", ".mkv", ".mov", ".webm", ".flv", ".ts", ".m4v"}
 VALID_RESULTS = ("win", "loss", "draw")
 VALID_CATEGORIES = ("good", "mistake", "info", "question")
 COACH_ROLES = ("healer", "tank", "nameless")
-VOD_ROLES = COACH_ROLES + ("team",)  # Team-VODs sehen alle Mitglieder
+VOD_ROLES = COACH_ROLES  # (alte Team-VODs bleiben lesbar, neue gibt es nicht mehr)
 ROLE_LABELS = {"healer": "Healer", "tank": "Tank", "nameless": "Nameless", "team": "Team"}
 
 
@@ -506,7 +506,7 @@ def create_vod(payload: VodCreateIn, db: Session = Depends(get_db), ctx: VodCtx 
     if not title:
         raise HTTPException(status_code=400, detail="Titel fehlt")
     if payload.role not in VOD_ROLES:
-        raise HTTPException(status_code=400, detail="Bitte Rolle wählen (Healer, Tank, Nameless" + (" oder Team)" if ctx.is_coach else ")"))
+        raise HTTPException(status_code=400, detail="Please pick a role (Healer, Tank or Nameless)")
     if payload.role == "team" and not ctx.is_coach:
         raise HTTPException(status_code=403, detail="Team-VODs können nur Coaches hochladen")
     if MAX_PER_USER > 0 and not ctx.is_coach:

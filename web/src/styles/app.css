@@ -110,7 +110,7 @@
 #vod-composer-text, .vod-edit-text, .vod-reply-text, .vod-form-row input {
   width: 100%; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 10px; padding: 9px 12px; font-size: 15px;
 }
-.field input:focus, .field textarea:focus, .vod-toolbar input:focus, #vod-composer-text:focus { outline: none; border-color: var(--c-pink); box-shadow: 0 0 0 3px rgba(255, 61, 119, 0.15); }
+.field input:focus, .field textarea:focus, .vod-toolbar input:focus, #vod-composer-text:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 input[type="file"] { font-size: 14px; }
 .cat-tab { height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text-2); transition: all 0.15s; }
 .cat-tab:hover { border-color: var(--text-2); }
@@ -144,5 +144,5 @@ main.vod-main, .vod-main { max-width: none; }
 .ev-row .tr-main strong .muted { font-weight: 500; }
 .vod-links { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 14px; }
 .vod-links a { color: var(--c-pink); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
-.badge-developer { background: var(--grad-brand); color: #fff; border-color: transparent; }
+.badge-developer { background: var(--text); color: var(--bg); border-color: var(--text); }
 @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
