@@ -345,18 +345,11 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
     groups.get(k)!.push(s);
   }
   const chipFor = (s: any) => players.get(s.user_id) ? rhChip(players.get(s.user_id)!) : rhChip({ uid: "", name: s.name, path: "", role: "", playing: s.playing });
-  // innerhalb einer Gruppe (z. B. DPS) nach Schule unterteilen: Bellstrike blau, Bamboocut lila …
+  // innerhalb einer Gruppe nach Schule sortieren, damit gleiche Farben zusammenstehen (ohne Unterüberschriften)
   const bySchool = (list: any[], chip: (s: any) => string) => {
-    const schoolOf = (x: any) => (pathFromText(x.spec) || pathFromText(x.class))?.group || "";
     const order = SCHOOLS.map((sc) => sc.id as string);
-    const parts = new Map<string, any[]>();
-    for (const x of list) { const k = schoolOf(x); if (!parts.has(k)) parts.set(k, []); parts.get(k)!.push(x); }
-    if (parts.size <= 1) return `<div class="rh-people">${list.map(chip).join("")}</div>`;
-    return [...parts.entries()].sort((a, b) => (order.indexOf(a[0]) + 1 || 99) - (order.indexOf(b[0]) + 1 || 99)).map(([k, xs]) => {
-      const sc = SCHOOLS.find((x) => x.id === k);
-      return `<div class="rh-sub" style="--sc:${sc?.color || "var(--muted)"}"><span class="rh-sub-h">${sc && schoolEmote(sc.id) ? emoteImg(schoolEmote(sc.id), "emo emo-s", sc.color) : "<i></i>"}${esc(sc?.name || "—")}<b>${xs.length}</b></span>
-        <div class="rh-people">${xs.map(chip).join("")}</div></div>`;
-    }).join("");
+    const rank = (x: any) => { const g = (pathFromText(x.spec) || pathFromText(x.class))?.group || ""; const i = order.indexOf(g); return i < 0 ? 99 : i; };
+    return `<div class="rh-people">${[...list].sort((a, b) => rank(a) - rank(b)).map(chip).join("")}</div>`;
   };
   const out = e.signups.filter((x: any) => !x.playing);
   const roster = e.roster;
