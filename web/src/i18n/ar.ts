@@ -658,6 +658,7 @@ const ar: Partial<Dict & ExtraDict> = {
   att_label: "الحضور (30 يومًا):",
   att_title: "{a} من {t} فعالية",
   rh_open_web: "لم يتم العثور على تطبيق Discord – انقر مرة أخرى لفتحه في المتصفح.",
+  att_count: "{a} فعالية",
 };
 
 export default ar;

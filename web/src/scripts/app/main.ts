@@ -945,7 +945,7 @@ const attClass = (p: number) => (p >= 75 ? "att-good" : p >= 50 ? "att-mid" : "a
 const attBadge = (did: string) => {
   const a = ATT[did];
   if (!a || a.pct == null) return "";
-  return `<span class="att ${attClass(a.pct)}" title="${esc(T("att_title", { a: a.attended ?? "?", t: a.total ?? "?" }))}">${a.pct}%</span>`;
+  return `<span class="att ${attClass(a.pct)}">${a.pct}%</span>`;
 };
 async function viewRoster(view: HTMLElement) {
   view.innerHTML = head(T("mem_title")) + `<div class="mem-filter">
@@ -1066,7 +1066,7 @@ async function viewMember(view: HTMLElement, id: number) {
       <div class="mh-main"><h1>${esc(u.display_name)} ${flag(u.country)}</h1>
         <div class="mh-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
         <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span>
-        ${ATT[u.discord_id]?.pct != null ? `<span class="mh-att">${esc(T("att_label"))} ${attBadge(u.discord_id)} <span class="muted">${esc(T("att_title", { a: ATT[u.discord_id].attended ?? "?", t: ATT[u.discord_id].total ?? "?" }))}</span></span>` : ""}</div>
+        ${ATT[u.discord_id]?.pct != null ? `<span class="mh-att">${esc(T("att_label"))} ${attBadge(u.discord_id)} ${ATT[u.discord_id].attended != null ? `<span class="muted">${esc(ATT[u.discord_id].total != null ? T("att_title", { a: ATT[u.discord_id].attended, t: ATT[u.discord_id].total }) : T("att_count", { a: ATT[u.discord_id].attended }))}</span>` : ""}</span>` : ""}</div>
       ${u.id === me!.id ? `<a class="btn btn-outline btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a>`
         : u.can_edit_build ? `<a class="btn btn-outline btn-sm" href="#/roster/${u.id}/edit">${icon.edit} ${esc(T("dash_build_edit"))}</a>` : ""}
     </section>

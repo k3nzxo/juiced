@@ -355,6 +355,7 @@ const en = {
   att_label: "Attendance (30 days):",
   att_title: "{a} of {t} events",
   rh_open_web: "Discord app not found – click again to open it in the browser.",
+  att_count: "{a} events",
 };
 
 export type ExtraDict = typeof en;
@@ -706,6 +707,7 @@ const de: Partial<ExtraDict> = {
   att_label: "Anwesenheit (30 Tage):",
   att_title: "{a} von {t} Events",
   rh_open_web: "Discord-App nicht gefunden – nochmal klicken für die Browser-Version.",
+  att_count: "{a} Events",
 };
 
 const fr: Partial<ExtraDict> = {
@@ -1049,6 +1051,7 @@ const fr: Partial<ExtraDict> = {
   att_title: "{a} sur {t} événements",
   m_friday: "Soirées du vendredi",
   rh_open_web: "App Discord introuvable – reclique pour l'ouvrir dans le navigateur.",
+  att_count: "{a} événements",
 };
 
 const es: Partial<ExtraDict> = {
@@ -1392,6 +1395,7 @@ const es: Partial<ExtraDict> = {
   att_title: "{a} de {t} eventos",
   m_friday: "Noches de viernes",
   rh_open_web: "No se encontró la app de Discord: vuelve a hacer clic para abrirlo en el navegador.",
+  att_count: "{a} eventos",
 };
 
 const pt: Partial<ExtraDict> = {
@@ -1735,6 +1739,7 @@ const pt: Partial<ExtraDict> = {
   att_title: "{a} de {t} eventos",
   m_friday: "Sextas à noite",
   rh_open_web: "App do Discord não encontrado – clique de novo para abrir no navegador.",
+  att_count: "{a} eventos",
 };
 
 const ru: Partial<ExtraDict> = {
@@ -2078,6 +2083,7 @@ const ru: Partial<ExtraDict> = {
   att_title: "{a} из {t} событий",
   m_friday: "Пятничные вечера",
   rh_open_web: "Приложение Discord не найдено — нажми ещё раз, чтобы открыть в браузере.",
+  att_count: "событий: {a}",
 };
 
 const tr: Partial<ExtraDict> = {
@@ -2421,6 +2427,7 @@ const tr: Partial<ExtraDict> = {
   att_title: "{t} etkinlikten {a}",
   m_friday: "Cuma Geceleri",
   rh_open_web: "Discord uygulaması bulunamadı – tarayıcıda açmak için tekrar tıkla.",
+  att_count: "{a} etkinlik",
 };
 
 const pl: Partial<ExtraDict> = {
@@ -2764,6 +2771,7 @@ const pl: Partial<ExtraDict> = {
   att_title: "{a} z {t} wydarzeń",
   m_friday: "Piątkowe wieczory",
   rh_open_web: "Nie znaleziono aplikacji Discord – kliknij ponownie, by otworzyć w przeglądarce.",
+  att_count: "{a} wydarzeń",
 };
 
 export const extra: Record<string, Partial<ExtraDict>> = { en, de, fr, es, pt, ru, tr, pl };

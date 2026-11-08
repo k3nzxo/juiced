@@ -84,3 +84,37 @@ def test_mention_chunks_limits():
 def test_mention_chunks_single():
     chunks = rh._mention_chunks("head\n", ["1", "2"])
     assert chunks == [("head\n<@1> <@2> ", ["1", "2"])]
+
+
+# ---------------------------------------------------------------- Anwesenheit (Antwortform laut Server-Log)
+
+def test_attendance_total_from_percentage(monkeypatch):
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"result": [{"id": "111", "name": "symbol", "attended": 12, "percentage": 48},
+                               {"id": "222", "name": "x", "attended": 0, "percentage": 0}]}
+
+    class FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def get(self, *a, **k):
+            return FakeResp()
+
+    monkeypatch.setattr(rh, "API_KEY", "k")
+    monkeypatch.setattr(rh, "SERVER_ID", "1")
+    monkeypatch.setattr(rh.httpx, "Client", FakeClient)
+    rh._att_cache.clear()
+    m = rh.get_attendance(30)["members"]
+    assert m["111"] == {"attended": 12, "total": 25, "pct": 48}
+    assert m["222"] == {"attended": 0, "total": None, "pct": 0}
+    rh._att_cache.clear()

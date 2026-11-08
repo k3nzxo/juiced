@@ -787,8 +787,10 @@ def get_attendance(days: int) -> dict:
         attended, total, pct = _num(_pick(row, "attended")), _num(_pick(row, "total")), _num(_pick(row, "pct"))
         if pct is None and attended is not None and total:
             pct = attended / total * 100
+        if total is None and attended is not None and pct:  # Raid-Helper liefert nur attended + percentage
+            total = attended * 100 / pct
         members[uid] = {"attended": int(attended) if attended is not None else None,
-                        "total": int(total) if total is not None else None,
+                        "total": round(total) if total is not None else None,
                         "pct": round(pct) if pct is not None else None}
     out = {"configured": True, "days": days, "members": members}
     _att_cache[days] = (time.time(), out)
