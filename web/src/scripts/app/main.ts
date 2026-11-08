@@ -325,19 +325,24 @@ function drawSignupEvent(card: HTMLElement, e: any, data: any) {
   const gName = (g: any, i: number) => g.name || T("roster_group", { n: i + 1 });
   card.innerHTML = `
     <header class="rh-head">
-      <div><h3>${e.cancelled ? `<span class="rh-cancel-badge">${esc(T("rh_cancelled"))}</span> ` : ""}${esc(e.cancelled ? plainTitle(e.title) : e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
-      <div class="rh-side">
+      <div class="rh-title"><h3>${e.cancelled ? `<span class="rh-cancel-badge">${esc(T("rh_cancelled"))}</span> ` : ""}${esc(e.cancelled ? plainTitle(e.title) : e.title)}</h3><span class="muted">${e.start ? esc(when(e.start)) : ""}${e.leader ? ` · ${esc(e.leader)}` : ""}</span></div>
+      <div class="rh-status">
         <span class="rh-count"><b>${e.count}</b> ${esc(T("rh_signed"))}</span>
         ${e.me ? `<span class="rh-me ok">${icon.check} ${esc(T("rh_you", { cls: rhLabel(e.me.spec || e.me.class || "") }))}</span>` : `<span class="rh-me">${esc(T("rh_not_you"))}</span>`}
-        ${data.can_remind && !e.cancelled ? `<button class="btn btn-ghost btn-sm" data-remind>${icon.bell} ${esc(T("rh_remind"))}</button>` : ""}
-        ${data.can_edit ? (e.cancelled
-          ? `<button class="btn btn-outline btn-sm" data-restore>${icon.refresh} ${esc(T("rh_restore"))}</button>`
-          : `<button class="btn btn-ghost btn-sm rh-cancel-btn" data-cancel-ev>${icon.x} ${esc(T("rh_cancel"))}</button>`) : ""}
-        ${data.can_edit ? `<button class="btn btn-ghost btn-sm" data-del-ev title="${esc(T("rh_delete"))}">${icon.trash}</button>` : ""}
-        ${data.can_edit && !e.cancelled ? `<button class="btn btn-primary btn-sm" data-plan>${icon.users} ${esc(T(roster ? "roster_edit" : "roster_plan"))}</button>` : ""}
-        ${e.url ? `<a class="btn btn-ghost btn-sm" href="${esc(e.url)}" target="_blank" rel="noopener">${icon.external} ${esc(T("rh_open"))}</a>` : ""}
       </div>
     </header>
+    <div class="rh-bar">
+      <div class="rh-bar-main">
+        ${data.can_edit && !e.cancelled ? `<button class="btn btn-primary btn-sm" data-plan>${icon.users} ${esc(T(roster ? "roster_edit" : "roster_plan"))}</button>` : ""}
+        ${data.can_edit && e.cancelled ? `<button class="btn btn-outline btn-sm" data-restore>${icon.refresh} ${esc(T("rh_restore"))}</button>` : ""}
+        ${e.url ? `<a class="btn btn-outline btn-sm" href="${esc(e.url)}" target="_blank" rel="noopener" data-discord>${icon.external} ${esc(T("rh_open"))}</a>` : ""}
+        ${data.can_remind && !e.cancelled ? `<button class="btn btn-ghost btn-sm" data-remind>${icon.bell} ${esc(T("rh_remind"))}</button>` : ""}
+      </div>
+      ${data.can_edit ? `<div class="rh-bar-admin">
+        ${!e.cancelled ? `<button class="btn btn-ghost btn-sm rh-cancel-btn" data-cancel-ev>${icon.x} ${esc(T("rh_cancel"))}</button>` : ""}
+        <button class="btn btn-ghost btn-sm rh-del-btn" data-del-ev title="${esc(T("rh_delete"))}" aria-label="${esc(T("rh_delete"))}">${icon.trash}</button>
+      </div>` : ""}
+    </div>
     ${roster ? `<section class="ro-view">
       <div class="ro-vhead"><h4>${esc(T("roster_title"))}</h4>${myGroup ? `<span class="rh-me ok">${esc(T("roster_you", { group: gName(myGroup, roster.groups.indexOf(myGroup)) }))}</span>` : ""}
         ${roster.updated_by ? `<span class="muted">${esc(T("roster_by", { name: roster.updated_by, when: roster.updated_at ? timeAgo(roster.updated_at) : "" }))}</span>` : ""}
@@ -810,6 +815,25 @@ async function remindUnsigned(e: any, data: any) {
     } catch (x) { toast((x as Error).message); b.disabled = false; }
   });
 }
+
+// "In Discord öffnen": erst die Discord-App (discord://), nur ohne App die Browser-Version
+document.addEventListener("click", (ev) => {
+  const a = (ev.target as HTMLElement).closest<HTMLAnchorElement>("a[data-discord]");
+  if (!a || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+  const m = a.href.match(/^https:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/(.+)$/);
+  if (!m) return;
+  ev.preventDefault();
+  let left = false;
+  const gone = () => { left = true; };
+  window.addEventListener("blur", gone, { once: true });
+  document.addEventListener("visibilitychange", gone, { once: true });
+  location.href = `discord://-/${m[1]}`;
+  window.setTimeout(() => {
+    window.removeEventListener("blur", gone);
+    document.removeEventListener("visibilitychange", gone);
+    if (!left && document.visibilityState === "visible") window.open(a.href, "_blank", "noopener");
+  }, 1200);
+});
 
 // ------------------------------------------------------------------ Build: Pfade + Inner Ways (Darstellung)
 

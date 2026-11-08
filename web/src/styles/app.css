@@ -555,3 +555,14 @@ main.vod-main, .vod-main { max-width: none; }
 .pp-sugg button:hover { background: var(--surface-2); }
 .pt-prof { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
 .pt-prof:empty { display: none; }
+/* Event-Kopf: oben Titel + Status, darunter Werkzeugleiste (Aktionen links, Absagen/Löschen rechts) */
+.rh-head { align-items: center; }
+.rh-title { min-width: 0; }
+.rh-title h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rh-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rh-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.rh-bar:not(:has(.btn)) { display: none; }
+.rh-bar-main, .rh-bar-admin { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rh-bar-admin .btn { color: var(--muted); }
+.rh-bar-admin .rh-cancel-btn:hover, .rh-bar-admin .rh-del-btn:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, transparent); }
+@media (max-width: 600px) { .rh-head { flex-direction: column; align-items: flex-start; } }
