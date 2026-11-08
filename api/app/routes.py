@@ -19,7 +19,7 @@ from .db import get_db
 from .security import client_ip, current_user_optional, limiter, require_admin, require_management, require_member, require_user
 
 router = APIRouter(prefix="/api", tags=["site"])
-LANGS = {"en", "de", "fr", "es", "pt", "ru", "tr", "pl"}
+LANGS = {"en", "de", "fr", "es", "pt", "ru", "tr", "pl", "ar", "fi"}
 RANK_ORDER = {"developer": 0, "leader": 1, "vice": 2, "coach": 3, "member": 4}
 
 

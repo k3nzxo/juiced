@@ -6,6 +6,8 @@ import pt from "./pt";
 import ru from "./ru";
 import tr from "./tr";
 import pl from "./pl";
+import ar from "./ar";
+import fi from "./fi";
 import extraEn, { extra, type ExtraDict } from "./extra";
 
 export const LOCALES = [
@@ -17,13 +19,17 @@ export const LOCALES = [
   { code: "ru", name: "Русский", html: "ru" },
   { code: "tr", name: "Türkçe", html: "tr" },
   { code: "pl", name: "Polski", html: "pl" },
+  { code: "fi", name: "Suomi", html: "fi" },
+  { code: "ar", name: "العربية", html: "ar" },
 ] as const;
+// Sprachen, die von rechts nach links geschrieben werden
+export const RTL = new Set<string>(["ar"]);
 
 export type Lang = (typeof LOCALES)[number]["code"];
 export type FullDict = Dict & ExtraDict;
 export type Key = keyof FullDict;
 
-const partials: Record<Lang, Partial<Dict>> = { en, de, fr, es, pt, ru, tr, pl };
+const partials: Record<Lang, Partial<Dict>> = { en, de, fr, es, pt, ru, tr, pl, fi, ar };
 
 export function dict(lang: Lang): FullDict {
   return { ...en, ...extraEn, ...partials[lang], ...extra[lang] } as FullDict;

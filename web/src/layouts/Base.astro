@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import Logo from "../components/Logo.astro";
 import Icon from "../components/Icon.astro";
-import { LOCALES, useT, DISCORD_INVITE, type Lang } from "../i18n";
+import { LOCALES, RTL, useT, DISCORD_INVITE, type Lang } from "../i18n";
 
 interface Props { lang: Lang; title?: string; description?: string; page?: "home" | "team" | "join" | "app" | "privacy" | "schedule" | "matches" | "other"; noindex?: boolean }
 const { lang, title, description, page = "other", noindex = false } = Astro.props;
@@ -23,7 +23,7 @@ const nav = [
 ];
 ---
 <!doctype html>
-<html lang={htmlLang} data-theme="light">
+<html lang={htmlLang} dir={RTL.has(lang) ? "rtl" : "ltr"} data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
