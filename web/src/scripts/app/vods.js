@@ -42,6 +42,7 @@ function vodFmtTime(sec) {
 
 function vodFmtBytes(b) {
   if (!b) return "0 MB";
+  if (b >= 1024 ** 4) return `${(b / 1024 ** 4).toFixed(1)} TB`;
   if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(1)} GB`;
   return `${Math.round(b / 1024 ** 2)} MB`;
 }
