@@ -1,35 +1,51 @@
-// Windfeld im Hero: feine Strömungslinien, die der Maus ausweichen und um sie herum wirbeln.
-// Jede Linie merkt sich ihre letzten Punkte (Ringpuffer); gezeichnet wird jedes Bild komplett neu, dadurch bleibt kein Schleier zurück.
-const TL = 30;
-type P = { x: number; y: number; vx: number; vy: number; s: number; life: number; c: number; hot: number;
-  tx: Float32Array; ty: Float32Array; head: number; n: number; dying: boolean };
+// Windfeld im Hero: ruhige Strömungslinien, die um den Mauszeiger herum einen weichen Wirbel bilden.
+// Jede Linie ist ein glatter Strich mit Verlauf (hinten durchsichtig, vorne kräftig).
+// Geschwindigkeit hängt an der echten Zeit, nicht an der Bildrate (60 Hz und 144 Hz sehen gleich aus).
+
+const SEG = 3.2;        // Abstand der gespeicherten Spurpunkte in px
+const TL = 26;          // Spurpunkte pro Linie (≈ 80 px Spurlänge)
+const BASE = 2.1;       // Grundgeschwindigkeit in px pro 1/60 s
+const R = 160;          // Wirkradius der Maus
+
+type P = {
+  x: number; y: number; vx: number; vy: number; s: number;
+  life: number; age: number; dying: boolean; c: number; hot: number;
+  px: Float32Array; py: Float32Array; n: number;   // Spur, [0] = ältester Punkt
+};
 
 export function initWind(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const calm = 1;  // volle Geschwindigkeit, auch bei "weniger Bewegung" im System
   let w = 0, h = 0, dpr = 1;
   let parts: P[] = [];
   let t = Math.random() * 100;
-  let raf = 0, visible = true;
-  const mouse = { x: -9999, y: -9999, vx: 0, vy: 0, on: false };
-  let colors = ["#dc5512", "#111"];
+  let raf = 0, visible = true, last = 0;
+  // geglättete Maus: Position und Bewegung laufen weich nach, dadurch kein Zittern
+  const mouse = { x: -9999, y: -9999, sx: -9999, sy: -9999, vx: 0, vy: 0, on: false, k: 0 };
+  let rgb: [number, number, number][] = [[220, 85, 18], [17, 17, 17]];
 
+  const toRgb = (c: string): [number, number, number] => {
+    ctx.fillStyle = "#000";
+    ctx.fillStyle = c;
+    const v = String(ctx.fillStyle);
+    if (v.startsWith("#")) return [parseInt(v.slice(1, 3), 16), parseInt(v.slice(3, 5), 16), parseInt(v.slice(5, 7), 16)];
+    const m = v.match(/\d+/g);
+    return m ? [Number(m[0]), Number(m[1]), Number(m[2])] : [220, 85, 18];
+  };
   const readColors = () => {
     const cs = getComputedStyle(document.documentElement);
-    colors = [cs.getPropertyValue("--accent").trim() || "#dc5512", cs.getPropertyValue("--text").trim() || "#111"];
-    ctx.clearRect(0, 0, w, h);
+    rgb = [toRgb(cs.getPropertyValue("--accent").trim() || "#dc5512"), toRgb(cs.getPropertyValue("--text").trim() || "#111")];
   };
 
   const spawn = (p: P, anywhere: boolean) => {
-    p.x = anywhere ? Math.random() * w : -10 - Math.random() * 60;
+    p.x = anywhere ? Math.random() * w : -20 - Math.random() * 40;
     p.y = Math.random() * h;
-    p.vx = 0; p.vy = 0; p.hot = 0; p.dying = false;
-    if (!p.tx) { p.tx = new Float32Array(TL); p.ty = new Float32Array(TL); }
-    p.head = 0; p.n = 1; p.tx[0] = p.x; p.ty[0] = p.y;
-    p.s = 0.7 + Math.random() * 1.5;
-    p.life = 160 + Math.random() * 360;
-    p.c = Math.random() < 0.93 ? 0 : 1;
+    p.vx = 0; p.vy = 0; p.hot = 0; p.age = 0; p.dying = false;
+    p.s = 1 + Math.random() * 0.45;
+    p.life = 4 + Math.random() * 6;           // Sekunden
+    p.c = Math.random() < 0.92 ? 0 : 1;
+    if (!p.px) { p.px = new Float32Array(TL); p.py = new Float32Array(TL); }
+    p.px[0] = p.x; p.py[0] = p.y; p.n = 1;
   };
 
   const resize = () => {
@@ -38,97 +54,109 @@ export function initWind(canvas: HTMLCanvasElement) {
     w = r.width; h = r.height;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.min(440, Math.round((w * h) / 2500));
-    parts = Array.from({ length: n }, () => { const p = {} as P; spawn(p, true); return p; });
+    const n = Math.min(380, Math.round((w * h) / 2800));
+    parts = Array.from({ length: n }, () => { const p = {} as P; spawn(p, true); p.age = 1; return p; });
   };
 
-  // Weiches Strömungsfeld aus überlagerten Wellen (reicht völlig, kein Noise-Paket nötig)
-  const angle = (x: number, y: number) => {
-    const nx = x / 520, ny = y / 380;
-    return -0.12
-      + 0.9 * Math.sin(nx * 1.7 + t * 0.35) * Math.cos(ny * 2.1 - t * 0.27)
-      + 0.45 * Math.sin((nx + ny) * 3.1 + t * 0.6);
-  };
+  // Ruhiges Strömungsfeld: überwiegend nach rechts, sanft wellend
+  const angle = (x: number, y: number) =>
+    -0.06
+    + 0.38 * Math.sin(x / 640 + t * 0.22) * Math.cos(y / 400 - t * 0.17)
+    + 0.14 * Math.sin((x + y) / 950 + t * 0.35);
 
-  const R = 200;  // Wirkradius der Maus
+  const step = (dt: number) => {
+    t += 0.004 * dt;
+    // Maus weich nachführen
+    const follow = 1 - Math.pow(0.75, dt);
+    mouse.sx += (mouse.x - mouse.sx) * follow;
+    mouse.sy += (mouse.y - mouse.sy) * follow;
+    mouse.k += ((mouse.on ? 1 : 0) - mouse.k) * (1 - Math.pow(0.9, dt));   // Wirbel blendet ein/aus
+    const decay = Math.pow(0.86, dt);
+    mouse.vx *= decay; mouse.vy *= decay;
 
-  const step = () => {
-    t += 0.004;
-    ctx.clearRect(0, 0, w, h);
-    // flache Enden: Teilstücke überlappen nicht, die Linie bleibt glatt statt "perlig"
-    ctx.lineCap = "butt";
-    ctx.lineJoin = "round";
-
-    // Bewegen: jede Linie hat Schwung und gleitet zurück in die Windrichtung
-    const mspeed = Math.min(40, Math.hypot(mouse.vx, mouse.vy));
+    const ease = 1 - Math.pow(1 - 0.16, dt);
     for (const p of parts) {
+      p.age += dt / 60;
       if (p.dying) {
-        // Spur läuft aus statt plötzlich zu verschwinden
-        if (--p.n <= 1) spawn(p, true);
+        // Spur läuft hinten aus, dann neu starten
+        const drop = Math.max(1, Math.round(dt));
+        for (let k = 0; k < drop && p.n > 1; k++) { p.px.copyWithin(0, 1, p.n); p.py.copyWithin(0, 1, p.n); p.n--; }
+        if (p.n <= 1) spawn(p, Math.random() < 0.6);
         continue;
       }
       const a = angle(p.x, p.y);
-      const tx = Math.cos(a) * p.s * 1.6 * calm, ty = Math.sin(a) * p.s * 1.6 * calm;
-      p.vx += (tx - p.vx) * 0.06;
-      p.vy += (ty - p.vy) * 0.06;
-      p.hot *= 0.94;
-      if (mouse.on) {
-        const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
-        if (d2 < R * R) {
-          const d = Math.sqrt(d2) || 1, f = 1 - d / R, f2 = f * f;
-          // Wirbel um den Cursor + leicht wegdrücken + Windstoß in Mausrichtung
-          p.vx += (-dy / d) * f * 1.5 + (dx / d) * f2 * 0.4 + mouse.vx * f * 0.14;
-          p.vy += (dx / d) * f * 1.5 + (dy / d) * f2 * 0.4 + mouse.vy * f * 0.14;
-          p.hot = Math.max(p.hot, f * (0.6 + mspeed / 40));
+      let tx = Math.cos(a) * p.s * BASE, ty = Math.sin(a) * p.s * BASE;
+      let wgt = 0;
+      if (mouse.k > 0.01) {
+        const dx = p.x - mouse.sx, dy = p.y - mouse.sy;
+        const d = Math.hypot(dx, dy) || 1;
+        wgt = Math.exp(-(d * d) / (R * R)) * mouse.k;     // weicher Abfall, keine harte Kante
+        if (wgt > 0.002) {
+          // Wirbel: tangential um den Cursor, plus Sog in Mausrichtung
+          const swirl = 5.2 * wgt;
+          tx = tx * (1 - wgt * 0.7) + (-dy / d) * swirl + mouse.vx * wgt * 0.35;
+          ty = ty * (1 - wgt * 0.7) + (dx / d) * swirl + mouse.vy * wgt * 0.35;
         }
       }
-      const sp = Math.hypot(p.vx, p.vy);
-      if (sp > 11) { p.vx *= 11 / sp; p.vy *= 11 / sp; }
-      p.x += p.vx; p.y += p.vy;
-      if (p.x > w + 20 || p.x < -80 || p.y < -40 || p.y > h + 40) { spawn(p, false); continue; }
-      p.head = (p.head + 1) % TL;
-      p.tx[p.head] = p.x; p.ty[p.head] = p.y;
-      if (p.n < TL) p.n++;
-      if (--p.life < 0) p.dying = true;
+      p.vx += (tx - p.vx) * ease;
+      p.vy += (ty - p.vy) * ease;
+      p.hot += (Math.min(1, wgt * 2.2) - p.hot) * (1 - Math.pow(0.88, dt));
+      p.x += p.vx * dt; p.y += p.vy * dt;
+
+      // Spur: neuer Punkt erst nach SEG px, der vorderste Punkt folgt immer live
+      const li = p.n - 1;
+      if (Math.hypot(p.x - p.px[li > 0 ? li - 1 : 0], p.y - p.py[li > 0 ? li - 1 : 0]) >= SEG || p.n === 1) {
+        if (p.n < TL) p.n++;
+        else { p.px.copyWithin(0, 1); p.py.copyWithin(0, 1); }
+      }
+      p.px[p.n - 1] = p.x; p.py[p.n - 1] = p.y;
+
+      p.life -= dt / 60;
+      if (p.x > w + 30 || p.y < -60 || p.y > h + 60 || p.x < -120) spawn(p, false);
+      else if (p.life <= 0) p.dying = true;
     }
 
-    // Zeichnen: Spur von hell (vorne) nach durchsichtig (hinten); normal, neutral, "heiß" nah an der Maus
-    const pass = (c: number, hot: boolean, alpha: number, width: number) => {
-      ctx.strokeStyle = colors[c];
-      ctx.lineWidth = width;
-      for (let k = 0; k < TL - 1; k++) {
-        ctx.globalAlpha = alpha * (1 - k / (TL - 1));
-        ctx.beginPath();
-        for (const p of parts) {
-          if (p.c !== c || (p.hot > 0.15) !== hot || k + 1 >= p.n) continue;
-          const i0 = (p.head - k + TL) % TL, i1 = (p.head - k - 1 + TL) % TL;
-          ctx.moveTo(p.tx[i0], p.ty[i0]);
-          ctx.lineTo(p.tx[i1], p.ty[i1]);
-        }
-        ctx.stroke();
+    // Zeichnen
+    ctx.clearRect(0, 0, w, h);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const p of parts) {
+      if (p.n < 3) continue;
+      const [r, g, b] = rgb[p.c];
+      const fadeIn = Math.min(1, p.age / 0.6);
+      const base = (p.c === 0 ? 0.5 : 0.18) + p.hot * (p.c === 0 ? 0.45 : 0.2);
+      const alpha = base * fadeIn;
+      if (alpha < 0.01) continue;
+      const x0 = p.px[0], y0 = p.py[0], x1 = p.px[p.n - 1], y1 = p.py[p.n - 1];
+      const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+      grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
+      grad.addColorStop(1, `rgba(${r},${g},${b},${alpha.toFixed(3)})`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.15 + p.hot * 0.55;
+      // glatte Kurve durch die Mittelpunkte der Spur
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      for (let k = 1; k < p.n - 1; k++) {
+        const mx = (p.px[k] + p.px[k + 1]) / 2, my = (p.py[k] + p.py[k + 1]) / 2;
+        ctx.quadraticCurveTo(p.px[k], p.py[k], mx, my);
       }
-    };
-    pass(1, false, 0.3, 1.3);
-    pass(0, false, 0.75, 1.3);
-    pass(1, true, 0.6, 1.6);
-    pass(0, true, 1, 1.8);
-    ctx.globalAlpha = 1;
-    mouse.vx *= 0.8; mouse.vy *= 0.8;
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    }
   };
 
-  const loop = () => {
+  const loop = (now: number) => {
     raf = 0;
-    if (!visible || document.hidden) return;
-    step();
+    if (!visible || document.hidden) { last = 0; return; }
+    const dt = last ? Math.min(3, (now - last) / (1000 / 60)) : 1;
+    last = now;
+    step(dt);
     raf = requestAnimationFrame(loop);
   };
   const start = () => { if (!raf) raf = requestAnimationFrame(loop); };
 
-  // Ohne Animation (reduzierte Bewegung): einmal ein stehendes Bild zeichnen
-  const still = () => { /* Bild baut sich über die Animation auf */ };
   readColors();
   resize();
-  still();
   start();
 
   // Größe neu messen, sobald sich der Hero ändert (auch wenn er beim Start noch 0 groß war)
@@ -137,9 +165,9 @@ export function initWind(canvas: HTMLCanvasElement) {
     const { width, height } = e.contentRect;
     if (Math.abs(width - lastW) < 2 && Math.abs(height - lastH) < 2) return;
     lastW = width; lastH = height;
-    clearTimeout(rt); rt = window.setTimeout(() => { resize(); still(); }, w ? 150 : 0);
+    clearTimeout(rt); rt = window.setTimeout(resize, w ? 150 : 0);
   }).observe(canvas);
-  window.addEventListener("themechange", () => requestAnimationFrame(() => { readColors(); still(); }));
+  window.addEventListener("themechange", () => requestAnimationFrame(readColors));
   document.addEventListener("visibilitychange", start);
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); }).observe(canvas);
 
@@ -147,7 +175,11 @@ export function initWind(canvas: HTMLCanvasElement) {
   host.addEventListener("pointermove", (e) => {
     const r = canvas.getBoundingClientRect();
     const x = e.clientX - r.left, y = e.clientY - r.top;
-    if (mouse.on) { mouse.vx += x - mouse.x; mouse.vy += y - mouse.y; }
+    if (mouse.on) {
+      // Mausbewegung sanft mitteln
+      mouse.vx = mouse.vx * 0.6 + (x - mouse.x) * 0.4;
+      mouse.vy = mouse.vy * 0.6 + (y - mouse.y) * 0.4;
+    } else { mouse.sx = x; mouse.sy = y; }
     mouse.x = x; mouse.y = y; mouse.on = true;
   }, { passive: true });
   host.addEventListener("pointerleave", () => { mouse.on = false; });
