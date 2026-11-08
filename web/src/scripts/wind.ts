@@ -92,14 +92,23 @@ export function initWind(canvas: HTMLCanvasElement) {
   };
   const start = () => { if (!raf && !reduce) raf = requestAnimationFrame(loop); };
 
+  // Ohne Animation (reduzierte Bewegung): einmal ein stehendes Bild zeichnen
+  const still = () => { if (reduce && w) for (let i = 0; i < 90; i++) step(); };
   readColors();
   resize();
-  if (reduce) { for (let i = 0; i < 90; i++) step(); return; }
+  still();
   start();
 
-  let rt = 0;
-  window.addEventListener("resize", () => { clearTimeout(rt); rt = window.setTimeout(resize, 150); });
-  window.addEventListener("themechange", () => requestAnimationFrame(readColors));
+  // Größe neu messen, sobald sich der Hero ändert (auch wenn er beim Start noch 0 groß war)
+  let rt = 0, lastW = w, lastH = h;
+  new ResizeObserver(([e]) => {
+    const { width, height } = e.contentRect;
+    if (Math.abs(width - lastW) < 2 && Math.abs(height - lastH) < 2) return;
+    lastW = width; lastH = height;
+    clearTimeout(rt); rt = window.setTimeout(() => { resize(); still(); }, w ? 150 : 0);
+  }).observe(canvas);
+  window.addEventListener("themechange", () => requestAnimationFrame(() => { readColors(); still(); }));
+  if (reduce) return;
   document.addEventListener("visibilitychange", start);
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); }).observe(canvas);
 
