@@ -27,10 +27,10 @@ const NAV_DEFAULT = ["home", "schedule", "team", "join", "app", "vods"];
 const topNav = [
   ...nav,
   { id: "overview", href: `/${lang}/app/#/`, label: t("app_nav_dashboard"), member: true },
+  { id: "profile", href: `/${lang}/app/#/profile`, label: t("app_nav_profile"), member: true },
   { id: "vods", href: `/${lang}/app/#/vods`, label: t("nav_vods"), member: true },
   { id: "signups", href: `/${lang}/app/#/signups`, label: t("rh_nav"), member: true },
   { id: "roster", href: `/${lang}/app/#/roster`, label: t("app_nav_members"), member: true },
-  { id: "profile", href: `/${lang}/app/#/profile`, label: t("app_nav_profile"), member: true },
 ] as { id: string; href: string; label: string; member?: boolean }[];
 ---
 <!doctype html>
