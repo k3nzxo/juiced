@@ -135,3 +135,18 @@ def test_post_pings_embed_first_message_only(monkeypatch):
     assert "embeds" not in posts[1]
     assert sum(len(p["allowed_mentions"]["users"]) for p in posts) == 150
     assert all(p["content"].startswith("<@") for p in posts)  # nur Erwähnungen im Text
+
+
+# ---------------------------------------------------------------- Erinnerung: Rollen auslassen (z. B. Shotcaller)
+
+def test_unsigned_exclude_roles(monkeypatch):
+    members = [{"id": "1", "name": "Ann", "roles": ["10"]},
+               {"id": "2", "name": "Bob", "roles": ["10", "99"]},   # Shotcaller
+               {"id": "3", "name": "Cid", "roles": ["10"]},
+               {"id": "4", "name": "Dan", "roles": ["20"]}]
+    monkeypatch.setattr(rh, "_guild_members", lambda: members)
+    ev = {"signups": [{"user_id": "3"}]}
+    assert [m["id"] for m in rh._unsigned(ev, "10")] == ["1", "2"]
+    assert [m["id"] for m in rh._unsigned(ev, "10", ["99"])] == ["1"]
+    assert [m["id"] for m in rh._unsigned(ev, "10", ["10"])] == ["1", "2"]     # Zielrolle selbst wird nie ausgelassen
+    assert rh._role_ids("99, x y,12") == ["99", "12"]

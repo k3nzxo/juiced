@@ -833,10 +833,16 @@ async function remindUnsigned(e: any, data: any) {
   try { rhRoles = rhRoles || await api<any[]>("/raidhelper/roles"); } catch (x) { toast((x as Error).message); return; }
   let saved = ""; try { saved = localStorage.getItem("juiced-remind-role") || ""; } catch { /* egal */ }
   const def = rhRoles.find((r) => r.id === saved) || rhRoles.find((r) => r.name.toUpperCase() === "G1") || rhRoles[0];
+  // Rollen, die nie gepingt werden (z. B. Shotcaller) – im Browser gemerkt, sonst Shotcaller vorausgewählt
+  let excl: string[] | null = null;
+  try { const raw = localStorage.getItem("juiced-remind-exclude"); if (raw !== null) excl = JSON.parse(raw); } catch { /* egal */ }
+  const exclude = new Set<string>(Array.isArray(excl) ? excl : rhRoles.filter((r) => /shot\s*caller/i.test(r.name)).map((r) => r.id));
   const m = modal(T("rh_remind_t"), `
     <p class="hint">${esc(T("rh_unsigned_hint"))}</p>
     <div class="row2"><div class="field"><label>${esc(T("rh_role"))}</label><select class="select" id="rm-role">${rhRoles.map((r) => `<option value="${esc(r.id)}" ${r.id === def?.id ? "selected" : ""}>@${esc(r.name)}</option>`).join("")}</select></div>
       <div class="field"><label>${esc(T("rh_channel"))}</label><select class="select" id="rm-ch">${chans.map((c) => `<option value="${esc(c.id)}" ${c.id === e.channel_id ? "selected" : ""}>#${esc(c.name || c.id)}</option>`).join("")}</select></div></div>
+    <div class="field"><label>${esc(T("rh_exclude"))}</label><p class="hint">${esc(T("rh_exclude_hint"))}</p>
+      <div class="chips rm-excl" id="rm-excl">${rhRoles.map((r) => `<button type="button" class="chip" data-excl="${esc(r.id)}" aria-pressed="${exclude.has(r.id)}">@${esc(r.name)}</button>`).join("")}</div></div>
     <div class="field"><span class="label" id="rm-count"></span><div class="unsigned-list" id="rm-list">${loading}</div></div>
     <div class="field"><label>${esc(T("rh_remind_text"))}</label><input class="input" id="rm-text" maxlength="800" value="${esc(T("rh_remind_default", { title: e.title }))}"></div>
     <label class="check"><input type="checkbox" id="rm-ping" checked> <span>${esc(T("rh_remind_ping"))}</span></label>
@@ -849,7 +855,7 @@ async function remindUnsigned(e: any, data: any) {
     try { localStorage.setItem("juiced-remind-role", role); } catch { /* egal */ }
     q<HTMLElement>("#rm-list").innerHTML = loading;
     try {
-      const list = await api<any[]>(`/raidhelper/events/${encodeURIComponent(e.id)}/unsigned?role=${encodeURIComponent(role)}`);
+      const list = await api<any[]>(`/raidhelper/events/${encodeURIComponent(e.id)}/unsigned?role=${encodeURIComponent(role)}&exclude=${encodeURIComponent([...exclude].join(","))}`);
       count = list.length;
       q<HTMLElement>("#rm-count").textContent = T("rh_unsigned", { n: list.length });
       q<HTMLElement>("#rm-list").innerHTML = list.length ? list.map((u) => `<span class="rh-p"><b>${esc(u.name)}</b></span>`).join("") : `<span class="muted">${esc(T("rh_unsigned_none"))}</span>`;
@@ -857,13 +863,22 @@ async function remindUnsigned(e: any, data: any) {
     q<HTMLButtonElement>("[data-save]").disabled = !count;
   };
   q<HTMLSelectElement>("#rm-role").addEventListener("change", load);
+  q<HTMLElement>("#rm-excl").addEventListener("click", (ev) => {
+    const b = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-excl]");
+    if (!b) return;
+    const id = b.dataset.excl!;
+    if (exclude.has(id)) exclude.delete(id); else exclude.add(id);
+    b.setAttribute("aria-pressed", String(exclude.has(id)));
+    try { localStorage.setItem("juiced-remind-exclude", JSON.stringify([...exclude])); } catch { /* egal */ }
+    load();
+  });
   load();
   q<HTMLElement>("[data-save]").addEventListener("click", async (ev) => {
     const b = ev.currentTarget as HTMLButtonElement;
     b.disabled = true;
     try {
       const r = await api<any>(`/raidhelper/events/${encodeURIComponent(e.id)}/remind`, { method: "POST", json: {
-        role_id: q<HTMLSelectElement>("#rm-role").value, channel_id: q<HTMLSelectElement>("#rm-ch")?.value || null,
+        role_id: q<HTMLSelectElement>("#rm-role").value, exclude_roles: [...exclude], channel_id: q<HTMLSelectElement>("#rm-ch")?.value || null,
         text: q<HTMLInputElement>("#rm-text").value, ping: q<HTMLInputElement>("#rm-ping").checked, dm: q<HTMLInputElement>("#rm-dm").checked,
       } });
       m.close(); toast(T("rh_reminded_n", { n: r.count }));

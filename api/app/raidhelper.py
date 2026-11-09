@@ -497,9 +497,17 @@ def roles(user: models.User = Depends(require_management)):
     return _guild_roles()
 
 
-def _unsigned(ev: dict, role_id: str) -> list:
+def _unsigned(ev: dict, role_id: str, exclude=()) -> list:
+    """exclude: Rollen, deren Mitglieder nicht gepingt werden (z. B. Shotcaller)."""
     signed = {s["user_id"] for s in ev["signups"]}  # jede Reaktion zählt (auch Abwesend), wie bei Raid-Helper
-    return sorted((m for m in _guild_members() if role_id in m["roles"] and m["id"] not in signed), key=lambda m: m["name"].lower())
+    skip = {r for r in exclude if r != role_id}
+    return sorted((m for m in _guild_members() if role_id in m["roles"] and m["id"] not in signed and not skip.intersection(m["roles"])),
+                  key=lambda m: m["name"].lower())
+
+
+def _role_ids(raw) -> list:
+    items = raw.split(",") if isinstance(raw, str) else list(raw or [])
+    return [r for r in (str(x).strip() for x in items[:50]) if _ID.match(r)]
 
 
 def _find_event(event_id: str) -> dict:
@@ -510,14 +518,15 @@ def _find_event(event_id: str) -> dict:
 
 
 @router.get("/events/{event_id}/unsigned")
-def unsigned(event_id: str, role: str, user: models.User = Depends(require_management)):
+def unsigned(event_id: str, role: str, exclude: str = "", user: models.User = Depends(require_management)):
     if not _ID.match(role or ""):
         raise HTTPException(status_code=400, detail="Please choose a role")
-    return [{"id": m["id"], "name": m["name"]} for m in _unsigned(_find_event(event_id), role)]
+    return [{"id": m["id"], "name": m["name"]} for m in _unsigned(_find_event(event_id), role, _role_ids(exclude))]
 
 
 class RemindIn(BaseModel):
     role_id: str
+    exclude_roles: list[str] = []
     channel_id: Optional[str] = None
     text: str = ""
     ping: bool = True
@@ -530,7 +539,7 @@ def remind(event_id: str, payload: RemindIn, db: DbSession = Depends(get_db), us
     if not _ID.match(payload.role_id or ""):
         raise HTTPException(status_code=400, detail="Please choose a role")
     ev = _find_event(event_id)
-    missing = _unsigned(ev, payload.role_id)
+    missing = _unsigned(ev, payload.role_id, _role_ids(payload.exclude_roles))
     text = (payload.text or "").strip()[:800]
     if payload.ping and missing:
         channel = payload.channel_id or ev.get("channel_id")

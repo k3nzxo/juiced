@@ -589,6 +589,8 @@ const ar: Partial<Dict & ExtraDict> = {
   roster_img_copied: "تم نسخ الصورة، الصقها في Discord",
   rh_unsigned: "غير مسجلين ({n})",
   rh_unsigned_hint: "كل من لديه رتبة Discord هذه ولم يتفاعل مع الفعالية بعد، مثل /unsigned في Raid-Helper.",
+  rh_exclude: "استثناء الرتب",
+  rh_exclude_hint: "لن تتم الإشارة إلى من لديهم هذه الرتب، مثل Shotcaller.",
   rh_remind: "تذكير",
   rh_remind_t: "إرسال تذكير",
   rh_remind_post: "النشر في قناة (عبر Raid-Helper)",

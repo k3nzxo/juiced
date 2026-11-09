@@ -589,6 +589,8 @@ const fi: Partial<Dict & ExtraDict> = {
   roster_img_copied: "Kuva kopioitu, liitä se Discordiin",
   rh_unsigned: "Ei ilmoittautunut ({n})",
   rh_unsigned_hint: "Kaikki tällä Discord-roolilla, jotka eivät ole vielä reagoineet tapahtumaan, kuten /unsigned Raid-Helperissa.",
+  rh_exclude: "Jätä roolit pois",
+  rh_exclude_hint: "Näillä rooleilla olevia ei mainita, esim. Shotcaller.",
   rh_remind: "Muistuta",
   rh_remind_t: "Lähetä muistutus",
   rh_remind_post: "Julkaise kanavalla (Raid-Helperin kautta)",
