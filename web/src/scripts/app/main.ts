@@ -118,6 +118,7 @@ function bindLogout() {
 function navItems() {
   const items = [
     { id: "", label: T("app_nav_dashboard"), ico: icon.grid },
+    { id: "profile", label: T("app_nav_profile"), ico: icon.settings },
     { id: "vods", label: T("app_nav_vods"), ico: icon.video },
     { id: "signups", label: T("rh_nav"), ico: icon.signups },
     { id: "roster", label: T("app_nav_members"), ico: icon.users },
@@ -126,7 +127,6 @@ function navItems() {
   if (me!.can_view_all) items.push({ id: "matches", label: T("app_nav_matches"), ico: icon.swords });
   if (me!.can_view_all) items.push({ id: "applications", label: T("app_nav_apps"), ico: icon.inbox });
   if (me!.can_view_all) items.push({ id: "admin", label: T("app_nav_admin"), ico: icon.shield });
-  items.push({ id: "profile", label: T("app_nav_profile"), ico: icon.settings });
   return items;
 }
 
