@@ -25,8 +25,12 @@ function vodPhaseFields(phases, quick = []) {
   return `<div class="field"><label>${escapeHtml(T("vod_f_phases"))}</label><p class="vod-hint">${escapeHtml(T("vod_f_phases_hint"))}</p>
     <div class="vod-phases">${VOD_PHASES.map(p => {
       const ws = buildWeapons(phases?.[p]).map(w => w.id);
-      return `<div class="vod-ph-row"><span class="vod-ph-name">${escapeHtml(T("vod_ph_" + p))}</span>${vodWeaponSelect(p, 0, ws[0])}${vodWeaponSelect(p, 1, ws[1])}
-        ${quick.length ? `<div class="vod-ph-quick">${quick.map(b => `<button type="button" class="vod-ph-q" data-ph="${p}" data-b="${b}" title="${escapeHtml(buildWeapons(b).map(w => w.name).join(" + "))}">${vodBuildDots(b)}${escapeHtml(buildLabel(b))}</button>`).join("")}</div>` : ""}</div>`;
+      // Waffen-Auswahl nur, wenn es keine Profil-Builds gibt oder der gesetzte Build keiner davon ist -- sonst hinter "+"
+      const manual = !quick.length || (phases?.[p] && !quick.includes(phases[p]));
+      return `<div class="vod-ph-row ${manual ? "is-manual" : ""}" data-row="${p}"><span class="vod-ph-name">${escapeHtml(T("vod_ph_" + p))}</span>
+        ${quick.length ? `<div class="vod-ph-quick">${quick.map(b => `<button type="button" class="vod-ph-q" data-ph="${p}" data-b="${b}" title="${escapeHtml(buildWeapons(b).map(w => w.name).join(" + "))}">${vodBuildDots(b)}${escapeHtml(buildLabel(b))}</button>`).join("")}
+          <button type="button" class="vod-ph-q vod-ph-more" data-more="${p}" title="${escapeHtml(T("vod_ph_other"))}" aria-label="${escapeHtml(T("vod_ph_other"))}">+</button></div>` : ""}
+        <div class="vod-ph-manual">${vodWeaponSelect(p, 0, ws[0])}${vodWeaponSelect(p, 1, ws[1])}</div></div>`;
     }).join("")}</div></div>`;
 }
 function vodBuildDots(b) {
@@ -38,6 +42,7 @@ function vodBindPhases(root) {
     const [a, b] = [0, 1].map(n => root.querySelector(`.vod-ph-w[data-ph="${p}"][data-n="${n}"]`)?.value || "");
     const cur = a && b && a !== b ? buildId(a, b) : "";
     root.querySelectorAll(`.vod-ph-q[data-ph="${p}"]`).forEach(x => x.classList.toggle("active", x.dataset.b === cur));
+    root.querySelector(`[data-more="${p}"]`)?.classList.toggle("active", !!cur && !root.querySelector(`.vod-ph-q[data-ph="${p}"][data-b="${cur}"]`));
   });
   root.querySelectorAll(".vod-ph-q").forEach(btn => btn.addEventListener("click", () => {
     const ws = buildWeapons(btn.dataset.b);
@@ -45,6 +50,11 @@ function vodBindPhases(root) {
     mark();
   }));
   root.querySelectorAll(".vod-ph-w").forEach(s => s.addEventListener("change", mark));
+  root.querySelectorAll("[data-more]").forEach(btn => btn.addEventListener("click", () => {
+    const row = root.querySelector(`[data-row="${btn.dataset.more}"]`);
+    row.classList.toggle("is-manual");
+    if (row.classList.contains("is-manual")) row.querySelector(".vod-ph-w")?.focus();
+  }));
   mark();
 }
 function vodReadPhases(root) {

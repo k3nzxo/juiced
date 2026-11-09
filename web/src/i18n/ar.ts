@@ -599,6 +599,7 @@ const ar: Partial<Dict & ExtraDict> = {
   vod_ph_tower: "Tower",
   vod_ph_goose: "Goose",
   vod_ph_tree: "Tree",
+  vod_ph_other: "أسلحة أخرى",
   rh_remind: "تذكير",
   rh_remind_t: "إرسال تذكير",
   rh_remind_post: "النشر في قناة (عبر Raid-Helper)",

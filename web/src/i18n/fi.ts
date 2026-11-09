@@ -599,6 +599,7 @@ const fi: Partial<Dict & ExtraDict> = {
   vod_ph_tower: "Tower",
   vod_ph_goose: "Goose",
   vod_ph_tree: "Tree",
+  vod_ph_other: "Muut aseet",
   rh_remind: "Muistuta",
   rh_remind_t: "Lähetä muistutus",
   rh_remind_post: "Julkaise kanavalla (Raid-Helperin kautta)",
