@@ -171,7 +171,7 @@ p { margin: 0; }
 .chip[aria-pressed="true"], .chip.active { background: var(--role, var(--accent)); border-color: var(--role, var(--accent)); color: #fff; }
 
 /* ------------------------------------------------------------------ reveal on scroll */
-.reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); transition-delay: calc(var(--d, 0ms) * 0.6); }
+.reveal { opacity: 0; transform: translateY(8px); transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); transition-delay: calc(var(--d, 0ms) * 0.3); }
 .reveal.in { opacity: 1; transform: none; }
 /* "Weniger Bewegung" im System: nichts abschalten, nur Verschieben/Endlos-Wackeln weg, Einblenden bleibt */
 @media (prefers-reduced-motion: reduce) {
