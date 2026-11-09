@@ -224,7 +224,7 @@ def test_nav_items_default_save_and_limit(client_for):
     c = client_for("quin", "member")
     assert c.get("/api/auth/me").json()["user"]["nav_items"] == list(models.NAV_DEFAULT)
     u = c.put("/api/me", json={"nav_items": ["profile", "home", "bogus", "signups"]}, headers=ORIGIN).json()["user"]
-    assert u["nav_items"] == ["home", "signups", "profile"]                     # feste Reihenfolge, Unbekanntes raus
+    assert u["nav_items"] == ["home", "profile", "signups"]                     # feste Reihenfolge, Unbekanntes raus
     u = c.put("/api/me", json={"nav_items": list(models.NAV_ITEMS)}, headers=ORIGIN).json()["user"]
     assert len(u["nav_items"]) == models.NAV_MAX
     u = c.put("/api/me", json={"nav_items": []}, headers=ORIGIN).json()["user"]
