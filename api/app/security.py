@@ -69,7 +69,9 @@ def current_user_optional(request: Request, db: DbSession = Depends(get_db)) -> 
     # Owner ist immer Developer, auch wenn der Rang mal manuell geändert wurde
     if user and user.discord_id in OWNER_DISCORD_IDS and user.rank != "developer":
         user.rank = "developer"
-        db.commit()
+    # Lese-Transaktion beenden -> Verbindung geht sofort zurück in den Pool. Sonst hielte jede Anfrage eine
+    # Verbindung, auch während sie auf Raid-Helper/Discord wartet, und bei vielen Besuchern wäre der Pool voll.
+    db.commit()
     return user
 
 

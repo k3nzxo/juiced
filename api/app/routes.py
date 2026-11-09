@@ -248,6 +248,7 @@ def _partner_info(db: DbSession, u: models.User) -> dict:
     """Eingetragene Partner + wer diese Person selbst als Partner eingetragen hat (Namen auch ohne Website-Konto)."""
     users = db.query(models.User).all()
     by_did = {x.discord_id: x for x in users}
+    db.commit()  # Verbindung freigeben, bevor evtl. auf Discord gewartet wird
     names = {}
     try:
         from .raidhelper import _guild_members
