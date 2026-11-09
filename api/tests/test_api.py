@@ -212,3 +212,8 @@ def test_chunk_upload_streams_to_file(client_for, monkeypatch):
         assert f.read() == data
     r = c.put(f"/api/vods/{v['id']}/chunk", params={"index": 2}, content=b"x" * 501, headers=ORIGIN)
     assert r.status_code == 400                     # zu groß
+
+
+def test_health_checks_database(anon):
+    r = anon.get("/api/health")
+    assert r.status_code == 200 and r.json() == {"ok": True}

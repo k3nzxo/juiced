@@ -87,6 +87,14 @@ app.include_router(raidhelper_router)
 
 @app.get("/api/health")
 def health():
+    """Für die Überwachung: API läuft UND die Datenbank antwortet."""
+    from fastapi.responses import JSONResponse
+    from sqlalchemy import text
+    try:
+        with engine.connect() as c:
+            c.execute(text("SELECT 1"))
+    except Exception as ex:
+        return JSONResponse({"ok": False, "db": type(ex).__name__}, status_code=503)
     return {"ok": True}
 
 

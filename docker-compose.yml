@@ -85,6 +85,29 @@ services:
         limits:
           memory: 256m
 
+  # Überwachung: schickt dem Owner (OWNER_DISCORD_IDS) eine Discord-DM, wenn etwas nicht läuft (siehe monitor/monitor.py)
+  monitor:
+    image: python:3.12-alpine
+    restart: unless-stopped
+    command: ["python", "-u", "/monitor.py"]
+    environment:
+      TZ: Europe/Berlin
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      OWNER_DISCORD_IDS: ${OWNER_DISCORD_IDS:-}
+      VOD_REQUIRE_MARKER: ${VOD_REQUIRE_MARKER:-0}
+      BACKUP_REQUIRE_MARKER: ${BACKUP_REQUIRE_MARKER:-0}
+    volumes:
+      - ./monitor/monitor.py:/monitor.py:ro
+      - ${VOD_HOST_DIR:-./data/vods}:/vods:ro
+      - ${BACKUP_HOST_DIR:-./data/backups}:/backups:ro
+      - ./data/uploads:/uploads:ro
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
 volumes:
   db_data:
 
