@@ -804,6 +804,9 @@ def get_vod(vod_id: int, db: Session = Depends(get_db), ctx: VodCtx = Depends(vo
     out = _vod_out(v, users, len(notes), ctx)
     out["notes"] = [_note_out(n, users, ctx) for n in notes]
     out["chunk_size"] = CHUNK_SIZE
+    up = db.get(models.User, v.uploader_id) if v.uploader_id else None
+    # Builds der hochladenden Person (Profil) als Schnellauswahl für die Phasen beim Bearbeiten
+    out["uploader_builds"] = list(dict.fromkeys(b for b in ([up.main_build] + up.alt_build_list if up else []) if b))
     if v.status == "uploading":
         out["chunks_done"] = _chunks_done(v)
     return out

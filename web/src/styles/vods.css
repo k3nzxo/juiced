@@ -217,3 +217,10 @@ main.vod-main { max-width: 1500px; }
 .vod-phase-tag i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
 .vod-phase-tag i + i { margin-left: -4px; box-shadow: 0 0 0 2px var(--surface-2); }
 @media (max-width: 480px) { .vod-ph-row { grid-template-columns: 1fr 1fr; } .vod-ph-name { grid-column: 1 / -1; } }
+.vod-ph-quick { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 5px; margin-top: -2px; }
+.vod-ph-q { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); }
+.vod-ph-q:hover { border-color: var(--text-2); }
+.vod-ph-q.active { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.vod-ph-q i { flex: none; width: 7px; height: 7px; border-radius: 50%; }
+.vod-ph-q i + i { margin-left: -4px; box-shadow: 0 0 0 2px var(--surface); }
+@media (max-width: 480px) { .vod-ph-quick { grid-column: 1 / -1; } }

@@ -19,12 +19,33 @@ function vodWeaponSelect(phase, n, sel) {
     `<optgroup label="${escapeHtml(sc.name)}">${WEAPONS.filter(w => w.school === sc.id).map(w =>
       `<option value="${w.id}" ${w.id === sel ? "selected" : ""}>${escapeHtml(w.name)}</option>`).join("")}</optgroup>`).join("")}</select>`;
 }
-function vodPhaseFields(phases) {
+// quick: Builds aus dem Profil als Schnellauswahl je Phase (ein Klick setzt beide Waffen)
+function vodPhaseFields(phases, quick = []) {
+  quick = [...new Set((quick || []).filter(b => buildWeapons(b).length === 2))].slice(0, 6);
   return `<div class="field"><label>${escapeHtml(T("vod_f_phases"))}</label><p class="vod-hint">${escapeHtml(T("vod_f_phases_hint"))}</p>
     <div class="vod-phases">${VOD_PHASES.map(p => {
       const ws = buildWeapons(phases?.[p]).map(w => w.id);
-      return `<div class="vod-ph-row"><span class="vod-ph-name">${escapeHtml(T("vod_ph_" + p))}</span>${vodWeaponSelect(p, 0, ws[0])}${vodWeaponSelect(p, 1, ws[1])}</div>`;
+      return `<div class="vod-ph-row"><span class="vod-ph-name">${escapeHtml(T("vod_ph_" + p))}</span>${vodWeaponSelect(p, 0, ws[0])}${vodWeaponSelect(p, 1, ws[1])}
+        ${quick.length ? `<div class="vod-ph-quick">${quick.map(b => `<button type="button" class="vod-ph-q" data-ph="${p}" data-b="${b}" title="${escapeHtml(buildWeapons(b).map(w => w.name).join(" + "))}">${vodBuildDots(b)}${escapeHtml(buildLabel(b))}</button>`).join("")}</div>` : ""}</div>`;
     }).join("")}</div></div>`;
+}
+function vodBuildDots(b) {
+  return [...new Set(buildWeapons(b).map(w => w.school))].map(sc => `<i style="background:${schoolColor(sc)}"></i>`).join("");
+}
+// Schnellauswahl verdrahten + markieren, welcher Build gerade gesetzt ist
+function vodBindPhases(root) {
+  const mark = () => VOD_PHASES.forEach(p => {
+    const [a, b] = [0, 1].map(n => root.querySelector(`.vod-ph-w[data-ph="${p}"][data-n="${n}"]`)?.value || "");
+    const cur = a && b && a !== b ? buildId(a, b) : "";
+    root.querySelectorAll(`.vod-ph-q[data-ph="${p}"]`).forEach(x => x.classList.toggle("active", x.dataset.b === cur));
+  });
+  root.querySelectorAll(".vod-ph-q").forEach(btn => btn.addEventListener("click", () => {
+    const ws = buildWeapons(btn.dataset.b);
+    [0, 1].forEach(n => { const s = root.querySelector(`.vod-ph-w[data-ph="${btn.dataset.ph}"][data-n="${n}"]`); if (s) s.value = ws[n]?.id || ""; });
+    mark();
+  }));
+  root.querySelectorAll(".vod-ph-w").forEach(s => s.addEventListener("change", mark));
+  mark();
 }
 function vodReadPhases(root) {
   const out = {};
@@ -323,7 +344,7 @@ function openVodUploadModal() {
             ${["", "win", "loss"].map(r => `<button type="button" class="cat-tab ${r === "" ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
           </div>
         </div>
-        ${vodPhaseFields(vodLastMe?.main_build ? Object.fromEntries(VOD_PHASES.map(p => [p, vodLastMe.main_build])) : null)}
+        ${vodPhaseFields(vodLastMe?.main_build ? Object.fromEntries(VOD_PHASES.map(p => [p, vodLastMe.main_build])) : null, [vodLastMe?.main_build, ...(vodLastMe?.alt_builds || [])])}
         <div class="field"><label>${vt("f_desc")}</label><textarea class="textarea" id="vod-f-desc" rows="3" maxlength="5000"></textarea></div>
       </div>
       <div class="modal-foot">
@@ -340,6 +361,7 @@ function openVodUploadModal() {
   let role = null;
   let file = null;
   vodBindRoleChips(backdrop, "vod-f-role", r => { role = r; });
+  vodBindPhases(backdrop);
   backdrop.querySelectorAll("#vod-f-result [data-r]").forEach(b => b.addEventListener("click", () => {
     result = b.dataset.r;
     backdrop.querySelectorAll("#vod-f-result [data-r]").forEach(x => x.classList.toggle("active", x === b));
@@ -923,7 +945,7 @@ function openVodEditModal(vod) {
             ${["", "win", "loss"].map(r => `<button type="button" class="cat-tab ${(vod.result || "") === r ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
           </div>
         </div>
-        ${vodPhaseFields(vod.phases)}
+        ${vodPhaseFields(vod.phases, vod.uploader_builds)}
         <div class="field"><label>${vt("f_desc")}</label><textarea class="textarea" id="vod-e-desc" rows="4" maxlength="5000">${escapeHtml(vod.description || "")}</textarea></div>
       </div>
       <div class="modal-foot"><button class="btn btn-primary" id="vod-e-save">${vt("save")}</button></div>
@@ -936,6 +958,7 @@ function openVodEditModal(vod) {
   let result = vod.result || "";
   let role = vod.role;
   vodBindRoleChips(backdrop, "vod-e-role", r => { role = r; });
+  vodBindPhases(backdrop);
   backdrop.querySelectorAll("#vod-e-result [data-r]").forEach(b => b.addEventListener("click", () => {
     result = b.dataset.r;
     backdrop.querySelectorAll("#vod-e-result [data-r]").forEach(x => x.classList.toggle("active", x === b));
