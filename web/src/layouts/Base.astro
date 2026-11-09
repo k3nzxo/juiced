@@ -21,6 +21,18 @@ const nav = [
   { id: "join", href: `/${lang}/join/`, label: t("nav_join") },
   { id: "app", href: `/${lang}/app/`, label: t("nav_area") },
 ];
+// Navigation oben: jedes Mitglied wählt im Profil selbst, was hier steht (gleiche Liste wie NAV_ITEMS in der API).
+// "member" = nur angemeldet sichtbar. Ohne Auswahl gilt NAV_DEFAULT.
+const NAV_DEFAULT = ["home", "schedule", "team", "join", "app", "vods"];
+const topNav = [
+  ...nav.slice(0, 4),
+  { id: "matches", href: `/${lang}/matches/`, label: t("nav_matches") },
+  nav[4],
+  { id: "vods", href: `/${lang}/app/#/vods`, label: t("nav_vods"), member: true },
+  { id: "signups", href: `/${lang}/app/#/signups`, label: t("rh_nav"), member: true },
+  { id: "roster", href: `/${lang}/app/#/roster`, label: t("app_nav_members"), member: true },
+  { id: "profile", href: `/${lang}/app/#/profile`, label: t("app_nav_profile"), member: true },
+] as { id: string; href: string; label: string; member?: boolean }[];
 ---
 <!doctype html>
 <html lang={htmlLang} dir={RTL.has(lang) ? "rtl" : "ltr"} data-theme="light">
@@ -56,8 +68,7 @@ const nav = [
       <div class="container header-inner">
         <a href={`/${lang}/`} class="brand" aria-label="JUICED"><Logo /></a>
         <nav class="nav-desktop" aria-label="Main">
-          {nav.map((n) => <a href={n.href} class:list={["nav-link", { active: page === n.id }]}>{n.label}</a>)}
-          <a href={`/${lang}/app/#/vods`} class="nav-link auth-only">{t("nav_vods")}</a>
+          {topNav.map((n) => <a href={n.href} data-nid={n.id} hidden={!NAV_DEFAULT.includes(n.id)} class:list={["nav-link", { active: page === n.id, "auth-only": n.member }]}>{n.label}</a>)}
         </nav>
         <div class="header-actions">
           <div class="lang-menu" data-lang-menu>
@@ -90,8 +101,7 @@ const nav = [
       </div>
       <div class="mobile-panel" hidden data-mobile-panel>
         <div class="container">
-          {nav.map((n) => <a href={n.href} class="m-link">{n.label}</a>)}
-          <a href={`/${lang}/app/#/vods`} class="m-link auth-only">{t("nav_vods")}</a>
+          {topNav.map((n) => <a href={n.href} data-nid={n.id} hidden={!NAV_DEFAULT.includes(n.id)} class:list={["m-link", { "auth-only": n.member }]}>{n.label}</a>)}
           <a href={DISCORD_INVITE} target="_blank" rel="noopener" class="m-link">Discord</a>
           <a href={`/${lang}/app/`} class="btn btn-sm m-login guest-only"><Icon name="discord" />{t("nav_login_discord")}</a>
         </div>
@@ -100,6 +110,13 @@ const nav = [
     <script is:inline>
       // Angemeldeten Nutzer sofort zeigen (aus dem letzten Seitenaufruf), Abgleich passiert danach in chrome.ts
       (function () {
+        // eigene Auswahl der Navigation oben sofort anwenden (gemerkt vom letzten Besuch, Abgleich in chrome.ts)
+        try {
+          var nav = JSON.parse(localStorage.getItem("juiced-nav") || "null");
+          if (Array.isArray(nav)) document.querySelectorAll("[data-nid]").forEach(function (a) { a.hidden = nav.indexOf(a.getAttribute("data-nid")) < 0; });
+          var hi = document.querySelector(".header-inner");
+          if (hi && hi.scrollWidth > hi.clientWidth + 1) document.documentElement.classList.add("nav-tight");
+        } catch (e) {}
         try {
           var u = JSON.parse(sessionStorage.getItem("juiced-me") || "null");
           if (!u) return;
@@ -194,6 +211,9 @@ const nav = [
   .mobile-panel { border-top: 1px solid var(--border); background: var(--bg); }
   .mobile-panel .container { display: flex; flex-direction: column; padding-top: 8px; padding-bottom: 16px; }
   .m-link { padding: 12px 4px; font-size: 17px; font-weight: 500; border-bottom: 1px solid var(--border); }
+  /* eigene Navigation passt nicht in die Leiste -> Menü-Knopf statt Überlauf (setzt chrome.ts / Inline-Skript) */
+  :global(html.nav-tight) .nav-desktop { display: none !important; }
+  :global(html.nav-tight) .show-sm { display: inline-flex; }
   @media (max-width: 820px) {
     .nav-desktop, .hide-sm { display: none !important; }
     .show-sm { display: inline-flex; }

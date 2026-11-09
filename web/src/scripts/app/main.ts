@@ -9,7 +9,7 @@ import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText, W
 type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
   coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
-  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[]; dm_off: string[];
+  weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[]; dm_off: string[]; nav_items?: string[];
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; can_view_all: boolean; rank_manual: boolean;
 };
 
@@ -200,7 +200,7 @@ function route() {
     case "schedule": return me.can_view_all ? viewSchedule(view) : viewDashboard(view);
     case "matches": return me.can_view_all ? viewMatches(view) : viewDashboard(view);
     case "admin": return me.can_view_all ? viewAdmin(view) : viewDashboard(view);
-    case "profile": return viewProfile(view);
+    case "profile": return h.split("/")[1] === "edit" ? viewProfile(view) : viewMember(view, me.id);
     default: return viewDashboard(view);
   }
 }
@@ -216,7 +216,7 @@ async function viewDashboard(view: HTMLElement) {
     me!.can_manage ? `<button class="btn btn-primary btn-sm" data-new>${icon.plus} ${esc(T("ann_new"))}</button>` : "") +
     `<div class="dash-top">
       <section class="card dash-card dash-build">
-        <header><h2>${esc(T("prof_build"))}</h2><a class="btn btn-ghost btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a></header>
+        <header><h2>${esc(T("prof_build"))}</h2><a class="btn btn-ghost btn-sm" href="#/profile/edit">${icon.edit} ${esc(T("dash_build_edit"))}</a></header>
         ${hasBuild(me) ? buildBlock(me, true) : `<p class="muted">${esc(T("dash_build_empty"))}</p>`}
       </section>
       <section class="card dash-card dash-next">
@@ -1074,7 +1074,8 @@ async function editMemberBuild(view: HTMLElement, id: number) {
 }
 
 async function viewMember(view: HTMLElement, id: number) {
-  view.innerHTML = `<a class="back-link" href="#/roster">← ${esc(T("mem_back"))}</a><div id="mem">${loading}</div>`;
+  const self = id === me!.id;
+  view.innerHTML = `${self ? "" : `<a class="back-link" href="#/roster">← ${esc(T("mem_back"))}</a>`}<div id="mem">${loading}</div>`;
   const el = view.querySelector<HTMLElement>("#mem")!;
   let u: any, vods: any[] = [];
   try {
@@ -1088,7 +1089,7 @@ async function viewMember(view: HTMLElement, id: number) {
         <div class="mh-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
         <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span>
         ${ATT[u.discord_id]?.pct != null ? `<span class="mh-att">${esc(T("att_label"))} ${attBadge(u.discord_id)} ${ATT[u.discord_id].attended != null ? `<span class="muted">${esc(ATT[u.discord_id].total != null ? T("att_title", { a: ATT[u.discord_id].attended, t: ATT[u.discord_id].total }) : T("att_count", { a: ATT[u.discord_id].attended }))}</span>` : ""}</span>` : ""}</div>
-      ${u.id === me!.id ? `<a class="btn btn-outline btn-sm" href="#/profile">${icon.edit} ${esc(T("dash_build_edit"))}</a>`
+      ${u.id === me!.id ? `<a class="btn btn-primary btn-sm" href="#/profile/edit">${icon.edit} ${esc(T("edit"))}</a>`
         : u.can_edit_build ? `<a class="btn btn-outline btn-sm" href="#/roster/${u.id}/edit">${icon.edit} ${esc(T("dash_build_edit"))}</a>` : ""}
     </section>
     <h2 class="v-sub">Build</h2>
@@ -1194,6 +1195,27 @@ const COUNTRIES = ["AE", "AL", "AM", "AR", "AT", "AU", "AZ", "BA", "BE", "BG", "
 
 // target: Mitglied, dessen Build ein Leader/Vice bearbeitet (sonst das eigene Profil)
 // Benachrichtigungen: Discord-DMs und Glocke, je mit Hauptschalter "alle"; nur relevante Punkte zeigen
+// Navigation oben selbst zusammenstellen: Punkte und Beschriftung kommen aus dem Header der Seite
+const NAV_MAX = 7;
+function navPicker() {
+  const items = [...document.querySelectorAll<HTMLElement>(".nav-desktop [data-nid]")].map((a) => ({ id: a.dataset.nid!, label: a.textContent!.trim() }));
+  if (!items.length) return "";
+  const cur = new Set(me!.nav_items || []);
+  return `<h2 class="prof-sec">${esc(T("prof_nav"))}</h2>
+    <div class="field"><p class="hint">${esc(T("prof_nav_hint", { n: NAV_MAX }))}</p>
+      <div class="chips" data-navbox>${items.map((i) => `<button type="button" class="chip" data-navpick="${esc(i.id)}" aria-pressed="${cur.has(i.id)}">${esc(i.label)}</button>`).join("")}</div></div>`;
+}
+function bindNavPicker(view: HTMLElement) {
+  const box = view.querySelector<HTMLElement>("[data-navbox]");
+  box?.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-navpick]");
+    if (!b) return;
+    const on = b.getAttribute("aria-pressed") === "true";
+    if (!on && box.querySelectorAll('[aria-pressed="true"]').length >= NAV_MAX) { toast(T("prof_nav_max", { n: NAV_MAX })); return; }
+    b.setAttribute("aria-pressed", String(!on));
+  });
+}
+
 function notifGroups() {
   const off = new Set(me!.dm_off || []);
   const coach = me!.is_admin || (me!.coach_roles || []).length > 0;
@@ -1233,9 +1255,8 @@ function viewProfile(view: HTMLElement, target: any = null) {
   let showAll = false;
   const partners: string[] = (u.partners || []).map((x: any) => (typeof x === "string" ? x : x.id));
   let people: { id: string; name: string }[] = [];
-  view.innerHTML = (own ? head(T("prof_title")) : `<a class="back-link" href="#/roster/${u.id}">← ${esc(u.display_name)}</a>` + head(T("prof_edit_other", { name: u.display_name }))) + `<form class="profile card" novalidate>
-    <div class="prof-top">${avatar(u, 56)}<div><strong>${esc(u.username)}</strong>${rankBadge(own ? me!.public_rank : u.rank)}</div>
-      <a class="btn btn-ghost btn-sm prof-view" href="#/roster/${u.id}">${icon.user}</a></div>
+  view.innerHTML = (own ? `<a class="back-link" href="#/profile">← ${esc(T("app_nav_profile"))}</a>` + head(T("prof_title")) : `<a class="back-link" href="#/roster/${u.id}">← ${esc(u.display_name)}</a>` + head(T("prof_edit_other", { name: u.display_name }))) + `<form class="profile card" novalidate>
+    <div class="prof-top">${avatar(u, 56)}<div><strong>${esc(u.username)}</strong>${rankBadge(own ? me!.public_rank : u.rank)}</div></div>
     ${own ? `<div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
     <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>` : ""}
     <h2 class="prof-sec">${esc(own ? T("prof_build") : "Build")}</h2>
@@ -1256,12 +1277,13 @@ function viewProfile(view: HTMLElement, target: any = null) {
     <div class="field"><span class="label">${esc(T("prof_partners"))}</span><p class="hint">${esc(T("prof_partners_hint"))}</p>
       <div class="pp-partners" data-partners></div>
       <div class="pp-search"><input class="input" id="p-psearch" autocomplete="off" placeholder="${esc(T("prof_partners_ph"))}"><div class="pp-sugg" data-sugg hidden></div></div></div>
+    ${own ? navPicker() : ""}
     ${own ? notifGroups() : ""}
     ${own ? `    <label class="check"><input type="checkbox" id="p-show" ${me!.show_on_team ? "checked" : ""}> <span>${esc(T("prof_show"))}</span></label>` : ""}
     <button class="btn btn-primary" type="submit">${esc(T("save"))}</button>
   </form>`;
 
-  if (own) bindNotifGroups(view);
+  if (own) { bindNotifGroups(view); bindNavPicker(view); }
   // Inner Ways: nach Pfad gruppiert; ohne "Alle zeigen" nur eigene Pfade + allgemeine (+ schon gewählte)
   const drawWays = () => {
     const mainPaths = buildPaths(curMain());
@@ -1373,11 +1395,14 @@ function viewProfile(view: HTMLElement, target: any = null) {
         dm_off: [...(me!.dm_off || []).filter((k) => !view.querySelector(`[data-dm="${k}"]`)),
         ...[...view.querySelectorAll<HTMLInputElement>("[data-dm]")].filter((x) => !x.checked).map((x) => x.dataset.dm!)],
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
+        nav_items: [...view.querySelectorAll<HTMLElement>("[data-navpick]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.navpick!),
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });
       me = r.user;
       toast(T("saved"));
-      renderShell(); route();
+      window.dispatchEvent(new CustomEvent("juiced:nav", { detail: me!.nav_items || null }));
+      renderShell();
+      location.hash = "#/profile";
     } catch (err) { toast((err as Error).message); }
   });
 }

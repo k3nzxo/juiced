@@ -25,6 +25,10 @@ OLD_WEAPONS = {"nameless": "nameless_sword", "twinblades": "infernal_twinblades"
 DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder",
             "bell_apps", "bell_matches", "bell_vods", "bell_uploads")
 DISCORD_DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder")  # per Discord-DM; standardmäßig aus
+# Punkte für die Navigation oben (jedes Mitglied wählt selbst); Reihenfolge = Anzeige-Reihenfolge
+NAV_ITEMS = ("home", "schedule", "team", "join", "matches", "app", "vods", "signups", "roster", "profile")
+NAV_DEFAULT = ("home", "schedule", "team", "join", "app", "vods")
+NAV_MAX = 7
 
 
 def clean_weapons(items, role=None) -> str:
@@ -53,6 +57,7 @@ class User(Base):
     inner_ways = Column(String(900), nullable=True)    # gewählte Inner Ways, kommagetrennt
     partners = Column(String(400), nullable=True)      # Ingame-Partner (Discord-IDs), kommagetrennt
     main_build = Column(String(80), nullable=True)     # Haupt-Build: zwei Waffen "a+b" (auch Hybride)
+    nav_items = Column(String(200), nullable=True)     # gewählte Punkte der Navigation oben (NAV_ITEMS); leer = Standard
     dm_off = Column(String(200), nullable=True)        # abgestellte Benachrichtigungen (DM_KINDS), kommagetrennt; leer = noch nie eingestellt -> Discord-DMs aus
     alt_builds = Column(String(400), nullable=True)    # weitere Builds, kommagetrennt
     country = Column(String(2), nullable=True)
@@ -72,6 +77,12 @@ class User(Base):
     @property
     def alt_build_list(self) -> list[str]:
         return [b for b in (self.alt_builds or "").split(",") if b]
+
+    @property
+    def nav_list(self) -> list[str]:
+        if self.nav_items is None:
+            return list(NAV_DEFAULT)
+        return [k for k in self.nav_items.split(",") if k in NAV_ITEMS]
 
     @property
     def dm_off_list(self) -> list[str]:

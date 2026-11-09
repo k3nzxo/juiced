@@ -94,14 +94,16 @@ export function initChrome() {
       if (!me || !me.user) {
         // abgemeldet: Zwischenspeicher und evtl. schon gezeigten Namen zurücksetzen
         try { sessionStorage.removeItem("juiced-me"); } catch { /* egal */ }
+        applyNav(null);  // Gäste sehen die Standard-Navigation
         if (label) label.textContent = label.dataset.default || label.textContent;
         link?.querySelector(".acc-av")?.remove();
         const bell = document.querySelector<HTMLElement>("[data-bell]");
         if (bell) bell.hidden = true;
         return;
       }
-      if (!label || !link) return;
       const u = me.user;
+      applyNav(u.is_member && Array.isArray(u.nav_items) ? u.nav_items : null);
+      if (!label || !link) return;
       let img = link.querySelector<HTMLImageElement>(".acc-av");
       if (u.avatar_url) {
         if (!img) {
@@ -117,6 +119,30 @@ export function initChrome() {
     })
     .catch(() => {});
 }
+
+// Navigation oben: eigene Auswahl (null = Standard aus dem HTML)
+const NAV_DEFAULT = ["home", "schedule", "team", "join", "app", "vods"];
+// passt die Leiste nicht in die Breite, kommt der Menü-Knopf (statt dass die Seite seitlich überläuft)
+function fitNav() {
+  const root = document.documentElement;
+  const hi = document.querySelector<HTMLElement>(".header-inner");
+  if (!hi) return;
+  root.classList.remove("nav-tight");
+  if (hi.scrollWidth > hi.clientWidth + 1) root.classList.add("nav-tight");
+}
+let fitT = 0;
+window.addEventListener("resize", () => { clearTimeout(fitT); fitT = window.setTimeout(fitNav, 100); });
+export function applyNav(items: string[] | null) {
+  const list = items || NAV_DEFAULT;
+  document.querySelectorAll<HTMLElement>("[data-nid]").forEach((a) => { a.hidden = !list.includes(a.dataset.nid || ""); });
+  fitNav();
+  requestAnimationFrame(fitNav);  // nochmal, nachdem Name/Avatar im Header stehen
+  try {
+    if (items) localStorage.setItem("juiced-nav", JSON.stringify(items));
+    else localStorage.removeItem("juiced-nav");
+  } catch { /* privater Modus */ }
+}
+window.addEventListener("juiced:nav", (e) => applyNav((e as CustomEvent).detail));
 
 function saveMe(patch: Record<string, unknown>) {
   try {

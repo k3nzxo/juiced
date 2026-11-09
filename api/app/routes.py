@@ -142,6 +142,7 @@ class ProfileIn(BaseModel):
     inner_ways: Optional[list[str]] = None
     partners: Optional[list[str]] = None
     dm_off: Optional[list[str]] = None
+    nav_items: Optional[list[str]] = None
     country: Optional[str] = None
     show_on_team: Optional[bool] = None
     lang: Optional[str] = None
@@ -213,6 +214,10 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
     if "dm_off" in data:
         # "-" = bewusst alles an (None hieße "nie eingestellt" = alles aus)
         user.dm_off = ",".join(k for k in models.DM_KINDS if k in (data["dm_off"] or [])) or "-"
+    if "nav_items" in data and data["nav_items"] is not None:
+        chosen = set(data["nav_items"])
+        # feste Reihenfolge, höchstens NAV_MAX; "-" = bewusst nichts gewählt (None hieße Standard)
+        user.nav_items = ",".join([k for k in models.NAV_ITEMS if k in chosen][:models.NAV_MAX]) or "-"
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None
