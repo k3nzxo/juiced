@@ -118,3 +118,20 @@ def test_attendance_total_from_percentage(monkeypatch):
     assert m["111"] == {"attended": 12, "total": 25, "pct": 48}
     assert m["222"] == {"attended": 0, "total": None, "pct": 0}
     rh._att_cache.clear()
+
+
+# ---------------------------------------------------------------- Erinnerung/Absage: Pings oben, Karte darunter
+
+def test_post_pings_embed_first_message_only(monkeypatch):
+    from types import SimpleNamespace
+    posts = []
+    monkeypatch.setattr(rh, "_discord", lambda method, path, **kw: posts.append(kw["json"]))
+    ids = [str(10 ** 17 + i) for i in range(150)]
+    emb = rh._embed("Weekly Raid", "https://discord.com/channels/1/2/3", "sign up", SimpleNamespace(discord_id="42"))
+    rh._post_pings("555", ids, emb)
+    assert len(posts) == 2                                   # 150 Leute -> 2 Nachrichten
+    assert posts[0]["embeds"][0]["title"] == "Weekly Raid"
+    assert "Sent by <@42>" in posts[0]["embeds"][0]["description"]
+    assert "embeds" not in posts[1]
+    assert sum(len(p["allowed_mentions"]["users"]) for p in posts) == 150
+    assert all(p["content"].startswith("<@") for p in posts)  # nur Erwähnungen im Text

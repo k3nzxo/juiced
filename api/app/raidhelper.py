@@ -428,6 +428,25 @@ def _mention_chunks(head: str, ids: list) -> list:
     return out
 
 
+def _post_pings(channel: str, ids: list, embed: dict):
+    """Wie bei Raid-Helper: oben die Erwähnungen (die pingen), darunter eine Karte mit Titel/Text.
+    Bei vielen Leuten gehen weitere Erwähnungen in Folgenachrichten (Discord-Grenzen)."""
+    chunks = _mention_chunks("", ids) if ids else [("", [])]
+    for n, (content, chunk_ids) in enumerate(chunks):
+        msg = {"content": content.strip(), "allowed_mentions": {"parse": [], "users": chunk_ids}}
+        if n == 0:
+            msg["embeds"] = [embed]
+        _discord("POST", f"/channels/{channel}/messages", json=msg)
+
+
+def _embed(title: str, url: str, text: str, sender: models.User, color: int = 0xFF7A18) -> dict:
+    e = {"title": title[:256], "color": color,
+         "description": "\n\n".join(x for x in (text, f"Sent by <@{sender.discord_id}>") if x)[:4000]}
+    if url:
+        e["url"] = url
+    return e
+
+
 def _guild_channels() -> list:
     def load():
         chans = _discord("GET", f"/guilds/{DISCORD_GUILD_ID}/channels") or []
@@ -517,11 +536,7 @@ def remind(event_id: str, payload: RemindIn, db: DbSession = Depends(get_db), us
         channel = payload.channel_id or ev.get("channel_id")
         if not channel or not _ID.match(channel):
             raise HTTPException(status_code=400, detail="Please choose a channel")
-        head = "\n".join(x for x in (f"**{ev['title']}**" + (f" · {text}" if text else ""), ev.get("url") or "") if x)
-        # Erwähnungen auf mehrere Nachrichten verteilen (max. 2000 Zeichen)
-        for content, ids in _mention_chunks(head + "\n", [m["id"] for m in missing]):
-            _discord("POST", f"/channels/{channel}/messages", json={
-                "content": content, "allowed_mentions": {"parse": [], "users": ids}})
+        _post_pings(channel, [m["id"] for m in missing], _embed(_plain_title(ev["title"]), ev.get("url") or "", text, user))
     if payload.dm and missing:
         off = {u.discord_id for u in db.query(models.User).filter(models.User.discord_id.in_([m["id"] for m in missing])).all()
                if not u.wants_dm("reminder")}
@@ -638,10 +653,8 @@ def cancel_event(event_id: str, payload: CancelIn, db: DbSession = Depends(get_d
     pinged = 0
     if payload.ping and DISCORD_BOT_TOKEN and ev.get("channel_id"):
         ids = list(dict.fromkeys(s["user_id"] for s in ev["signups"] if s["user_id"] and s["status"] == "primary" and s["class"].lower() not in ("absence", "absent")))
-        head = f"❌ **{_plain_title(ev['title'])}** – cancelled" + (f": {reason}" if reason else "") + (f"\n{ev['url']}" if ev.get("url") else "")
-        for content, chunk_ids in _mention_chunks(head + "\n", ids):
-            _discord("POST", f"/channels/{ev['channel_id']}/messages", json={
-                "content": content, "allowed_mentions": {"parse": [], "users": chunk_ids}})
+        _post_pings(ev["channel_id"], ids, _embed(f"❌ {_plain_title(ev['title'])} – cancelled", ev.get("url") or "",
+                                                  reason, user, color=0xE5484D))
         pinged = len(ids)
     return {"ok": True, "pinged": pinged}
 
