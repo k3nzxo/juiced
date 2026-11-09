@@ -112,7 +112,7 @@ export const WEAPONS: Weapon[] = [
   { id: "museflow_drum", name: "Museflow Waist Drum", school: "silkbind", short: "Drum" },
   { id: "thundercry_blade", name: "Thundercry Blade", school: "stonesplit", short: "Mo" },
   { id: "stormbreaker_spear", name: "Stormbreaker Spear", school: "stonesplit", short: "Stormbreaker" },
-  { id: "snowparting_blade", name: "Snowparting Blade", school: "stonesplit", short: "Snowparting" },
+  { id: "snowparting_blade", name: "Snowparting Blade (Hengdao)", school: "stonesplit", short: "Hengdao" },
   { id: "phalanxbane_blade", name: "Phalanxbane Blade", school: "stonesplit", short: "Phalanxbane" },
 ];
 export const PRESETS: { name: string; weapons: [string, string]; role: "dps" | "tank" | "healer" }[] = [

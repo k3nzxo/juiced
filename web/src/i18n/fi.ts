@@ -561,7 +561,7 @@ const fi: Partial<Dict & ExtraDict> = {
   weapon_skygrasp_rope_dart: "Skygrasp Rope Dart",
   weapon_heavenwill_gauntlets: "Heavenwill Gauntlets",
   weapon_skystrike_gauntlets: "Skystrike Gauntlets",
-  weapon_snowparting_blade: "Snowparting Blade",
+  weapon_snowparting_blade: "Snowparting Blade (Hengdao)",
   weapon_phalanxbane_blade: "Phalanxbane Blade",
   weapon_willowbend_fan: "Willowbend Fan",
   err_rh_channel: "Valitse kanava.",
