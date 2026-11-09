@@ -174,3 +174,13 @@ def test_vod_dm_respects_settings(client_for, monkeypatch):
     finally:
         db.close()
     assert sent == [u.discord_id]
+
+
+def test_notifications_off_by_default(client_for):
+    from app import models
+    c = client_for("pia", "member")
+    u = c.get("/api/auth/me").json()["user"]
+    assert set(u["dm_off"]) == set(models.DISCORD_DM_KINDS)         # neu: Discord-DMs aus, Glocke an
+    u = c.put("/api/me", json={"dm_off": []}, headers=ORIGIN).json()["user"]
+    assert u["dm_off"] == []                                          # bewusst alles an bleibt an
+    assert c.get("/api/auth/me").json()["user"]["dm_off"] == []

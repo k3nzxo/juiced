@@ -211,7 +211,8 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
     elif user.weapons:  # nach Rollenwechsel nur passende Waffen behalten
         user.weapons = models.clean_weapons(user.weapons.split(","), user.main_role) or None
     if "dm_off" in data:
-        user.dm_off = ",".join(k for k in models.DM_KINDS if k in (data["dm_off"] or [])) or None
+        # "-" = bewusst alles an (None hieße "nie eingestellt" = alles aus)
+        user.dm_off = ",".join(k for k in models.DM_KINDS if k in (data["dm_off"] or [])) or "-"
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None

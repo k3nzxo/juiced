@@ -24,6 +24,7 @@ OLD_WEAPONS = {"nameless": "nameless_sword", "twinblades": "infernal_twinblades"
 #   Discord-DMs vom Bot und die Zähler der Glocke auf der Website
 DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder",
             "bell_apps", "bell_matches", "bell_vods", "bell_uploads")
+DISCORD_DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder")  # per Discord-DM; standardmäßig aus
 
 
 def clean_weapons(items, role=None) -> str:
@@ -52,7 +53,7 @@ class User(Base):
     inner_ways = Column(String(900), nullable=True)    # gewählte Inner Ways, kommagetrennt
     partners = Column(String(400), nullable=True)      # Ingame-Partner (Discord-IDs), kommagetrennt
     main_build = Column(String(80), nullable=True)     # Haupt-Build: zwei Waffen "a+b" (auch Hybride)
-    dm_off = Column(String(200), nullable=True)        # abgestellte Benachrichtigungen (DM_KINDS), kommagetrennt
+    dm_off = Column(String(200), nullable=True)        # abgestellte Benachrichtigungen (DM_KINDS), kommagetrennt; leer = noch nie eingestellt -> Discord-DMs aus
     alt_builds = Column(String(400), nullable=True)    # weitere Builds, kommagetrennt
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
@@ -74,7 +75,9 @@ class User(Base):
 
     @property
     def dm_off_list(self) -> list[str]:
-        return [k for k in (self.dm_off or "").split(",") if k in DM_KINDS]
+        if self.dm_off is None:  # noch nie eingestellt: Discord-DMs aus, Glocke auf der Website an
+            return list(DISCORD_DM_KINDS)
+        return [k for k in self.dm_off.split(",") if k in DM_KINDS]
 
     def wants_dm(self, kind: str) -> bool:
         return kind not in self.dm_off_list
