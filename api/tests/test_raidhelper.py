@@ -113,11 +113,11 @@ def test_attendance_total_from_percentage(monkeypatch):
     monkeypatch.setattr(rh, "API_KEY", "k")
     monkeypatch.setattr(rh, "SERVER_ID", "1")
     monkeypatch.setattr(rh.httpx, "Client", FakeClient)
-    rh._att_cache.clear()
+    rh._dc_cache.clear()
     m = rh.get_attendance(30)["members"]
     assert m["111"] == {"attended": 12, "total": 25, "pct": 48}
     assert m["222"] == {"attended": 0, "total": None, "pct": 0}
-    rh._att_cache.clear()
+    rh._dc_cache.clear()
 
 
 # ---------------------------------------------------------------- Erinnerung/Absage: Pings oben, Karte darunter
@@ -150,3 +150,30 @@ def test_unsigned_exclude_roles(monkeypatch):
     assert [m["id"] for m in rh._unsigned(ev, "10", ["99"])] == ["1"]
     assert [m["id"] for m in rh._unsigned(ev, "10", ["10"])] == ["1", "2"]     # Zielrolle selbst wird nie ausgelassen
     assert rh._role_ids("99, x y,12") == ["99", "12"]
+
+
+# ---------------------------------------------------------------- Zwischenspeicher: viele gleichzeitige Besucher -> nur ein Abruf
+
+def test_cached_single_flight_and_stale():
+    import threading, time
+    calls = []
+
+    def slow():
+        calls.append(1)
+        time.sleep(0.2)
+        return len(calls)
+
+    rh._dc_cache.pop("t", None)
+    out = []
+    ts = [threading.Thread(target=lambda: out.append(rh._cached("t", 60, slow))) for _ in range(10)]
+    [t.start() for t in ts]
+    [t.join() for t in ts]
+    assert len(calls) == 1 and out == [1] * 10              # leer: einer lädt, alle bekommen dasselbe
+
+    rh._dc_cache["t"] = (time.time() - 120, 1)              # abgelaufen
+    t0 = time.time()
+    got = [rh._cached("t", 60, slow) for _ in range(5)]
+    assert got == [1] * 5 and time.time() - t0 < 0.1         # sofort die alten Daten, kein Warten
+    time.sleep(0.4)
+    assert len(calls) == 2 and rh._dc_cache["t"][1] == 2    # genau ein Hintergrund-Abruf
+    rh._dc_cache.pop("t", None)

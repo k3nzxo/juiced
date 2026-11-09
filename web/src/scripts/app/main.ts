@@ -59,11 +59,15 @@ export async function start() {
   window.addEventListener("hashchange", route);
   window.addEventListener("juiced:unauthorized", () => { me = null; renderLogin(); });
   try {
-    const r = await api<{ user: Me | null; login_configured: boolean }>("/auth/me");
+    // Emote-Icons gleich mitladen (parallel statt nacheinander)
+    const emotes: Promise<Record<string, string> | null> = fetch("/api/raidhelper/emotes", { credentials: "same-origin" })
+      .then((x) => (x.ok ? x.json() : null)).catch(() => null);  // ohne Login einfach leer (kein Abmelde-Ereignis)
+    const shared = await ((window as any).__juicedMe || Promise.resolve(null));
+    const r = shared && "user" in shared ? shared : await api<{ user: Me | null; login_configured: boolean }>("/auth/me");
     me = r.user;
     if (!me) return renderLogin(r.login_configured);
     if (!me.is_member) return renderNoAccess();
-    try { EMOTES = await api<Record<string, string>>("/raidhelper/emotes"); } catch { /* ohne Icons */ }
+    EMOTES = (await emotes) || EMOTES;
     renderShell();
     route();
   } catch {
@@ -136,7 +140,9 @@ function renderShell() {
     <section class="view" id="view"></section>
   </div>`;
   bindLogout();
-  refreshBadges();
+  // Glocke im Header hat die Zahlen evtl. gerade erst geholt -> wiederverwenden statt doppelt fragen
+  const bell = (window as any).__juicedBell;
+  if (bell && Date.now() - bell.at < 10000) bell.p.then((n: Counts | null) => n && applyBadges(n)).catch(() => {}); else refreshBadges();
 }
 
 // Offene Punkte als Zahl an den Menüpunkten (gleiche Daten wie die Glocke im Header).

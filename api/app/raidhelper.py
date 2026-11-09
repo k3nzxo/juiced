@@ -405,13 +405,47 @@ def _discord(method: str, path: str, **kw):
     return r.json() if r.content else None
 
 
-def _cached(key: str, ttl: int, fn):
+_dc_locks: dict = {}
+_dc_locks_guard = threading.Lock()
+
+
+def _cached(key: str, ttl: int, fn, max_stale: int = 1800):
+    """Zwischenspeicher, der auch bei vielen gleichzeitigen Besuchern nur EINMAL nachlädt.
+    Abgelaufen, aber noch halbwegs frisch: sofort die alten Daten liefern und im Hintergrund erneuern.
+    Ganz ohne (oder sehr alte) Daten: genau einer lädt, die anderen warten auf dessen Ergebnis."""
     hit = _dc_cache.get(key)
-    if hit and time.time() - hit[0] < ttl:
+    age = time.time() - hit[0] if hit else None
+    if hit and age < ttl:
         return hit[1]
-    val = fn()
-    _dc_cache[key] = (time.time(), val)
-    return val
+    with _dc_locks_guard:
+        lock = _dc_locks.setdefault(key, threading.Lock())
+
+    def refresh():
+        val = fn()
+        _dc_cache[key] = (time.time(), val)
+        return val
+
+    if hit and age < max_stale:
+        if lock.acquire(blocking=False):
+            def bg():
+                try:
+                    refresh()
+                except Exception as ex:  # alte Daten bleiben; nächster Besuch versucht es wieder
+                    print(f"[cache] {key}: {type(ex).__name__}")
+                finally:
+                    lock.release()
+            threading.Thread(target=bg, daemon=True).start()
+        return hit[1]
+    with lock:
+        hit = _dc_cache.get(key)
+        if hit and time.time() - hit[0] < ttl:
+            return hit[1]  # hat inzwischen jemand anderes geladen
+        try:
+            return refresh()
+        except Exception:
+            if hit:
+                return hit[1]
+            raise
 
 
 def _mention_chunks(head: str, ids: list) -> list:
@@ -489,7 +523,7 @@ def _guild_members() -> list:
             after = page[-1]["user"]["id"]
         return [{"id": str(m["user"]["id"]), "name": str(m.get("nick") or m["user"].get("global_name") or m["user"].get("username") or "")[:64],
                  "roles": [str(x) for x in m.get("roles") or []]} for m in out if not m["user"].get("bot")]
-    return _cached("members", 60, load)
+    return _cached("members", 120, load)
 
 
 @router.get("/roles")
@@ -783,19 +817,20 @@ def get_attendance(days: int) -> dict:
     """Discord-ID -> {attended, total, pct} der letzten `days` Tage (geschlossene Events)."""
     if not API_KEY or not SERVER_ID:
         return {"configured": False, "members": {}}
-    hit = _att_cache.get(days)
-    if hit and time.time() - hit[0] < 600:
-        return hit[1]
-    now = int(time.time())
     try:
-        with httpx.Client(timeout=15, headers={"Authorization": API_KEY, "User-Agent": "juiced-site",
-                                               "TimeFilterStart": str(now - days * 86400), "TimeFilterEnd": str(now)}) as c:
-            r = c.get(f"{BASE}/servers/{SERVER_ID}/attendance")
-            r.raise_for_status()
-            data = r.json()
+        return _cached(f"att{days}", 600, lambda: _load_attendance(days), max_stale=6 * 3600)
     except Exception as ex:
         print(f"[raidhelper] Anwesenheit nicht abrufbar: {type(ex).__name__}")
-        return hit[1] if hit else {"configured": True, "members": {}, "error": "unavailable"}
+        return {"configured": True, "members": {}, "error": "unavailable"}
+
+
+def _load_attendance(days: int) -> dict:
+    now = int(time.time())
+    with httpx.Client(timeout=15, headers={"Authorization": API_KEY, "User-Agent": "juiced-site",
+                                           "TimeFilterStart": str(now - days * 86400), "TimeFilterEnd": str(now)}) as c:
+        r = c.get(f"{BASE}/servers/{SERVER_ID}/attendance")
+        r.raise_for_status()
+        data = r.json()
     rows = data.get("result") if isinstance(data, dict) else data
     rows = rows if isinstance(rows, list) else []
     if rows and isinstance(rows[0], dict) and not _att_cache.get("logged"):
@@ -816,9 +851,7 @@ def get_attendance(days: int) -> dict:
         members[uid] = {"attended": int(attended) if attended is not None else None,
                         "total": round(total) if total is not None else None,
                         "pct": round(pct) if pct is not None else None}
-    out = {"configured": True, "days": days, "members": members}
-    _att_cache[days] = (time.time(), out)
-    return out
+    return {"configured": True, "days": days, "members": members}
 
 
 @router.get("/attendance")

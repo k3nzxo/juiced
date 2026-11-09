@@ -72,8 +72,12 @@ export function initChrome() {
   initMotion();
 
   // Angemeldet? Dann Avatar + Name im Header zeigen
-  fetch("/api/auth/me", { credentials: "same-origin" })
+  // einmal abfragen; der Mitgliederbereich nimmt dieselbe Antwort (spart eine Anfrage pro Seitenaufruf)
+  const mePromise: Promise<any> = fetch("/api/auth/me", { credentials: "same-origin" })
     .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  (window as any).__juicedMe = mePromise;
+  mePromise
     .then((me) => {
       const label = document.querySelector<HTMLElement>("[data-account-label]");
       const link = document.querySelector<HTMLElement>("[data-account-link]");
@@ -141,22 +145,25 @@ function initBell() {
       .map((k) => `<a href="/${lang}/app/#/${k}"><span class="bm-ico bm-${k}">${BELL_ICONS[k]}</span><span class="bm-label">${L[k]}</span><b>${n[k]}</b></a>`).join("");
     menu.innerHTML = `<div class="bm-head">${L.t}</div>` + (rows || `<div class="bm-empty">${L.empty}</div>`);
   };
-  // Live: alle 15 s nachsehen, solange der Tab offen ist, und sofort beim Zurückkehren
-  let busy = false;
-  const load = () => {
-    if (busy) return;
+  // Live: alle 30 s nachsehen, solange der Tab offen ist, und beim Zurückkehren (höchstens alle 5 s)
+  let busy = false, lastAt = 0;
+  const load = (force = false) => {
+    if (busy || (!force && Date.now() - lastAt < 5000)) return;
     busy = true;
-    fetch("/api/notifications", { credentials: "same-origin", cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
+    lastAt = Date.now();
+    const p = fetch("/api/notifications", { credentials: "same-origin", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null));
+    (window as any).__juicedBell = { at: Date.now(), p };  // der Mitgliederbereich nimmt dieselbe Antwort
+    p
       .then((n) => { if (n) { paint(n); window.dispatchEvent(new CustomEvent("juiced:bell", { detail: n })); } })
       .catch(() => {})
       .finally(() => { busy = false; });
   };
   bell.hidden = false;
-  load();
-  window.setInterval(() => { if (!document.hidden) load(); }, 15000);
+  load(true);
+  window.setInterval(() => { if (!document.hidden) load(); }, 30000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
-  window.addEventListener("focus", load);
+  window.addEventListener("focus", () => load());
   window.addEventListener("juiced:notifications", (e) => paint((e as CustomEvent).detail));
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
