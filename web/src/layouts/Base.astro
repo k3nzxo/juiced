@@ -25,9 +25,8 @@ const nav = [
 // "member" = nur angemeldet sichtbar. Ohne Auswahl gilt NAV_DEFAULT.
 const NAV_DEFAULT = ["home", "schedule", "team", "join", "app", "vods"];
 const topNav = [
-  ...nav.slice(0, 4),
-  { id: "matches", href: `/${lang}/matches/`, label: t("nav_matches") },
-  nav[4],
+  ...nav,
+  { id: "overview", href: `/${lang}/app/#/`, label: t("app_nav_dashboard"), member: true },
   { id: "vods", href: `/${lang}/app/#/vods`, label: t("nav_vods"), member: true },
   { id: "signups", href: `/${lang}/app/#/signups`, label: t("rh_nav"), member: true },
   { id: "roster", href: `/${lang}/app/#/roster`, label: t("app_nav_members"), member: true },

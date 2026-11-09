@@ -26,7 +26,7 @@ DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder",
             "bell_apps", "bell_matches", "bell_vods", "bell_uploads")
 DISCORD_DM_KINDS = ("new_vod", "vod_comments", "vod_review", "reminder")  # per Discord-DM; standardmäßig aus
 # Punkte für die Navigation oben (jedes Mitglied wählt selbst); Reihenfolge = Anzeige-Reihenfolge
-NAV_ITEMS = ("home", "schedule", "team", "join", "matches", "app", "vods", "signups", "roster", "profile")
+NAV_ITEMS = ("home", "schedule", "team", "join", "app", "overview", "vods", "signups", "roster", "profile")
 NAV_DEFAULT = ("home", "schedule", "team", "join", "app", "vods")
 NAV_MAX = 7
 
