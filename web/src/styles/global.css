@@ -220,12 +220,8 @@ p { margin: 0; }
 .spinner { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--border-strong); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- Seitenwechsel: weich überblenden, Header bleibt stehen */
-@view-transition { navigation: auto; }
-#site-header { view-transition-name: site-header; }
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.22s; animation-timing-function: ease-out; }
-::view-transition-group(site-header), ::view-transition-old(site-header), ::view-transition-new(site-header) { animation: none; }
-::view-transition-old(site-header) { display: none; }
+/* Seitenwechsel ohne Überblendung (@view-transition): der Browser hielt dabei die alte Seite fest,
+   bis die neue komplett fertig war, und blendete dann noch über -> Klicks in der Navigation wirkten träge. */
 
 /* ---------- Lichtschein unter dem Mauszeiger auf Karten:
    Fläche nur ganz leicht neutral aufgehellt, Orange nur als feine Kante, die der Maus folgt */

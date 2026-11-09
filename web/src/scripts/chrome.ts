@@ -61,6 +61,15 @@ export function initChrome() {
 
   // Scroll-Reveal
   const items = document.querySelectorAll<HTMLElement>(".reveal");
+  // was beim Laden schon sichtbar ist, sofort zeigen (ohne Einblenden) -- nur weiter unten wird beim Scrollen eingeblendet
+  const vh = window.innerHeight;
+  items.forEach((el) => {
+    if (el.getBoundingClientRect().top < vh) {
+      el.style.transition = "none";
+      el.classList.add("in");
+    }
+  });
+  requestAnimationFrame(() => items.forEach((el) => { el.style.transition = ""; }));
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
