@@ -91,7 +91,7 @@ const topNav = [
             <div class="bell-menu" data-bell-menu hidden></div>
           </div>
           <a class="icon-btn hide-sm" href={DISCORD_INVITE} target="_blank" rel="noopener" aria-label="Discord"><Icon name="discord" /></a>
-          <a class="btn btn-outline btn-sm hide-sm acc-link" href={`/${lang}/app/`} data-account-link>
+          <a class="btn btn-outline btn-sm hide-sm acc-link" href={`/${lang}/app/`} data-account-link data-base={`/${lang}/app/`}>
             <span class="acc-dc" aria-hidden="true"><Icon name="discord" /></span>
             <span data-account-label data-default={t("nav_login_discord")}>{t("nav_login_discord")}</span>
           </a>
@@ -121,6 +121,7 @@ const topNav = [
           if (!u) return;
           var l = document.querySelector("[data-account-label]"), a = document.querySelector("[data-account-link]");
           if (l) l.textContent = u.n;
+          if (a && u.m) a.href = a.getAttribute("data-base") + "#/profile";  // eigener Name/Avatar oben -> eigenes Profil
           if (a && u.a) { var i = document.createElement("img"); i.src = u.a; i.alt = ""; i.width = 20; i.height = 20; i.className = "acc-av"; a.prepend(i); }
           var b = document.querySelector("[data-bell]");
           if (b && u.m) {

@@ -97,6 +97,7 @@ export function initChrome() {
         applyNav(null);  // Gäste sehen die Standard-Navigation
         if (label) label.textContent = label.dataset.default || label.textContent;
         link?.querySelector(".acc-av")?.remove();
+        if (link?.dataset.base) link.setAttribute("href", link.dataset.base);
         const bell = document.querySelector<HTMLElement>("[data-bell]");
         if (bell) bell.hidden = true;
         return;
@@ -114,6 +115,8 @@ export function initChrome() {
         if (img.src !== u.avatar_url) img.src = u.avatar_url;
       } else img?.remove();
       label.textContent = u.display_name;
+      // eigener Name/Avatar oben -> eigenes Profil (Gäste ohne Mitgliedsrang: Mitgliederbereich)
+      if (link.dataset.base) link.setAttribute("href", link.dataset.base + (u.is_member ? "#/profile" : ""));
       saveMe({ n: u.display_name, a: u.avatar_url || "", m: !!u.is_member });
       if (u.is_member) initBell();
     })
