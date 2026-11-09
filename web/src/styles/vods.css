@@ -205,3 +205,15 @@ main.vod-main { max-width: 1500px; }
 .vod-up-bar { height: 5px; border-radius: 5px; background: var(--border); overflow: hidden; }
 .vod-up-bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s; }
 .vod-upload-row.is-retrying [data-stats] { color: var(--accent); font-weight: 600; } .vod-upload-row.is-retrying .vod-progress span { opacity: .5; }
+
+/* gespielter Build je Phase */
+.vod-phases { display: grid; gap: 8px; }
+.vod-ph-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; }
+.vod-ph-name { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.vod-ph-row .select { min-width: 0; }
+.vod-phase-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.vod-phase-tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; border: 1px solid var(--border); background: var(--surface-2); }
+.vod-phase-tag b { font-weight: 600; color: var(--muted); margin-right: 3px; }
+.vod-phase-tag i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.vod-phase-tag i + i { margin-left: -4px; box-shadow: 0 0 0 2px var(--surface-2); }
+@media (max-width: 480px) { .vod-ph-row { grid-template-columns: 1fr 1fr; } .vod-ph-name { grid-column: 1 / -1; } }

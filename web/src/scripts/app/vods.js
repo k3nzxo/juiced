@@ -2,6 +2,7 @@
 // Wird vom Router im Mitgliederbereich aufgerufen: renderVods(container, me)
 import { api, toast, esc as escapeHtml, icon, fmtDate as formatDate, timeAgo, closeModal, T, errMsg } from "./core";
 import { enhancePicker, closePicker } from "./picker";
+import { WEAPONS, SCHOOLS, buildId, buildWeapons, buildLabel, schoolColor } from "../../data/wwm";
 
 let $app = null;
 const goTo = (h) => { location.hash = h; };
@@ -11,6 +12,38 @@ const VOD_KEYS = {
   role_hint_team: "vod_role_hint_team", save: "save", cancel: "cancel", edit: "edit", del: "delete",
   sub: "vod_sub", title: "vod_title", eyebrow: "app_title",
 };
+// Gespielter Build je Phase (Tower / Goose / Tree) -- manche wechseln mitten im Krieg, z. B. von Drums auf etwas anderes
+const VOD_PHASES = ["tower", "goose", "tree"];
+function vodWeaponSelect(phase, n, sel) {
+  return `<select class="select vod-ph-w" data-ph="${phase}" data-n="${n}"><option value="">—</option>${SCHOOLS.map(sc =>
+    `<optgroup label="${escapeHtml(sc.name)}">${WEAPONS.filter(w => w.school === sc.id).map(w =>
+      `<option value="${w.id}" ${w.id === sel ? "selected" : ""}>${escapeHtml(w.name)}</option>`).join("")}</optgroup>`).join("")}</select>`;
+}
+function vodPhaseFields(phases) {
+  return `<div class="field"><label>${escapeHtml(T("vod_f_phases"))}</label><p class="vod-hint">${escapeHtml(T("vod_f_phases_hint"))}</p>
+    <div class="vod-phases">${VOD_PHASES.map(p => {
+      const ws = buildWeapons(phases?.[p]).map(w => w.id);
+      return `<div class="vod-ph-row"><span class="vod-ph-name">${escapeHtml(T("vod_ph_" + p))}</span>${vodWeaponSelect(p, 0, ws[0])}${vodWeaponSelect(p, 1, ws[1])}</div>`;
+    }).join("")}</div></div>`;
+}
+function vodReadPhases(root) {
+  const out = {};
+  for (const p of VOD_PHASES) {
+    const [a, b] = [0, 1].map(n => root.querySelector(`.vod-ph-w[data-ph="${p}"][data-n="${n}"]`)?.value || "");
+    out[p] = a && b && a !== b ? buildId(a, b) : null;
+  }
+  return out;
+}
+function vodPhaseTags(phases) {
+  const set = VOD_PHASES.filter(p => phases?.[p]);
+  if (!set.length) return "";
+  return `<div class="vod-phase-tags">${set.map(p => {
+    const ws = buildWeapons(phases[p]);
+    const dots = [...new Set(ws.map(w => w.school))].map(sc => `<i style="background:${schoolColor(sc)}"></i>`).join("");
+    return `<span class="vod-phase-tag" title="${escapeHtml(ws.map(w => w.name).join(" + "))}"><b>${escapeHtml(T("vod_ph_" + p))}</b>${dots}${escapeHtml(buildLabel(phases[p]))}</span>`;
+  }).join("")}</div>`;
+}
+
 function vt(key, vars) {
   const k = VOD_KEYS[key] || (key.startsWith("role_") ? key : "vod_" + key);
   return T(k, vars);
@@ -290,6 +323,7 @@ function openVodUploadModal() {
             ${["", "win", "loss"].map(r => `<button type="button" class="cat-tab ${r === "" ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
           </div>
         </div>
+        ${vodPhaseFields(vodLastMe?.main_build ? Object.fromEntries(VOD_PHASES.map(p => [p, vodLastMe.main_build])) : null)}
         <div class="field"><label>${vt("f_desc")}</label><textarea class="textarea" id="vod-f-desc" rows="3" maxlength="5000"></textarea></div>
       </div>
       <div class="modal-foot">
@@ -331,6 +365,7 @@ function openVodUploadModal() {
           match_date: backdrop.querySelector("#vod-f-date").value || null,
           result: result || null,
           description: backdrop.querySelector("#vod-f-desc").value.trim() || null,
+          phases: vodReadPhases(backdrop),
         }),
       });
       close();
@@ -573,6 +608,7 @@ async function renderVodDetail(vodId) {
           ${vod.pinned ? "" : vodExpiryLabel(vod)}
           ${vodReviewBadge(vod, true)}
         </div>
+        ${vodPhaseTags(vod.phases)}
       </div>
       <div class="vod-head-actions">
         ${vod.can_review && !vod.reviewed ? `<button class="btn btn-sm btn-ghost" id="vod-reviewing-btn">${vod.in_review ? `${icon.x} ${vt("review_stop")}` : `${icon.video} ${vt("review_start")}`}</button>` : ""}
@@ -887,6 +923,7 @@ function openVodEditModal(vod) {
             ${["", "win", "loss"].map(r => `<button type="button" class="cat-tab ${(vod.result || "") === r ? "active" : ""}" data-r="${r}">${vt(r ? "r_" + r : "r_none")}</button>`).join("")}
           </div>
         </div>
+        ${vodPhaseFields(vod.phases)}
         <div class="field"><label>${vt("f_desc")}</label><textarea class="textarea" id="vod-e-desc" rows="4" maxlength="5000">${escapeHtml(vod.description || "")}</textarea></div>
       </div>
       <div class="modal-foot"><button class="btn btn-primary" id="vod-e-save">${vt("save")}</button></div>
@@ -914,6 +951,7 @@ function openVodEditModal(vod) {
           match_date: backdrop.querySelector("#vod-e-date").value || null,
           result: result || null,
           description: backdrop.querySelector("#vod-e-desc").value,
+          phases: vodReadPhases(backdrop),
         }),
       });
       toast(vt("saved"));

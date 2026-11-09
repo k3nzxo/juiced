@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, Text, Date, DateTime, Float, BigInteger, Boolean, ForeignKey, func, inspect, text
 from sqlalchemy.orm import Session
 
-from . import models, notify
+from . import models, notify, wwm
 from .config import SECRET_KEY
 from .db import Base, engine, get_db, SessionLocal
 from .security import require_user, current_user_optional
@@ -82,6 +82,7 @@ class Vod(Base):
     reviewed_at = Column(DateTime(timezone=True), nullable=True)   # Review vom Coach abgeschlossen
     review_started_at = Column(DateTime(timezone=True), nullable=True)  # Review läuft (Coach hat angefangen)
     review_started_by = Column(Integer, nullable=True)
+    phases = Column(String(300), nullable=True)   # gespielter Build je Phase: "tower=a+b;goose=...;tree=..."
     reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -110,6 +111,7 @@ _MIGRATIONS = {
     "reviewed_by": "ALTER TABLE vods ADD COLUMN reviewed_by INTEGER",
     "review_started_at": "ALTER TABLE vods ADD COLUMN review_started_at TIMESTAMP WITH TIME ZONE",
     "review_started_by": "ALTER TABLE vods ADD COLUMN review_started_by INTEGER",
+    "phases": "ALTER TABLE vods ADD COLUMN phases VARCHAR(300)",
 }
 try:
     _cols = {c["name"] for c in inspect(engine).get_columns("vods")}
@@ -123,6 +125,22 @@ except Exception as _e:
 
 
 # ---------------------------------------------------------------- Helpers
+
+# Phasen eines Gildenkriegs: was hat die Person jeweils gespielt (manche wechseln, z. B. Drums -> etwas anderes)
+PHASES = ("tower", "goose", "tree")
+
+
+def _phases_in(raw) -> Optional[str]:
+    if not isinstance(raw, dict):
+        return None
+    parts = [f"{p}={b}" for p in PHASES if (b := wwm.clean_build(raw.get(p)))]
+    return ";".join(parts) or None
+
+
+def _phases_out(v) -> dict:
+    got = dict(x.split("=", 1) for x in (v.phases or "").split(";") if "=" in x)
+    return {p: got.get(p) for p in PHASES}
+
 
 _chunk_locks: dict[int, threading.Lock] = {}
 _chunk_locks_guard = threading.Lock()
@@ -469,9 +487,11 @@ class VodCreateIn(BaseModel):
     description: Optional[str] = None
     filename: str
     size_bytes: int
+    phases: Optional[dict] = None
 
 
 class VodUpdateIn(BaseModel):
+    phases: Optional[dict] = None
     title: Optional[str] = None
     role: Optional[str] = None
     opponent: Optional[str] = None
@@ -513,6 +533,7 @@ def _vod_out(v: Vod, users: dict, note_count: int, ctx: VodCtx) -> dict:
         "reviewed_at": v.reviewed_at.isoformat() if v.reviewed_at else None,
         "reviewed_by_name": users.get(v.reviewed_by),
         "in_review": bool(v.review_started_at and not v.reviewed_at),
+        "phases": _phases_out(v),
         "review_started_by_name": users.get(v.review_started_by),
         "can_review": _can_review(v, ctx),
         "expires_at": (lambda e: e.isoformat() if e else None)(_expires_at(v)),
@@ -652,7 +673,7 @@ def create_vod(payload: VodCreateIn, db: Session = Depends(get_db), ctx: VodCtx 
     result = payload.result if payload.result in VALID_RESULTS else None
     v = Vod(
         title=title, role=payload.role, opponent=_clean(payload.opponent, 120), match_date=payload.match_date, result=result,
-        description=_clean(payload.description, 5000), uploader_id=user.id,
+        description=_clean(payload.description, 5000), uploader_id=user.id, phases=_phases_in(payload.phases),
         file_key=secrets.token_hex(16), original_filename=_clean(payload.filename, 255),
         size_bytes=payload.size_bytes, received_bytes=0, status="uploading",
     )
@@ -811,6 +832,8 @@ def update_vod(vod_id: int, payload: VodUpdateIn, db: Session = Depends(get_db),
         v.result = data["result"] if data["result"] in VALID_RESULTS else None
     if "description" in data:
         v.description = _clean(data["description"], 5000)
+    if "phases" in data:
+        v.phases = _phases_in(data["phases"])
     db.commit()
     return _vod_out(v, _users_map(db), 0, ctx)
 

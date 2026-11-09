@@ -229,3 +229,15 @@ def test_nav_items_default_save_and_limit(client_for):
     assert len(u["nav_items"]) == models.NAV_MAX
     u = c.put("/api/me", json={"nav_items": []}, headers=ORIGIN).json()["user"]
     assert u["nav_items"] == []                                                  # bewusst leer bleibt leer
+
+
+def test_vod_phases_saved_and_cleaned(client_for, monkeypatch):
+    from app import vods
+    monkeypatch.setattr(vods, "_start_processing", lambda vid: None)
+    c = client_for("vera", "member")
+    v = c.post("/api/vods", json={"title": "GvG", "role": "healer", "filename": "a.mp4", "size_bytes": 10,
+                                  "phases": {"tower": "museflow_drum+willowbend_fan", "goose": "bogus+x", "tree": "nameless_sword+strategic_sword"}},
+               headers=ORIGIN).json()
+    assert v["phases"] == {"tower": "museflow_drum+willowbend_fan", "goose": None, "tree": "nameless_sword+strategic_sword"}
+    r = c.put(f"/api/vods/{v['id']}", json={"phases": {"goose": "strategic_sword+nameless_sword"}}, headers=ORIGIN).json()
+    assert r["phases"] == {"tower": None, "goose": "nameless_sword+strategic_sword", "tree": None}
