@@ -47,6 +47,7 @@ MAX_PER_USER = int(os.environ.get("VOD_MAX_PER_USER", "0"))  # 0 = kein Limit   
 REQUIRE_MARKER = os.environ.get("VOD_REQUIRE_MARKER", "") not in ("", "0", "false")
 MARKER_FILE = ".storagebox"
 CHUNK_SIZE = 16 * 1024 * 1024  # Stücke werden parallel hochgeladen (Client: 4 gleichzeitig)
+WRITE_BUF = 1024 * 1024        # so viel eines Stücks liegt höchstens im Speicher, dann geht es in die Datei
 MEDIA_URL_TTL = 12 * 3600
 ALLOWED_EXT = {".mp4", ".mkv", ".mov", ".webm", ".flv", ".ts", ".m4v"}
 VALID_RESULTS = ("win", "loss")
@@ -600,7 +601,7 @@ def storage_info(db: Session = Depends(get_db), ctx: VodCtx = Depends(vod_ctx)):
 
 @router.get("")
 def list_vods(db: Session = Depends(get_db), ctx: VodCtx = Depends(vod_ctx)):
-    _cleanup_stale(db)
+    # Aufräumen läuft im Hintergrund (alle 30 Min.), nicht bei jedem Abruf der Liste
     vods = db.query(Vod).order_by(Vod.match_date.desc().nullslast(), Vod.created_at.desc()).all()
     counts = dict(db.query(VodNote.vod_id, func.count(VodNote.id)).group_by(VodNote.vod_id).all())
     users = _users_map(db)
@@ -695,20 +696,36 @@ async def upload_chunk(vod_id: int, index: int, request: Request):
         raise HTTPException(status_code=400, detail="Bad chunk index")
     start = index * CHUNK_SIZE
     expected = min(CHUNK_SIZE, v.size_bytes - start)
-    buf = bytearray()
-    async for part in request.stream():
-        buf += part
-        if len(buf) > expected:
-            raise HTTPException(status_code=400, detail="Chunk too large")
-    if len(buf) != expected:
-        raise HTTPException(status_code=400, detail="Chunk incomplete")
+    cl = request.headers.get("content-length")
+    if cl and cl.isdigit() and int(cl) != expected:  # falsche Größe gleich abweisen, bevor etwas in der Datei landet
+        raise HTTPException(status_code=400, detail="Chunk too large" if int(cl) > expected else "Chunk incomplete")
     part = _part_path(v)
+    # Direkt in die Datei schreiben, sobald je ~1 MB da ist, statt das ganze 16-MB-Stück im Speicher zu sammeln:
+    # bei vielen gleichzeitigen Uploads (je 4 Stücke parallel) sonst schnell Hunderte MB RAM.
+    try:
+        f = await run_in_threadpool(open, part, "r+b")
+    except FileNotFoundError:
+        raise HTTPException(status_code=410, detail="Upload was cancelled")
+    got_len = 0
+    try:
+        await run_in_threadpool(f.seek, start)
+        buf = bytearray()
+        async for piece in request.stream():
+            got_len += len(piece)
+            if got_len > expected:
+                raise HTTPException(status_code=400, detail="Chunk too large")
+            buf += piece
+            if len(buf) >= WRITE_BUF:
+                data, buf = buf, bytearray()
+                await run_in_threadpool(f.write, data)
+        if buf:
+            await run_in_threadpool(f.write, buf)
+    finally:
+        await run_in_threadpool(f.close)
+    if got_len != expected:
+        raise HTTPException(status_code=400, detail="Chunk incomplete")  # Stück gilt nicht als fertig -> wird neu geschickt
 
     def _write() -> set:
-        # läuft in einem Hilfs-Thread: parallele Stücke blockieren sich nicht gegenseitig
-        with open(part, "r+b") as f:
-            f.seek(start)
-            f.write(buf)
         with _chunk_lock(v.id):
             got = set(_chunks_done(v))
             got.add(index)

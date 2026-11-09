@@ -184,3 +184,31 @@ def test_notifications_off_by_default(client_for):
     u = c.put("/api/me", json={"dm_off": []}, headers=ORIGIN).json()["user"]
     assert u["dm_off"] == []                                          # bewusst alles an bleibt an
     assert c.get("/api/auth/me").json()["user"]["dm_off"] == []
+
+
+# ---------------------------------------------------------------- VOD-Upload: Stücke direkt in die Datei (wenig RAM)
+
+def test_chunk_upload_streams_to_file(client_for, monkeypatch):
+    import os
+    from app import vods
+    monkeypatch.setattr(vods, "CHUNK_SIZE", 1000)
+    monkeypatch.setattr(vods, "WRITE_BUF", 300)      # mehrere Schreibvorgänge pro Stück
+    monkeypatch.setattr(vods, "_start_processing", lambda vid: None)
+    c = client_for("uli", "member")
+    data = os.urandom(2500)                         # 3 Stücke: 1000 + 1000 + 500
+    v = c.post("/api/vods", json={"title": "t", "role": "healer", "filename": "a.mp4", "size_bytes": len(data)},
+               headers=ORIGIN).json()
+    for i in (2, 0, 1):                             # beliebige Reihenfolge
+        r = c.put(f"/api/vods/{v['id']}/chunk", params={"index": i}, content=data[i * 1000:(i + 1) * 1000], headers=ORIGIN)
+        assert r.status_code == 200, r.text
+    assert r.json() == {"done": 3, "total": 3}
+    from app.db import SessionLocal
+    db = SessionLocal()
+    try:
+        part = vods._part_path(db.get(vods.Vod, v["id"]))
+    finally:
+        db.close()
+    with open(part, "rb") as f:
+        assert f.read() == data
+    r = c.put(f"/api/vods/{v['id']}/chunk", params={"index": 2}, content=b"x" * 501, headers=ORIGIN)
+    assert r.status_code == 400                     # zu groß
