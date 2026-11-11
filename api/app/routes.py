@@ -241,7 +241,7 @@ def member_out(u: models.User) -> dict:
             "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list,
             "weapon_other": u.weapon_other, "main_path": u.main_path, "alt_paths": u.alt_path_list, "inner_ways": u.inner_way_list,
             "main_build": u.main_build, "alt_builds": u.alt_build_list,
-            "country": u.country, "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
+            "country": u.country, "bench": bool(u.bench), "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
 
 
 def _clean_partner_ids(ids, own_id: str) -> Optional[str]:
@@ -425,13 +425,14 @@ def admin_users(db: DbSession = Depends(get_db), user: models.User = Depends(req
     users = db.query(models.User).order_by(func.lower(models.User.username)).all()
     return [{"id": u.id, "display_name": u.display_name, "username": u.username, "avatar_url": u.avatar_url,
              "rank": u.rank, "coach_roles": u.coach_list, "rank_manual": u.rank_manual, "in_guild": u.in_guild,
-             "last_login_at": iso(u.last_login_at)} for u in users]
+             "bench": u.bench, "last_login_at": iso(u.last_login_at)} for u in users]
 
 
 class RankIn(BaseModel):
     rank: Optional[str] = None
     coach_roles: Optional[list[str]] = None
     use_discord: Optional[bool] = None
+    bench: Optional[bool] = None
 
 
 def _can_assign(me: models.User, target: models.User, new_rank: Optional[str]) -> bool:
@@ -455,9 +456,11 @@ def admin_set_rank(uid: int, payload: RankIn, db: DbSession = Depends(get_db), m
         raise HTTPException(status_code=404, detail="Not found")
     if not _can_assign(me, u, payload.rank):
         raise HTTPException(status_code=403, detail="Not allowed")
+    if payload.bench is not None:  # Bench ist unabhängig vom Rang
+        u.bench = bool(payload.bench)
     if payload.use_discord:
         u.rank_manual = False
-    else:
+    elif payload.rank is not None or payload.coach_roles is not None:
         if payload.rank is not None:
             if payload.rank not in models.RANKS:
                 raise HTTPException(status_code=400, detail="Bad rank")
@@ -468,7 +471,7 @@ def admin_set_rank(uid: int, payload: RankIn, db: DbSession = Depends(get_db), m
             u.coach_roles = ",".join(r for r in models.COACH_ROLES if r in payload.coach_roles)
         u.rank_manual = True
     db.commit()
-    return {"id": u.id, "rank": u.rank, "coach_roles": u.coach_list, "rank_manual": u.rank_manual}
+    return {"id": u.id, "rank": u.rank, "coach_roles": u.coach_list, "rank_manual": u.rank_manual, "bench": u.bench}
 
 
 # ------------------------------------------------------------------ Wochenplan

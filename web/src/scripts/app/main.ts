@@ -25,6 +25,7 @@ function avatar(u: { avatar_url: string | null; display_name: string }, size = 3
     : `<span class="av av-fb" style="width:${size}px;height:${size}px">${esc((u.display_name || "?")[0].toUpperCase())}</span>`;
 }
 const rankBadge = (r: string) => `<span class="badge badge-${esc(r)}">${esc(T(RANK_KEYS[r] || r))}</span>`;
+const benchBadge = (u: any) => (u.bench ? ` <span class="badge badge-bench">${esc(T("rank_bench"))}</span>` : "");
 const roleTag = (r: string | null) => (r ? `<span class="role-tag role-${esc(r)}">${esc(T("role_" + r))}</span>` : "");
 // Rolle + Waffen kompakt: "DPS · Nameless, Twinblades"
 const weaponText = (w: string[] = [], other: string | null = null) => [...w.map((x) => T("weapon_" + x)), ...(other ? [other] : [])].join(", ");
@@ -983,7 +984,7 @@ async function viewRoster(view: HTMLElement) {
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
-        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)} ${flag(u.country)}</span></div></div>
+        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)}${benchBadge(u)} ${flag(u.country)}</span></div></div>
         <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
         ${(() => {  // passt nur über eine weitere Kombi? Dann zeigen, welche
@@ -1088,7 +1089,7 @@ async function viewMember(view: HTMLElement, id: number) {
   el.innerHTML = `<section class="card mem-hero">
       ${avatar(u, 72)}
       <div class="mh-main"><h1>${esc(u.display_name)} ${flag(u.country)}</h1>
-        <div class="mh-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
+        <div class="mh-tags">${rankBadge(u.rank)}${benchBadge(u)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
         <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span>
         ${ATT[u.discord_id]?.pct != null ? `<span class="mh-att">${esc(T("att_label"))} ${attBadge(u.discord_id)} ${ATT[u.discord_id].attended != null ? `<span class="muted">${esc(ATT[u.discord_id].total != null ? T("att_title", { a: ATT[u.discord_id].attended, t: ATT[u.discord_id].total }) : T("att_count", { a: ATT[u.discord_id].attended }))}</span>` : ""}</span>` : ""}</div>
       ${u.id === me!.id ? `<a class="btn btn-primary btn-sm" href="#/profile/edit">${icon.edit} ${esc(T("edit"))}</a>`
@@ -1222,9 +1223,10 @@ async function viewAdmin(view: HTMLElement) {
     view.querySelector("#adm")!.innerHTML = `<div class="table card">${items.map((u) => `
       <div class="tr tr-admin" data-id="${u.id}">${avatar(u, 34)}
         <div class="tr-main"><strong>${esc(u.display_name)}</strong><span class="muted">@${esc(u.username)} · ${esc(u.rank_manual ? T("admin_manual") : T("admin_from_discord"))}</span></div>
-        ${!canEdit ? `<div class="tr-tags">${rankBadge(u.rank)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div></div>` : `<div class="tr-ctrl">
+        ${!canEdit ? `<div class="tr-tags">${rankBadge(u.rank)}${benchBadge(u)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div></div>` : `<div class="tr-ctrl">
           <select class="select" data-rank aria-label="${esc(T("admin_rank"))}">${ranks.map((r) => `<option value="${r}" ${u.rank === r ? "selected" : ""}>${esc(T(RANK_KEYS[r]))}</option>`).join("")}</select>
           <div class="coach-pick"><span class="coach-label">${esc(T("admin_coach_for"))}:</span><div class="chips">${COACH_ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" aria-pressed="${u.coach_roles.includes(r)}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
+          <button class="chip chip-bench ${u.bench ? "active" : ""}" data-bench aria-pressed="${!!u.bench}" title="${esc(T("admin_bench_hint"))}">${esc(T("rank_bench"))}</button>
           ${u.rank_manual ? `<button class="btn btn-ghost btn-sm" data-sync title="${esc(T("admin_use_discord"))}">${icon.refresh}</button>` : ""}
         </div></div>`}`).join("")}</div>`;
     if (!canEdit) return;
@@ -1240,6 +1242,7 @@ async function viewAdmin(view: HTMLElement) {
         const r = b.dataset.coach!;
         save({ coach_roles: u.coach_roles.includes(r) ? u.coach_roles.filter((x: string) => x !== r) : [...u.coach_roles, r] });
       }));
+      row.querySelector("[data-bench]")!.addEventListener("click", () => save({ bench: !u.bench }));
       row.querySelector("[data-sync]")?.addEventListener("click", () => save({ use_discord: true }));
     });
   };

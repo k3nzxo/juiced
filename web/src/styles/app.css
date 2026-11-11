@@ -655,3 +655,4 @@ a.pp-chip:hover { border-color: var(--accent); }
 .log-status { display: inline-block; margin-inline-start: 6px; padding: 1px 6px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: #fff; background: var(--danger); }
 .log-foot { margin: 10px 0; }
 @media (max-width: 700px) { .log-row { grid-template-columns: 1fr; gap: 2px; } }
+.chip-bench { --role: #d97706; }

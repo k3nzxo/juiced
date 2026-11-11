@@ -190,6 +190,8 @@ p { margin: 0; }
 .badge-vice { background: var(--surface-2); color: var(--text-2); border-color: var(--border-strong); }
 .badge-management { background: color-mix(in srgb, var(--c-violet) 13%, transparent); color: #6d3fe0; border-color: color-mix(in srgb, var(--c-violet) 30%, transparent); }
 .badge-coach { background: color-mix(in srgb, var(--c-cyan) 14%, transparent); color: #0b8fa0; border-color: color-mix(in srgb, var(--c-cyan) 32%, transparent); }
+.badge-bench { background: color-mix(in srgb, #f59e0b 14%, transparent); color: #b45309; border-color: color-mix(in srgb, #f59e0b 34%, transparent); }
+:root[data-theme="dark"] .badge-bench { color: #fbbf24; }
 
 :root[data-theme="dark"] .badge-management { color: #b59bff; }
 :root[data-theme="dark"] .badge-coach { color: #5fe0ee; }

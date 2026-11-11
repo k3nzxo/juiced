@@ -610,6 +610,8 @@ const ar: Partial<Dict & ExtraDict> = {
   logs_anon: "غير مسجل الدخول",
   logs_more: "تحميل المزيد",
   logs_keep: "تُحفظ السجلات لمدة {n} يومًا.",
+  rank_bench: "Bench",
+  admin_bench_hint: "تعليم كاحتياطي (bench)",
   rh_remind: "تذكير",
   rh_remind_t: "إرسال تذكير",
   rh_remind_post: "النشر في قناة (عبر Raid-Helper)",

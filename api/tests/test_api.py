@@ -241,3 +241,17 @@ def test_vod_phases_saved_and_cleaned(client_for, monkeypatch):
     assert v["phases"] == {"tower": "museflow_drum+willowbend_fan", "goose": None, "tree": "nameless_sword+strategic_sword"}
     r = c.put(f"/api/vods/{v['id']}", json={"phases": {"goose": "strategic_sword+nameless_sword"}}, headers=ORIGIN).json()
     assert r["phases"] == {"tower": None, "goose": "nameless_sword+strategic_sword", "tree": None}
+
+
+# ---------------------------------------------------------------- Bench
+
+def test_bench_flag_set_by_staff_only(client_for):
+    client_for("neo", "member")
+    vice = client_for("vbench", "vice")
+    uid = _member_id(vice, "neo")
+    member = client_for("plain", "member")
+    assert member.put(f"/api/admin/users/{uid}", json={"bench": True}, headers=ORIGIN).status_code == 403
+    r = vice.put(f"/api/admin/users/{uid}", json={"bench": True}, headers=ORIGIN).json()
+    assert r["bench"] is True and r["rank"] == "member" and r["rank_manual"] is False  # Rang bleibt aus Discord
+    assert next(m for m in vice.get("/api/members").json() if m["id"] == uid)["bench"] is True
+    assert vice.put(f"/api/admin/users/{uid}", json={"bench": False}, headers=ORIGIN).json()["bench"] is False

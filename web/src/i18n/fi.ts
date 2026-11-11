@@ -610,6 +610,8 @@ const fi: Partial<Dict & ExtraDict> = {
   logs_anon: "Ei kirjautunut",
   logs_more: "Lataa lisää",
   logs_keep: "Merkinnät säilytetään {n} päivää.",
+  rank_bench: "Bench",
+  admin_bench_hint: "Merkitse varapelaajaksi (bench)",
   rh_remind: "Muistuta",
   rh_remind_t: "Lähetä muistutus",
   rh_remind_post: "Julkaise kanavalla (Raid-Helperin kautta)",

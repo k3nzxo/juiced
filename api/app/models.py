@@ -62,6 +62,7 @@ class User(Base):
     alt_builds = Column(String(400), nullable=True)    # weitere Builds, kommagetrennt
     country = Column(String(2), nullable=True)
     show_on_team = Column(Boolean, nullable=False, default=True)
+    bench = Column(Boolean, nullable=False, default=False)  # Ersatzbank (nur Website-Markierung, setzt Staff)
     lang = Column(String(5), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_login_at = Column(DateTime(timezone=True), nullable=True)
