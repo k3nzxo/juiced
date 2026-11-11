@@ -474,7 +474,9 @@ def admin_set_rank(uid: int, payload: RankIn, db: DbSession = Depends(get_db), m
         raise HTTPException(status_code=404, detail="Not found")
     if not _can_assign(me, u, payload.rank):
         raise HTTPException(status_code=403, detail="Not allowed")
-    if payload.bench is not None:  # Bench ist unabhängig vom Rang
+    if payload.bench is not None:  # Bench ist unabhängig vom Rang; vergeben darf nur der Developer
+        if me.rank != "developer":
+            raise HTTPException(status_code=403, detail="Developer only")
         u.bench = bool(payload.bench)
     if payload.use_discord:
         u.rank_manual = False

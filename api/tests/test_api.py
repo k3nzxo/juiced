@@ -245,9 +245,12 @@ def test_vod_phases_saved_and_cleaned(client_for, monkeypatch):
 
 # ---------------------------------------------------------------- Bench
 
-def test_bench_flag_set_by_staff_only(client_for):
+def test_bench_flag_set_by_developer_only(client_for):
     client_for("neo", "member")
-    vice = client_for("vbench", "vice")
+    vice0 = client_for("vbench0", "vice")
+    uid0 = _member_id(vice0, "neo")
+    assert vice0.put(f"/api/admin/users/{uid0}", json={"bench": True}, headers=ORIGIN).status_code == 403
+    vice = client_for("vbench", "developer")
     uid = _member_id(vice, "neo")
     member = client_for("plain", "member")
     assert member.put(f"/api/admin/users/{uid}", json={"bench": True}, headers=ORIGIN).status_code == 403
