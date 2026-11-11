@@ -234,6 +234,18 @@ class Partnership(Base):
     position = Column(Integer, nullable=False, default=0)
 
 
+class ActivityLog(Base):
+    """Wer hat wann was gemacht (nur für den Developer sichtbar, siehe activity.py)."""
+    __tablename__ = "activity_log"
+    id = Column(Integer, primary_key=True)
+    at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action = Column(String(120), nullable=False)
+    method = Column(String(8), nullable=True)
+    path = Column(String(200), nullable=True)
+    status = Column(Integer, nullable=True)
+
+
 class Emote(Base):
     """Discord-Emotes, die Raid-Helper für Klassen/Pfade nutzt (Name -> Emote-ID), für Icons auf der Website."""
     __tablename__ = "emotes"

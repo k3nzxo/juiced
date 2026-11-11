@@ -38,6 +38,7 @@ def create_session(db: DbSession, user: models.User) -> str:
     token = secrets.token_urlsafe(32)
     db.add(models.Session(id=_hash(token), user_id=user.id,
                           expires_at=datetime.now(timezone.utc) + timedelta(days=SESSION_DAYS)))
+    db.add(models.ActivityLog(user_id=user.id, action="Signed in", method="GET", path="/api/auth/callback", status=200))
     db.commit()
     return token
 

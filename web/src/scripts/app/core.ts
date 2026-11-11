@@ -78,6 +78,7 @@ const svg = (d: string, size = 15) =>
 
 export const icon = {
   plus: svg('<path d="M12 5v14M5 12h14"/>'),
+  activity: svg('<path d="M3 12h4l3-8 4 16 3-8h4"/>'),
   x: svg('<path d="M6 6l12 12M18 6 6 18"/>', 18),
   trash: svg('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
   edit: svg('<path d="M4 20h4L19 9l-4-4L4 16Z"/><path d="m14 6 4 4"/>'),

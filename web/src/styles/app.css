@@ -641,3 +641,17 @@ a.pp-chip:hover { border-color: var(--accent); }
 .notif-all { font-weight: 700; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
 .rm-excl { max-height: 132px; overflow-y: auto; padding: 2px; }
 .rm-excl .chip { height: 28px; font-size: 12.5px; }
+
+/* Aktivitätsprotokoll (Developer) */
+.log-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.log-filters .select { width: auto; min-width: 180px; }
+.log-filters .input { flex: 1; min-width: 180px; }
+.log-row { display: grid; grid-template-columns: 150px 200px minmax(0, 1fr); gap: 12px; align-items: center; font-size: 14px; }
+.log-at { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.log-who a { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--text); }
+.log-who b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-what a { color: var(--text); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.log-row.is-err .log-what { color: var(--danger); }
+.log-status { display: inline-block; margin-inline-start: 6px; padding: 1px 6px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: #fff; background: var(--danger); }
+.log-foot { margin: 10px 0; }
+@media (max-width: 700px) { .log-row { grid-template-columns: 1fr; gap: 2px; } }

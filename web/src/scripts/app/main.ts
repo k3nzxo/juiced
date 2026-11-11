@@ -127,6 +127,7 @@ function navItems() {
   if (me!.can_view_all) items.push({ id: "matches", label: T("app_nav_matches"), ico: icon.swords });
   if (me!.can_view_all) items.push({ id: "applications", label: T("app_nav_apps"), ico: icon.inbox });
   if (me!.can_view_all) items.push({ id: "admin", label: T("app_nav_admin"), ico: icon.shield });
+  if (me!.rank === "developer") items.push({ id: "logs", label: T("app_nav_logs"), ico: icon.activity });
   return items;
 }
 
@@ -200,6 +201,7 @@ function route() {
     case "schedule": return me.can_view_all ? viewSchedule(view) : viewDashboard(view);
     case "matches": return me.can_view_all ? viewMatches(view) : viewDashboard(view);
     case "admin": return me.can_view_all ? viewAdmin(view) : viewDashboard(view);
+    case "logs": return me.rank === "developer" ? viewLogs(view) : viewDashboard(view);
     case "profile": return h.split("/")[1] === "edit" ? viewProfile(view) : viewMember(view, me.id);
     default: return viewDashboard(view);
   }
@@ -1152,6 +1154,62 @@ async function viewApplications(view: HTMLElement) {
 }
 
 // ------------------------------------------------------------------ Ränge & Rollen (Leader / Vice)
+
+// Aktivitätsprotokoll (nur Developer): wer hat wann was gemacht
+async function viewLogs(view: HTMLElement) {
+  view.innerHTML = head(T("logs_title"), T("logs_sub")) + `<div class="log-filters">
+      <select class="select" data-u><option value="">${esc(T("logs_all"))}</option></select>
+      <input class="input" data-q placeholder="${esc(T("logs_search"))}">
+      <label class="check"><input type="checkbox" data-err> <span>${esc(T("logs_errors"))}</span></label></div>
+    <div id="logs">${loading}</div>`;
+  const box = view.querySelector<HTMLElement>("#logs")!;
+  const sel = view.querySelector<HTMLSelectElement>("[data-u]")!;
+  const qIn = view.querySelector<HTMLInputElement>("[data-q]")!;
+  const errIn = view.querySelector<HTMLInputElement>("[data-err]")!;
+  api<any[]>("/admin/users").then((us) => {
+    sel.insertAdjacentHTML("beforeend", us.filter((u) => u.rank !== "guest").sort((a, b) => a.display_name.localeCompare(b.display_name))
+      .map((u) => `<option value="${u.id}">${esc(u.display_name)}</option>`).join(""));
+  }).catch(() => {});
+  let items: any[] = [], more = false, keep = 30;
+  const when = (iso: string) => new Date(iso).toLocaleString(loc(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const target = (path: string) => {
+    const v = path.match(/^\/api\/vods\/(\d+)/); if (v) return `#/vods/${v[1]}`;
+    const m = path.match(/^\/api\/(?:members|admin\/users)\/(\d+)/); if (m) return `#/roster/${m[1]}`;
+    return "";
+  };
+  const draw = () => {
+    if (!items.length) { box.innerHTML = `<p class="empty">${esc(T("logs_empty"))}</p>`; return; }
+    box.innerHTML = `<div class="table card log-table">${items.map((i) => {
+      const href = target(i.path || "");
+      return `<div class="tr log-row ${i.status >= 400 ? "is-err" : ""}">
+        <span class="log-at">${esc(when(i.at))}</span>
+        <span class="log-who">${i.user ? `<a href="#/roster/${i.user.id}">${avatar({ avatar_url: i.user.avatar_url, display_name: i.user.name }, 22)}<b>${esc(i.user.name)}</b></a>` : `<span class="muted">${esc(T("logs_anon"))}</span>`}</span>
+        <span class="log-what">${href ? `<a href="${href}">${esc(i.action)}</a>` : esc(i.action)}${i.status >= 400 ? ` <span class="log-status">${i.status}</span>` : ""}</span>
+      </div>`;
+    }).join("")}</div>
+    <p class="hint log-foot">${esc(T("logs_keep", { n: keep }))}</p>
+    ${more ? `<button class="btn btn-ghost btn-sm" data-more>${esc(T("logs_more"))}</button>` : ""}`;
+    box.querySelector("[data-more]")?.addEventListener("click", () => load(false));
+  };
+  const load = async (reset: boolean) => {
+    const p = new URLSearchParams();
+    if (!reset && items.length) p.set("before", String(items[items.length - 1].id));
+    if (sel.value) p.set("user_id", sel.value);
+    if (errIn.checked) p.set("errors", "true");
+    if (qIn.value.trim()) p.set("q", qIn.value.trim());
+    try {
+      const r = await api<any>(`/admin/logs?${p}`);
+      items = reset ? r.items : [...items, ...r.items];
+      more = r.more; keep = r.keep_days;
+      draw();
+    } catch (e) { box.innerHTML = `<p class="empty">${esc((e as Error).message)}</p>`; }
+  };
+  let t = 0;
+  qIn.addEventListener("input", () => { clearTimeout(t); t = window.setTimeout(() => load(true), 300); });
+  sel.addEventListener("change", () => load(true));
+  errIn.addEventListener("change", () => load(true));
+  load(true);
+}
 
 async function viewAdmin(view: HTMLElement) {
   view.innerHTML = head(T("admin_title"), T("admin_sub")) + `<input class="input search" placeholder="${esc(T("admin_search"))}" data-q><div id="adm">${loading}</div>`;

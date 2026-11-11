@@ -73,6 +73,8 @@ app = FastAPI(
     openapi_url=None if IS_PROD else "/api/openapi.json",
 )
 app.add_middleware(OriginCheckMiddleware)
+from .activity import ActivityMiddleware, router as activity_router  # noqa: E402
+app.add_middleware(ActivityMiddleware)  # außen: protokolliert auch abgewiesene Aufrufe
 # Fehler als Code + englischer Text, die Website übersetzt den Code
 from fastapi.exceptions import HTTPException as _HTTPException  # noqa: E402
 from starlette.exceptions import HTTPException as _StarletteHTTPException  # noqa: E402
@@ -84,6 +86,7 @@ app.include_router(site_router)
 app.include_router(vods_router)
 from .raidhelper import router as raidhelper_router  # noqa: E402
 app.include_router(raidhelper_router)
+app.include_router(activity_router)
 
 
 @app.get("/api/health")
