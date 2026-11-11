@@ -215,6 +215,7 @@ p { margin: 0; }
 .split.split-in .w > .w-inner { transform: none; }
 [hidden] { display: none !important; }
 
+.flag-emoji { font-size: 1.05em; line-height: 1; vertical-align: -1px; }
 .flag { display: inline-block; width: 20px; height: 15px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px var(--border); vertical-align: -2px; }
 
 /* ---------- Lade-Spinner (überall nutzbar) */

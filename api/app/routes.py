@@ -58,7 +58,7 @@ def team(db: DbSession = Depends(get_db)):
     return {"members": [{
         "display_name": u.display_name, "avatar_url": u.avatar_url, "rank": u.public_rank,
         "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list, "weapon_other": u.weapon_other,
-        "country": u.country, "bench": bool(u.bench),
+        "country": u.country, "flag_emoji": u.flag_emoji, "bench": bool(u.bench),
     } for u in users]}
 
 
@@ -144,6 +144,7 @@ class ProfileIn(BaseModel):
     dm_off: Optional[list[str]] = None
     nav_items: Optional[list[str]] = None
     country: Optional[str] = None
+    flag_emoji: Optional[str] = None
     show_on_team: Optional[bool] = None
     lang: Optional[str] = None
 
@@ -221,6 +222,8 @@ def update_me(payload: ProfileIn, db: DbSession = Depends(get_db), user: models.
     if "country" in data:
         cc = (data["country"] or "").strip().upper()
         user.country = cc if len(cc) == 2 and cc.isalpha() else None
+    if "flag_emoji" in data and user.rank == "developer":  # Emoji statt Flagge: nur Developer
+        user.flag_emoji = clean_emoji(data["flag_emoji"])
     if "show_on_team" in data and data["show_on_team"] is not None:
         user.show_on_team = bool(data["show_on_team"])
     if "lang" in data:
@@ -241,7 +244,22 @@ def member_out(u: models.User) -> dict:
             "rank": u.public_rank, "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list,
             "weapon_other": u.weapon_other, "main_path": u.main_path, "alt_paths": u.alt_path_list, "inner_ways": u.inner_way_list,
             "main_build": u.main_build, "alt_builds": u.alt_build_list,
-            "country": u.country, "bench": bool(u.bench), "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
+            "country": u.country, "flag_emoji": u.flag_emoji, "bench": bool(u.bench), "last_login_at": iso(u.last_login_at), "joined_at": iso(u.created_at)}
+
+
+_EMOJI_RANGES = ((0x1F000, 0x1FAFF), (0x2600, 0x27BF), (0x2B00, 0x2BFF), (0x2300, 0x23FF), (0x2190, 0x21FF),
+                 (0x25A0, 0x25FF), (0x2100, 0x214F), (0xE0020, 0xE007F))
+_EMOJI_GLUE = {0x200D, 0xFE0F, 0x20E3, 0x00A9, 0x00AE, 0x203C, 0x2049}
+
+
+def clean_emoji(raw) -> Optional[str]:
+    """Nur Emojis (auch zusammengesetzte wie Flaggen oder Hautfarben), höchstens 3 Stück, kein Text."""
+    s = "".join((raw or "").split())[:40]
+    if not s or not all(ord(ch) in _EMOJI_GLUE or any(a <= ord(ch) <= b for a, b in _EMOJI_RANGES) for ch in s):
+        return None
+    if sum(1 for ch in s if ord(ch) not in _EMOJI_GLUE and not 0x1F3FB <= ord(ch) <= 0x1F3FF and not 0xE0020 <= ord(ch) <= 0xE007F) > 6:
+        return None  # 6 Zeichen reichen für 3 Flaggen / zusammengesetzte Emojis
+    return s
 
 
 def _clean_partner_ids(ids, own_id: str) -> Optional[str]:

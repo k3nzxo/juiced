@@ -656,3 +656,6 @@ a.pp-chip:hover { border-color: var(--accent); }
 .log-foot { margin: 10px 0; }
 @media (max-width: 700px) { .log-row { grid-template-columns: 1fr; gap: 2px; } }
 .chip-bench { --role: #d97706; }
+.emoji-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.emoji-pick .input { width: 7.5rem; }
+.emoji-pick .chip { padding: 4px 9px; font-size: 1rem; }

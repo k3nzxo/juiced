@@ -257,3 +257,13 @@ def test_bench_flag_set_by_staff_only(client_for):
     neo = next(m for m in vice.get("/api/team").json()["members"] if m["display_name"] == "neo")
     assert neo["bench"] is True  # auch öffentlich sichtbar
     assert vice.put(f"/api/admin/users/{uid}", json={"bench": False}, headers=ORIGIN).json()["bench"] is False
+
+
+def test_flag_emoji_developer_only(client_for):
+    dev = client_for("devemo", "developer")
+    u = dev.put("/api/me", json={"flag_emoji": "✅"}, headers=ORIGIN).json()["user"]
+    assert u["flag_emoji"] == "✅"
+    assert dev.put("/api/me", json={"flag_emoji": "hello"}, headers=ORIGIN).json()["user"]["flag_emoji"] is None  # kein Text
+    assert dev.put("/api/me", json={"flag_emoji": "🇩🇪⭐"}, headers=ORIGIN).json()["user"]["flag_emoji"] == "🇩🇪⭐"
+    m = client_for("memo", "member")
+    assert m.put("/api/me", json={"flag_emoji": "✅"}, headers=ORIGIN).json()["user"]["flag_emoji"] is None

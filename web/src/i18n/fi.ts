@@ -611,6 +611,8 @@ const fi: Partial<Dict & ExtraDict> = {
   logs_more: "Lataa lisää",
   logs_keep: "Merkinnät säilytetään {n} päivää.",
   rank_bench: "Bench",
+  prof_emoji: "Emoji lipun sijaan",
+  prof_emoji_hint: "Valinnainen: näytetään maalipun sijaan. Vain emojeja, enintään 3.",
   admin_bench_hint: "Merkitse varapelaajaksi (bench)",
   rh_remind: "Muistuta",
   rh_remind_t: "Lähetä muistutus",

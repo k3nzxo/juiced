@@ -37,7 +37,7 @@ def user_out(u: models.User) -> dict:
         "ingame_name": u.ingame_name, "main_role": u.main_role, "weapons": u.weapon_list, "weapon_other": u.weapon_other,
         "main_path": u.main_path, "alt_paths": u.alt_path_list, "inner_ways": u.inner_way_list, "partners": u.partner_list,
         "main_build": u.main_build, "alt_builds": u.alt_build_list, "dm_off": u.dm_off_list, "nav_items": u.nav_list,
-        "country": u.country,
+        "country": u.country, "flag_emoji": u.flag_emoji,
         "show_on_team": u.show_on_team, "lang": u.lang, "in_guild": u.in_guild, "rank_manual": u.rank_manual,
         "can_manage": u.level >= models.RANK_LEVEL["vice"], "is_admin": u.level >= models.RANK_LEVEL["vice"],
         "is_member": u.level >= models.RANK_LEVEL["member"],

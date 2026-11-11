@@ -611,6 +611,8 @@ const ar: Partial<Dict & ExtraDict> = {
   logs_more: "تحميل المزيد",
   logs_keep: "تُحفظ السجلات لمدة {n} يومًا.",
   rank_bench: "Bench",
+  prof_emoji: "إيموجي بدل العلم",
+  prof_emoji_hint: "اختياري: يظهر بدل علم بلدك. إيموجي فقط، 3 كحد أقصى.",
   admin_bench_hint: "تعليم كاحتياطي (bench)",
   rh_remind: "تذكير",
   rh_remind_t: "إرسال تذكير",

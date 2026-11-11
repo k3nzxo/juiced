@@ -8,7 +8,7 @@ import { PATHS, INNER_WAYS, pathById, innerWayById, innerWayImg, pathFromText, W
 
 type Me = {
   id: number; discord_id: string; display_name: string; username: string; avatar_url: string | null; rank: string; public_rank: string;
-  coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null;
+  coach_roles: string[]; ingame_name: string | null; main_role: string | null; country: string | null; flag_emoji?: string | null;
   weapons: string[]; weapon_other: string | null; main_path: string | null; alt_paths: string[]; inner_ways: string[]; partners: string[]; main_build: string | null; alt_builds: string[]; dm_off: string[]; nav_items?: string[];
   show_on_team: boolean; lang: string | null; is_member: boolean; can_manage: boolean; is_admin: boolean; can_view_all: boolean; rank_manual: boolean;
 };
@@ -33,6 +33,7 @@ const roleWeapons = (r: string | null, w: string[] = [], other: string | null = 
   const wt = weaponText(w, other);
   return roleTag(r) + (wt ? `<span class="muted weapons-tag">${r ? "· " : ""}${esc(wt)}</span>` : "");
 };
+const userFlag = (u: any) => (u.flag_emoji ? `<span class="flag-emoji">${esc(u.flag_emoji)}</span>` : flag(u.country));
 const flag = (cc: string | null) => (cc && /^[A-Z]{2}$/i.test(cc) ? `<img class="flag" src="/flags/${cc.toLowerCase()}.svg" alt="${cc.toUpperCase()}" width="20" height="15" loading="lazy">` : "");
 
 // ------------------------------------------------------------------ Start
@@ -984,7 +985,7 @@ async function viewRoster(view: HTMLElement) {
     view.querySelector("[data-count]")!.textContent = T("mem_count", { n: items.length });
     view.querySelector("#rost")!.innerHTML = items.length ? `<div class="mem-grid">${items.map((u) => `
       <a class="mcard card" href="#/roster/${u.id}">
-        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)}${benchBadge(u)} ${flag(u.country)}</span></div></div>
+        <div class="mc-top">${avatar(u, 44)}<div class="mc-name"><strong>${esc(u.display_name)}</strong><span>${rankBadge(u.rank)}${benchBadge(u)} ${userFlag(u)}</span></div></div>
         <div class="mc-build">${catTag(u)}${u.main_build ? `<span class="mc-bname">${buildDots(u.main_build)}${esc(buildLabel(u.main_build))}</span>` : ""}
           ${(u.alt_builds || []).length ? `<span class="mc-more">+${u.alt_builds.length}</span>` : ""}</div>
         ${(() => {  // passt nur über eine weitere Kombi? Dann zeigen, welche
@@ -1088,7 +1089,7 @@ async function viewMember(view: HTMLElement, id: number) {
   const joined = u.joined_at ? new Date(u.joined_at).toLocaleDateString(loc(), { month: "long", year: "numeric" }) : "";
   el.innerHTML = `<section class="card mem-hero">
       ${avatar(u, 72)}
-      <div class="mh-main"><h1>${esc(u.display_name)} ${flag(u.country)}</h1>
+      <div class="mh-main"><h1>${esc(u.display_name)} ${userFlag(u)}</h1>
         <div class="mh-tags">${rankBadge(u.rank)}${benchBadge(u)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div>
         <span class="muted">@${esc(u.username)}${joined ? ` · ${esc(T("mem_joined", { d: joined }))}` : ""}</span>
         ${ATT[u.discord_id]?.pct != null ? `<span class="mh-att">${esc(T("att_label"))} ${attBadge(u.discord_id)} ${ATT[u.discord_id].attended != null ? `<span class="muted">${esc(ATT[u.discord_id].total != null ? T("att_title", { a: ATT[u.discord_id].attended, t: ATT[u.discord_id].total }) : T("att_count", { a: ATT[u.discord_id].attended }))}</span>` : ""}</span>` : ""}</div>
@@ -1319,7 +1320,12 @@ function viewProfile(view: HTMLElement, target: any = null) {
   view.innerHTML = (own ? `<a class="back-link" href="#/profile">← ${esc(T("app_nav_profile"))}</a>` + head(T("prof_title")) : `<a class="back-link" href="#/roster/${u.id}">← ${esc(u.display_name)}</a>` + head(T("prof_edit_other", { name: u.display_name }))) + `<form class="profile card" novalidate>
     <div class="prof-top">${avatar(u, 56)}<div><strong>${esc(u.username)}</strong>${rankBadge(own ? me!.public_rank : u.rank)}</div></div>
     ${own ? `<div class="field"><label for="p-name">${esc(T("prof_ingame"))}</label><input class="input" id="p-name" maxlength="40" value="${esc(me!.ingame_name || "")}"></div>
-    <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>` : ""}
+    <div class="field"><label for="p-country">${esc(T("prof_country"))}</label><select class="select" id="p-country"><option value="">—</option>${opts.map((o) => `<option value="${o.c}" ${me!.country === o.c ? "selected" : ""}>${esc(o.n)}</option>`).join("")}</select></div>
+    ${me!.rank === "developer" ? `<div class="field"><label for="p-emoji">${esc(T("prof_emoji"))}</label>
+      <div class="emoji-pick"><input class="input" id="p-emoji" maxlength="40" placeholder="—" value="${esc(me!.flag_emoji || "")}">
+        ${["✅", "⭐", "🔥", "👑", "💀", "🐐", "🍊", "🛡️", "⚔️", "❤️"].map((e) => `<button type="button" class="chip" data-emoji="${e}">${e}</button>`).join("")}
+        <button type="button" class="chip" data-emoji="">✕</button></div>
+      <small class="muted">${esc(T("prof_emoji_hint"))}</small></div>` : ""}` : ""}
     <h2 class="prof-sec">${esc(own ? T("prof_build") : "Build")}</h2>
     <div class="field"><span class="label">${esc(T("prof_role"))}</span>
       <div class="seg-tabs path-roles" role="group">${ROLES3.map((r) => `<button type="button" data-prole="${r}" aria-pressed="${role === r}"><span class="role-tag role-${r}">${esc(T("role_" + r))}</span></button>`).join("")}</div></div>
@@ -1345,6 +1351,10 @@ function viewProfile(view: HTMLElement, target: any = null) {
   </form>`;
 
   if (own) { bindNotifGroups(view); bindNavPicker(view); }
+  view.querySelectorAll<HTMLElement>("[data-emoji]").forEach((b) => b.addEventListener("click", () => {
+    const inp = view.querySelector<HTMLInputElement>("#p-emoji")!;
+    inp.value = b.dataset.emoji ? (inp.value + b.dataset.emoji) : "";
+  }));
   // Inner Ways: nach Pfad gruppiert; ohne "Alle zeigen" nur eigene Pfade + allgemeine (+ schon gewählte)
   const drawWays = () => {
     const mainPaths = buildPaths(curMain());
@@ -1456,6 +1466,7 @@ function viewProfile(view: HTMLElement, target: any = null) {
         dm_off: [...(me!.dm_off || []).filter((k) => !view.querySelector(`[data-dm="${k}"]`)),
         ...[...view.querySelectorAll<HTMLInputElement>("[data-dm]")].filter((x) => !x.checked).map((x) => x.dataset.dm!)],
         country: (view.querySelector("#p-country") as HTMLSelectElement).value || null,
+        flag_emoji: (view.querySelector("#p-emoji") as HTMLInputElement | null)?.value.trim() || null,
         nav_items: [...view.querySelectorAll<HTMLElement>("[data-navpick]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.navpick!),
         show_on_team: (view.querySelector("#p-show") as HTMLInputElement).checked, lang: lang(),
       } });

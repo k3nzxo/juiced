@@ -9,6 +9,7 @@ export type PublicMember = {
   weapons?: string[]; weapon_other?: string | null;
   country: string | null;
   bench?: boolean;
+  flag_emoji?: string | null;
 };
 
 export const RANK_ORDER = ["developer", "leader", "vice", "coach", "member"];
@@ -42,7 +43,7 @@ export function personCard(m: PublicMember, labels: Record<string, string>): str
   return `<article class="person">
     ${avatar(m)}
     <div class="p-info">
-      <div class="p-name"><span>${esc(m.display_name)}</span>${m.country ? flag(m.country) : ""}</div>
+      <div class="p-name"><span>${esc(m.display_name)}</span>${m.flag_emoji ? `<span class="flag-emoji">${esc(m.flag_emoji)}</span>` : m.country ? flag(m.country) : ""}</div>
       <div class="p-sub"><span class="badge badge-${esc(m.rank)}">${esc(labels[m.rank] || m.rank)}</span>${m.bench ? ` <span class="badge badge-bench">${esc(labels.bench || "Bench")}</span>` : ""}</div>
       ${roleLabel ? `<div class="p-role"><span class="role-tag role-${esc(m.main_role)}">${esc(roleLabel)}</span></div>` : ""}
     </div>
