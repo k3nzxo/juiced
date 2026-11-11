@@ -254,4 +254,6 @@ def test_bench_flag_set_by_staff_only(client_for):
     r = vice.put(f"/api/admin/users/{uid}", json={"bench": True}, headers=ORIGIN).json()
     assert r["bench"] is True and r["rank"] == "member" and r["rank_manual"] is False  # Rang bleibt aus Discord
     assert next(m for m in vice.get("/api/members").json() if m["id"] == uid)["bench"] is True
+    neo = next(m for m in vice.get("/api/team").json()["members"] if m["display_name"] == "neo")
+    assert neo["bench"] is True  # auch öffentlich sichtbar
     assert vice.put(f"/api/admin/users/{uid}", json={"bench": False}, headers=ORIGIN).json()["bench"] is False

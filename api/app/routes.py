@@ -58,7 +58,7 @@ def team(db: DbSession = Depends(get_db)):
     return {"members": [{
         "display_name": u.display_name, "avatar_url": u.avatar_url, "rank": u.public_rank,
         "coach_roles": u.coach_list, "main_role": u.main_role, "weapons": u.weapon_list, "weapon_other": u.weapon_other,
-        "country": u.country,
+        "country": u.country, "bench": bool(u.bench),
     } for u in users]}
 
 
