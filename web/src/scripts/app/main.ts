@@ -25,7 +25,7 @@ function avatar(u: { avatar_url: string | null; display_name: string }, size = 3
     : `<span class="av av-fb" style="width:${size}px;height:${size}px">${esc((u.display_name || "?")[0].toUpperCase())}</span>`;
 }
 const rankBadge = (r: string) => `<span class="badge badge-${esc(r)}">${esc(T(RANK_KEYS[r] || r))}</span>`;
-const benchBadge = (u: any) => (u.bench ? ` <span class="badge badge-bench">${esc(T("rank_bench"))}</span>` : "");
+const benchBadge = (u: any) => (u.bench ? ` <span class="badge badge-bench">♿ ${esc(T("rank_bench"))}</span>` : "");
 const roleTag = (r: string | null) => (r ? `<span class="role-tag role-${esc(r)}">${esc(T("role_" + r))}</span>` : "");
 // Rolle + Waffen kompakt: "DPS · Nameless, Twinblades"
 const weaponText = (w: string[] = [], other: string | null = null) => [...w.map((x) => T("weapon_" + x)), ...(other ? [other] : [])].join(", ");
@@ -1227,7 +1227,7 @@ async function viewAdmin(view: HTMLElement) {
         ${!canEdit ? `<div class="tr-tags">${rankBadge(u.rank)}${benchBadge(u)} ${u.coach_roles.map((r: string) => `<span class="badge badge-coach">${esc(T("rank_coach"))} ${esc(T("role_" + r))}</span>`).join(" ")}</div></div>` : `<div class="tr-ctrl">
           <select class="select" data-rank aria-label="${esc(T("admin_rank"))}">${ranks.map((r) => `<option value="${r}" ${u.rank === r ? "selected" : ""}>${esc(T(RANK_KEYS[r]))}</option>`).join("")}</select>
           <div class="coach-pick"><span class="coach-label">${esc(T("admin_coach_for"))}:</span><div class="chips">${COACH_ROLES.map((r) => `<button class="chip role-${r} ${u.coach_roles.includes(r) ? "active" : ""}" data-coach="${r}" aria-pressed="${u.coach_roles.includes(r)}">${esc(T("role_" + r))}</button>`).join("")}</div></div>
-          <button class="chip chip-bench ${u.bench ? "active" : ""}" data-bench aria-pressed="${!!u.bench}" title="${esc(T("admin_bench_hint"))}">${esc(T("rank_bench"))}</button>
+          <button class="chip chip-bench ${u.bench ? "active" : ""}" data-bench aria-pressed="${!!u.bench}" title="${esc(T("admin_bench_hint"))}">♿ ${esc(T("rank_bench"))}</button>
           ${u.rank_manual ? `<button class="btn btn-ghost btn-sm" data-sync title="${esc(T("admin_use_discord"))}">${icon.refresh}</button>` : ""}
         </div></div>`}`).join("")}</div>`;
     if (!canEdit) return;
